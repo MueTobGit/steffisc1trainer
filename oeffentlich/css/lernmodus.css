@@ -1,0 +1,678 @@
+/* =========================================
+   Phase 3: Lernmodus + Vokabel-Karte
+   =========================================
+
+   1. Lernmodus Layout
+   2. Kapitelauswahl
+   3. Toolbar
+   4. Karten-Liste
+   5. Vokabel-Karte (vk-karte)
+   6. Formen-Bereich
+   7. TTS/STT Buttons
+   8. Favoriten
+   9. Abdeck-Funktion
+   10. STT Ergebnis
+   11. Responsive
+   12. Dark Mode Anpassungen
+   ========================================= */
+
+
+/* ---- 1. Lernmodus Layout ---- */
+
+.lernmodus {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.lernmodus__beschreibung {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.lernmodus__aktionen {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+
+/* ---- 2. Kapitelauswahl ---- */
+
+.lernmodus__auswahl {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lernmodus__gruppe {
+    margin-bottom: 4px;
+}
+
+.lernmodus__favoriten-gruppe {
+    margin-bottom: 8px;
+}
+
+/* Aufklappbarer Gruppen-Kopf (Button) */
+.lernmodus__gruppe--klappbar {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    overflow: hidden;
+}
+
+.lernmodus__gruppe-kopf {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--md-sys-color-surface-container);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease;
+    color: var(--md-sys-color-on-surface);
+}
+
+.lernmodus__gruppe-kopf:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.lernmodus__gruppe-titel {
+    font-size: var(--md-sys-typescale-title-small-size, 14px);
+    font-weight: 500;
+    color: var(--md-sys-color-primary);
+    flex: 1;
+    text-align: left;
+}
+
+.lernmodus__gruppe-pfeil {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 20px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.lernmodus__gruppe-pfeil--offen {
+    transform: rotate(180deg);
+}
+
+/* Inhalt der aufklappbaren Gruppe */
+.lernmodus__gruppe-inhalt {
+    padding: 4px 0;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.lernmodus__untergruppe-titel {
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    margin: 8px 0 4px 16px;
+}
+
+.lernmodus__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.lernmodus__checkbox-label:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.lernmodus__checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--md-sys-color-primary);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.lernmodus__anzahl {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* Gesperrte Lektionen (Lernpfad nicht freigeschaltet) */
+.lernmodus__checkbox-label--gesperrt {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lernmodus__checkbox-label--gesperrt:hover {
+    background: transparent;
+}
+
+.lernmodus__checkbox-label--gesperrt input[type="checkbox"] {
+    cursor: not-allowed;
+}
+
+.lernmodus__schloss-icon {
+    font-size: 14px;
+    vertical-align: middle;
+    color: var(--md-sys-color-outline);
+    flex-shrink: 0;
+}
+
+.lernmodus__favoriten-label {
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid var(--md-sys-color-secondary);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+}
+
+.lernmodus__favoriten-label:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.lernmodus__trenner {
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin: 12px 0;
+}
+
+
+/* ---- 3. Toolbar ---- */
+
+.lernmodus__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    flex-wrap: wrap;
+}
+
+.lernmodus__toolbar-mitte {
+    flex: 1;
+    text-align: center;
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+.lernmodus__toolbar-rechts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* ---- 4. Karten-Liste ---- */
+
+.lernmodus__karten-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 32px;
+}
+
+
+/* ---- 5. Vokabel-Karte ---- */
+
+.vk-karte {
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+    padding: 20px 24px;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    min-height: 180px;
+}
+
+.vk-karte--verdeckt {
+    cursor: pointer;
+}
+
+.vk-karte--verdeckt:hover {
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vk-karte:hover {
+    border-color: var(--md-sys-color-outline);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.vk-karte__kopf {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.vk-karte__sv {
+    flex: 1;
+    min-width: 0;
+}
+
+.vk-karte__schwedisch {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--md-sys-color-primary);
+    display: block;
+    margin-bottom: 2px;
+    word-break: break-word;
+}
+
+.vk-karte__genus {
+    font-size: var(--md-sys-typescale-title-medium-size, 16px);
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.vk-karte__aktionen {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.vk-karte__de {
+    margin-top: 8px;
+}
+
+.vk-karte__deutsch {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    line-height: 1.5;
+}
+
+
+/* ---- 6. Formen-Bereich ---- */
+
+/* Grid: Formbezeichnung links, Formwert rechts — automatisch ausgerichtet */
+.vk-karte__formen {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    margin: 10px 0;
+}
+
+.vk-karte__form-schema-item {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-label-medium-size, 13px);
+    font-weight: 400;
+    white-space: nowrap;
+    align-self: baseline;
+}
+
+.vk-karte__form-wert-item {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    align-self: baseline;
+}
+
+/* Fallback fuer Wortarten ohne Schema (Label: Wert) */
+.vk-karte__formen--fallback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+.vk-karte__form {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.vk-karte__form-label {
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.vk-karte__form-wert {
+    color: var(--md-sys-color-on-surface);
+}
+
+
+/* ---- 7. TTS/STT Buttons ---- */
+
+.vk-karte__tts,
+.vk-karte__stt {
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.vk-karte__tts:hover {
+    color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+    border-radius: 50%;
+}
+
+.vk-karte__tts--aktiv {
+    color: var(--md-sys-color-primary) !important;
+}
+
+.vk-karte__stt:hover {
+    color: var(--md-sys-color-error);
+    background: var(--md-sys-color-error-container);
+    border-radius: 50%;
+}
+
+.vk-karte__stt--aktiv {
+    color: var(--md-sys-color-error) !important;
+    animation: vk-pulsieren 1s ease-in-out infinite;
+}
+
+@keyframes vk-pulsieren {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+
+/* ---- 8. Favoriten ---- */
+
+.vk-karte__favorit {
+    transition: color 0.15s ease;
+}
+
+.vk-karte__favorit:hover {
+    color: var(--md-sys-color-secondary);
+}
+
+.vk-karte__favorit--aktiv {
+    color: var(--md-sys-color-secondary) !important;
+}
+
+.vk-karte__favorit--aktiv .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1;
+}
+
+
+/* ---- 9. Abdeck-Funktion ---- */
+
+.vk-karte__verdeckt-bereich {
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    min-height: 24px;
+}
+
+.vk-karte__verdeckt-bereich:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.vk-karte__verdeckt-text {
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    user-select: none;
+}
+
+.vk-karte__verdeckt {
+    color: var(--md-sys-color-outline);
+    letter-spacing: 2px;
+    font-weight: 500;
+}
+
+
+/* ---- 10. STT Ergebnis ---- */
+
+.vk-karte__stt-ergebnis {
+    padding: 10px 14px;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    background: var(--md-sys-color-surface-container);
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: vk-einblenden 0.3s ease;
+}
+
+.vk-karte__stt-ergebnis.versteckt {
+    display: none;
+}
+
+.vk-karte__stt-bewertung {
+    font-weight: 500;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+}
+
+.vk-karte__stt-erkannt {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+}
+
+@keyframes vk-einblenden {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* ---- 11. Responsive ---- */
+
+@media (max-width: 768px) {
+    .lernmodus {
+        padding: 0 12px;
+    }
+
+    .lernmodus__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .lernmodus__toolbar-mitte {
+        order: -1;
+        text-align: left;
+        font-size: var(--md-sys-typescale-title-small-size, 14px);
+    }
+
+    .lernmodus__toolbar-rechts {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .lernmodus__toolbar-rechts .eingabe--klein {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .lernmodus__toolbar-rechts .btn--klein {
+        white-space: nowrap;
+    }
+
+    .vk-karte {
+        padding: 16px 18px;
+    }
+
+    .vk-karte__kopf {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .vk-karte__aktionen {
+        align-self: flex-end;
+        margin-top: -4px;
+    }
+
+    .vk-karte__schwedisch {
+        font-size: 24px;
+    }
+
+    .vk-karte__deutsch {
+        font-size: 18px;
+    }
+
+    .vk-karte__form-wert-item {
+        font-size: 16px;
+    }
+
+    .lernmodus__checkbox-label {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .lernmodus__untergruppe-titel {
+        margin-left: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .vk-karte__aktionen {
+        gap: 0;
+    }
+
+    .vk-karte__aktionen .btn-icon {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+
+/* ---- 12. Dark Mode Anpassungen ---- */
+
+.dunkel .vk-karte {
+    border-color: var(--md-sys-color-outline-variant);
+}
+
+.dunkel .vk-karte:hover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dunkel .vk-karte__verdeckt-bereich {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.dunkel .vk-karte__verdeckt-bereich:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.dunkel .vk-karte__stt-ergebnis {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.dunkel .lernmodus__favoriten-label {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+
+/* ---- 13. Snap-Navigation (Endlosband / Fokus-Modus) ---- */
+
+/* #inhalt im Lernmodus: kein Padding, kein max-width — JS setzt Höhe exakt */
+#inhalt.inhalt--lernmodus {
+    padding: 0;
+    max-width: none;
+    overflow: hidden; /* verhindert dass Body-Scroll durchkommt */
+}
+
+/* Lernen-Wrapper: füllt #inhalt komplett */
+.lernmodus--lernen {
+    max-width: none;
+    padding: 0;
+}
+
+.lernmodus--lernen .lernmodus__toolbar {
+    max-width: 900px;
+    margin: 0 auto;
+    margin-bottom: 0; /* überschreibt basis margin-bottom: 16px */
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+}
+
+/* Desktop: vertikaler Fokus-Modus mit Scroll-Snap                   */
+/* Höhe wird per JS (_snap_hoehe_setzen) als inline-style gesetzt.   */
+/* Items nutzen height:100% — immer exakt eine Karte pro Sichtfeld.  */
+.lernmodus__karten-liste--snap {
+    /* Überschreibe Basis-Styles */
+    gap: 0;
+    padding-bottom: 0;
+    /* Vertikaler Snap */
+    position: relative;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: none; /* verhindert Seiten-Scroll bei Endposition */
+    scrollbar-width: none;
+    /* Fallback-Höhe bis JS greift */
+    height: calc(100dvh - 130px);
+}
+
+.lernmodus__karten-liste--snap::-webkit-scrollbar {
+    display: none;
+}
+
+.lernmodus__snap-item {
+    scroll-snap-align: center;
+    /* 100% = exakt so hoch wie der Snap-Container → immer eine Karte */
+    height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    box-sizing: border-box;
+}
+
+.lernmodus__snap-item .vk-karte {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
+}
+
+
+/* Mobile: horizontales Endlosband mit Scroll-Snap */
+@media (max-width: 768px) {
+    .lernmodus--lernen .lernmodus__toolbar {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .lernmodus__karten-liste--snap {
+        display: flex;
+        flex-direction: row;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior: none;
+    }
+
+    .lernmodus__snap-item {
+        scroll-snap-align: center;
+        flex-shrink: 0;
+        width: 100vw;
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 12px 24px;
+        box-sizing: border-box;
+    }
+
+    .lernmodus__snap-item .vk-karte {
+        max-height: none;
+        overflow-y: visible;
+        max-width: none;
+        width: 100%;
+    }
+}

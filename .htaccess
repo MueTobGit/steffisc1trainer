@@ -1,0 +1,67 @@
+# Vokabeltrainer — Haupt .htaccess
+# Kompatibel mit Apache 2.4 + PHP-FPM (dogado Shared Hosting)
+
+RewriteEngine On
+
+# Konfigurationsdateien vor direktem HTTP-Zugriff schuetzen
+# Apache 2.4 Syntax (Require) — ersetzt altes "Order Deny,Allow"
+# (install.php ist bewusst ausgenommen — loescht sich nach Installation selbst)
+<FilesMatch "^umgebung(\.beispiel)?\.php$">
+    Require all denied
+</FilesMatch>
+
+# HTTPS erzwingen
+# Lokal (XAMPP): diese zwei Zeilen auskommentiert lassen
+# Produktion (Hoster): Auskommentierung entfernen
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+</IfModule>
+
+# Komprimierung
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Cache fuer statische Dateien
+# JS + CSS: nie lange cachen — Versionierung erfolgt per ?v=<hash> aus index.php / app.js
+# Fonts + Bilder: lange cachen (aendern sich praktisch nie)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                "access plus 0 seconds"
+    ExpiresByType application/javascript  "access plus 0 seconds"
+    ExpiresByType font/woff2              "access plus 1 year"
+    ExpiresByType image/png               "access plus 1 month"
+    ExpiresByType image/svg+xml           "access plus 1 month"
+</IfModule>
+
+# Cache-Control-Header fuer JS/CSS und PHP/HTML
+<IfModule mod_headers.c>
+    # JS + CSS: immer beim Server revalidieren (ETag/Last-Modified)
+    # Wenn ?v=<hash> im URL steckt und der Hash unveraendert ist, liefert der Server 304 → kein Traffic
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+    # PHP + HTML: niemals cachen (index.php liefert immer frischen Hash)
+    <FilesMatch "\.(php|html)$">
+        Header always set Cache-Control "no-store, no-cache, must-revalidate"
+        Header always set Pragma "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# Verzeichnislistung deaktivieren
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# PHP-Einstellungen: php_flag/php_value sind bei PHP-FPM in .htaccess NICHT erlaubt
+# und wuerden einen 500er verursachen. Stattdessen per php.ini oder Hoster-Panel setzen:
+#   display_errors = Off
+#   log_errors = On

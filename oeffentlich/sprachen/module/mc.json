@@ -1,0 +1,12 @@
+{
+    "de": {
+        "badge": "Multiple Choice",
+        "richtung_sv_de": "Schwedisch → Deutsch",
+        "richtung_de_sv": "Deutsch → Schwedisch"
+    },
+    "sv": {
+        "badge": "Flerval",
+        "richtung_sv_de": "Svenska → Tyska",
+        "richtung_de_sv": "Tyska → Svenska"
+    }
+}

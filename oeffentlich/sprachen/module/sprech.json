@@ -1,0 +1,38 @@
+{
+    "de": {
+        "sprechen_starten": "Sprechen starten",
+        "badge": "Sprechen",
+        "anhoeren": "Aussprache anhören",
+        "anweisung_satz": "Sprich den Satz laut nach",
+        "anweisung_wort": "Sprich das Wort laut nach",
+        "status_initial": "Tippe auf das Mikrofon",
+        "status_aufnahme": "Sprich jetzt …",
+        "status_verarbeitung": "Wird ausgewertet …",
+        "fehler_mikrofon": "Mikrofon nicht erreichbar – tippe nochmal",
+        "nochmal": "Nochmal sprechen",
+        "feedback_super": "Super! Perfekte Aussprache!",
+        "feedback_fast": "Fast richtig! Gut gemacht.",
+        "feedback_nochmal": "Nicht ganz – hör dir die Aussprache an.",
+        "feedback_nochmal2": "Noch nicht ganz – versuch es nochmal!",
+        "erkannt": "Du hast gesagt: „{{text}}“",
+        "aussprache_ueben": "Aussprache üben"
+    },
+    "sv": {
+        "sprechen_starten": "Börja tala",
+        "badge": "Tala",
+        "anhoeren": "Lyssna på uttal",
+        "anweisung_satz": "Säg meningen högt",
+        "anweisung_wort": "Säg ordet högt",
+        "status_initial": "Tryck på mikrofonen",
+        "status_aufnahme": "Tala nu …",
+        "status_verarbeitung": "Utvärderar …",
+        "fehler_mikrofon": "Mikrofonen nås inte – tryck igen",
+        "nochmal": "Tala igen",
+        "feedback_super": "Toppen! Perfekt uttal!",
+        "feedback_fast": "Nästan rätt! Bra jobbat.",
+        "feedback_nochmal": "Inte riktigt – lyssna på uttalet.",
+        "feedback_nochmal2": "Inte helt rätt – försök igen!",
+        "erkannt": "Du sa: \"{{text}}\"",
+        "aussprache_ueben": "Öva uttal"
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "de": {
+        "titel": "Liga",
+        "fehler_laden": "Liga konnte nicht geladen werden.",
+        "keine_liga": "Keine aktive Liga",
+        "keine_liga_text": "Aktuell läuft keine Liga. Schau später wieder vorbei!",
+        "teilnehmer": "Teilnehmer",
+        "deine_punkte": "Deine Punkte",
+        "dein_rang": "Dein Rang",
+        "beitreten": "Liga beitreten",
+        "beigetreten": "Liga beigetreten!",
+        "beitreten_fehler": "Beitreten fehlgeschlagen.",
+        "rangliste_fehler": "Rangliste konnte nicht geladen werden.",
+        "keine_teilnehmer": "Noch keine Teilnehmer",
+        "keine_teilnehmer_text": "Sei der Erste und tritt der Liga bei!",
+        "champions_keine": "Keine Gewinner eingetragen.",
+        "champions_titel": "Liga-Champions",
+        "krone_bronze": "Lorbeerkranz",
+        "krone_gold": "Goldene Krone",
+        "krone_silber": "Silberne Krone"
+    },
+    "sv": {
+        "titel": "Liga",
+        "fehler_laden": "Ligan kunde inte laddas.",
+        "keine_liga": "Ingen aktiv liga",
+        "keine_liga_text": "Det pågår ingen liga just nu. Kolla tillbaka senare!",
+        "teilnehmer": "Deltagare",
+        "deine_punkte": "Dina poäng",
+        "dein_rang": "Din placering",
+        "beitreten": "Gå med i ligan",
+        "beigetreten": "Gick med i ligan!",
+        "beitreten_fehler": "Kunde inte gå med.",
+        "rangliste_fehler": "Rankinglistan kunde inte laddas.",
+        "keine_teilnehmer": "Inga deltagare ännu",
+        "keine_teilnehmer_text": "Bli den första och gå med i ligan!",
+        "champions_keine": "Inga vinnare registrerade.",
+        "champions_titel": "Liga-champions",
+        "krone_bronze": "Lagerkrans",
+        "krone_gold": "Guldkrona",
+        "krone_silber": "Silverkrona"
+    }
+}

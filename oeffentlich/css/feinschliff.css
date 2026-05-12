@@ -1,0 +1,1359 @@
+/* ============================================
+ * Feinschliff CSS — Phase 8
+ *
+ * Styles fuer Profil, Einstellungen, Admin-Panel.
+ * ============================================ */
+
+/* ============================================
+ * 1. Profil Layout
+ * ============================================ */
+
+.profil {
+    max-width: 800px;
+}
+
+.profil__info-karte {
+    margin-bottom: 24px;
+}
+
+.profil__kopf {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profil__meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.profil__name {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+    margin: 0 0 2px;
+}
+
+.profil__benutzername {
+    display: block;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.profil__email {
+    display: block;
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 2px;
+}
+
+.profil__tags {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.profil__mitglied-seit {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+
+/* ============================================
+ * 2. Profil Avatar
+ * ============================================ */
+
+.profil__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.profil__avatar-initial {
+    font-size: 28px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Avatar mit Bild (Preset-Cartoon) */
+.profil__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Klickbarer Avatar (Upload) */
+.profil__avatar--klickbar {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.profil__avatar-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.18s;
+    color: #fff;
+}
+
+.profil__avatar-overlay .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.profil__avatar--klickbar:hover .profil__avatar-overlay,
+.profil__avatar--klickbar:focus .profil__avatar-overlay {
+    opacity: 1;
+}
+
+/* Lade-Zustand */
+.profil__avatar--laden {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Entfernen-Button */
+.profil__avatar-entfernen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--md-sys-color-error);
+    background: transparent;
+    color: var(--md-sys-color-error);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.profil__avatar-entfernen-btn:hover {
+    background: var(--md-sys-color-error-container);
+}
+
+.profil__avatar-entfernen-btn .material-symbols-outlined {
+    font-size: 0.9rem;
+}
+
+/* Avatar in Unten-Leiste */
+.unten-leiste__avatar-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: var(--md-sys-color-surface-container, #efefef);
+    border: 2px solid transparent;
+}
+
+.unten-leiste__link--aktiv .unten-leiste__avatar-img {
+    border-color: var(--md-sys-color-primary);
+}
+
+/* Avatar in Seitenleiste */
+.seitenleiste__avatar-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: var(--md-sys-color-surface-container, #efefef);
+    flex-shrink: 0;
+}
+
+
+/* ============================================
+ * 3. Profil Statistik
+ * ============================================ */
+
+.profil__statistik {
+    margin-bottom: 24px;
+}
+
+.profil__stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    text-align: center;
+}
+
+.profil__stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 8px;
+}
+
+.profil__stat-icon {
+    margin-bottom: 4px;
+}
+
+.profil__stat-icon .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.profil__stat-wert {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 500;
+}
+
+.profil__stat-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+
+/* ============================================
+ * 4. Profil Formular
+ * ============================================ */
+
+.profil__bearbeiten {
+    margin-bottom: 24px;
+}
+
+.profil__formular-aktionen {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.profil__passwort {
+    margin-bottom: 24px;
+}
+
+/* Einstellungs-Sektionen im Profil (Darstellung, Level, Lernpfad, Benachrichtigungen) */
+.profil section {
+    margin-bottom: 24px;
+}
+
+.profil__pw-hinweis {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+    margin: 8px 0 12px;
+}
+
+
+/* ============================================
+ * 5. Einstellungen Layout
+ * ============================================ */
+
+.einstellungen {
+    max-width: 700px;
+}
+
+.einstellungen__kopf {
+    margin-bottom: 24px;
+}
+
+.einstellungen__kopf h2 {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+    margin: 0;
+}
+
+.einstellungen__thema,
+.einstellungen__level,
+.einstellungen__info {
+    margin-bottom: 24px;
+}
+
+
+/* ============================================
+ * 6. Einstellungen Thema-Optionen
+ * ============================================ */
+
+.einstellungen__thema-optionen {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.einstellungen__thema-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.einstellungen__thema-option:hover {
+    border-color: var(--md-sys-color-primary);
+}
+
+.einstellungen__thema-option input[type="radio"] {
+    accent-color: var(--md-sys-color-primary);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.einstellungen__thema-option:has(input:checked) {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+}
+
+.einstellungen__thema-option .material-symbols-outlined {
+    font-size: 24px;
+    color: var(--md-sys-color-primary);
+    flex-shrink: 0;
+}
+
+.einstellungen__thema-vorschau {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.einstellungen__thema-label {
+    font-weight: 500;
+    font-size: var(--md-sys-typescale-body-large-size, 16px);
+}
+
+.einstellungen__thema-beschreibung {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+
+/* ============================================
+ * 7. Einstellungen Info
+ * ============================================ */
+
+.einstellungen__level-anzeige {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.einstellungen__level-nummer {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+}
+
+.einstellungen__level-name {
+    font-size: var(--md-sys-typescale-title-medium-size, 16px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.einstellungen__level-formen ul {
+    list-style: disc;
+    padding-left: 20px;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    line-height: 1.8;
+    margin: 0;
+}
+
+.einstellungen__info-reihe {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #ccc);
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+}
+
+.einstellungen__info-reihe:last-child {
+    border-bottom: none;
+}
+
+
+/* ============================================
+ * 8. Admin-Panel Layout
+ * ============================================ */
+
+.admin-panel {
+    max-width: 1100px;
+}
+
+.admin-panel__kopf {
+    margin-bottom: 16px;
+}
+
+.admin-panel__kopf h2 {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+    margin: 0;
+}
+
+
+/* ============================================
+ * 9. Admin-Panel Tabs
+ * ============================================ */
+
+.admin-panel__tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--md-sys-color-outline-variant, #ccc);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
+}
+
+.admin-panel__tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.admin-panel__tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    font-size: var(--md-sys-typescale-label-large-size, 14px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0; /* Verhindert Schrumpfen — wichtig fuer Scroll */
+}
+
+/* Beschriftung des Tabs (das <span>-Textelement) */
+.admin-panel__tab > span:not(.material-symbols-outlined) {
+    display: inline;
+}
+
+.admin-panel__tab:hover {
+    color: var(--md-sys-color-on-surface);
+}
+
+.admin-panel__tab--aktiv {
+    color: var(--md-sys-color-primary);
+    border-bottom-color: var(--md-sys-color-primary);
+}
+
+.admin-panel__tab .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* Backup-Restore: Quellen-Toggle */
+.restore-quelle-btn--aktiv {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    border-color: var(--md-sys-color-primary) !important;
+}
+
+
+/* ============================================
+ * 10. Admin-Panel Konfiguration
+ * ============================================ */
+
+.admin-panel__konfig-eintrag {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #ccc);
+    gap: 16px;
+}
+
+.admin-panel__konfig-eintrag:last-child {
+    border-bottom: none;
+}
+
+.admin-panel__konfig-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-panel__konfig-schluessel {
+    font-family: monospace;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    font-weight: 500;
+    display: block;
+}
+
+.admin-panel__konfig-beschreibung {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    display: block;
+    margin-top: 2px;
+}
+
+.admin-panel__konfig-wert {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.admin-panel__konfig-wert .eingabe {
+    width: 120px;
+    text-align: right;
+}
+
+
+/* ============================================
+ * 11. Admin-Panel Wartung
+ * ============================================ */
+
+.admin-panel__system-info {
+    margin-top: 8px;
+}
+
+.admin-panel__info-reihe {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #ccc);
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+}
+
+.admin-panel__info-reihe:last-child {
+    border-bottom: none;
+}
+
+
+/* ============================================
+ * Rolle-Tags
+ * ============================================ */
+
+.tag--admin {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.tag--benutzer {
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.tag--erfolg {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.tag--fehler {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+
+/* ============================================
+ * 12. Responsive
+ * ============================================ */
+
+@media (max-width: 768px) {
+    .profil__kopf {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profil__tags {
+        justify-content: center;
+    }
+
+    .profil__avatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .profil__avatar-initial {
+        font-size: 24px;
+    }
+
+    .profil__stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .admin-panel__konfig-eintrag {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .admin-panel__konfig-wert {
+        width: 100%;
+    }
+
+    .admin-panel__konfig-wert .eingabe {
+        width: 100%;
+        text-align: left;
+    }
+
+    .einstellungen__thema-option {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profil__stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .admin-panel__tab {
+        padding: 10px 14px;
+        gap: 0;
+    }
+
+    /* Auf Mobil: nur Icon anzeigen, Beschriftung ausblenden */
+    .admin-panel__tab > span:not(.material-symbols-outlined) {
+        display: none;
+    }
+
+    .admin-panel__tab .material-symbols-outlined {
+        font-size: 22px;
+    }
+
+    /* Aktiver Tab: Tooltip via title-Attribut */
+    .admin-panel__tab--aktiv .material-symbols-outlined {
+        color: var(--md-sys-color-primary);
+    }
+
+    .einstellungen__level-anzeige {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+
+/* ============================================
+ * 13. Dark Mode
+ * ============================================ */
+
+[data-thema="dunkel"] .einstellungen__thema-option:has(input:checked) {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+[data-thema="dunkel"] .admin-panel__konfig-schluessel {
+    color: var(--md-sys-color-primary);
+}
+
+[data-thema="dunkel"] .tag--admin {
+    background: rgba(26, 35, 126, 0.2);
+    color: #90caf9;
+}
+
+[data-thema="dunkel"] .tag--benutzer {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+[data-thema="dunkel"] .tag--erfolg {
+    background: rgba(46, 125, 50, 0.15);
+    color: #81c784;
+}
+
+[data-thema="dunkel"] .tag--fehler {
+    background: rgba(198, 40, 40, 0.15);
+    color: #ef9a9a;
+}
+
+[data-thema="dunkel"] .einstellungen__info-reihe,
+[data-thema="dunkel"] .admin-panel__info-reihe,
+[data-thema="dunkel"] .admin-panel__konfig-eintrag {
+    border-bottom-color: var(--md-sys-color-surface-container-highest, #444);
+}
+
+/* ============================================
+ * 13. Android-Benachrichtigungen (Einstellungen)
+ * ============================================ */
+
+.einstellungen__benachrichtigungen {
+    margin-bottom: 24px;
+}
+
+.einstellungen__benachrichtigung-reihe {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+.einstellungen__benachrichtigung-details {
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+/* Toggle-Schalter */
+.einstellungen__schalter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.einstellungen__schalter input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.einstellungen__schalter-thumb {
+    display: block;
+    width: 44px;
+    height: 24px;
+    background: var(--md-sys-color-surface-variant, #e0e0e0);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.einstellungen__schalter-thumb::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: var(--md-sys-color-on-surface-variant, #757575);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.einstellungen__schalter input:checked + .einstellungen__schalter-thumb {
+    background: var(--md-sys-color-primary, #2563EB);
+}
+
+.einstellungen__schalter input:checked + .einstellungen__schalter-thumb::after {
+    background: white;
+    transform: translateX(20px);
+}
+
+.einstellungen__schalter input:disabled + .einstellungen__schalter-thumb {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ============================================
+ * 14. Android Edge-to-Edge CSS-Variablen
+ *     Werden von der Android-App gesetzt:
+ *     --android-inset-top, --android-inset-bottom,
+ *     --android-inset-left, --android-inset-right
+ * ============================================ */
+
+/* Haupt-Layout: Inset-Padding berücksichtigen wenn in Android-App.
+   padding-top wird NICHT gesetzt: Der WebView-Canvas beginnt bereits
+   unterhalb der Status-Bar (Android-System). Ein padding-top würde
+   einen ~3cm Leerraum über dem fixierten Header erzeugen. */
+body.android-app {
+    /* Die Insets werden vom Android-WebView als CSS-Variablen gesetzt */
+    padding-bottom: var(--android-inset-bottom, 0px);
+    padding-left:   var(--android-inset-left, 0px);
+    padding-right:  var(--android-inset-right, 0px);
+}
+
+/* ============================================
+ * 15. „In App öffnen"-Banner (anmeldung.js)
+ *     Wird nur im Android-Browser angezeigt,
+ *     nicht in der App selbst (window.Android fehlt).
+ * ============================================ */
+
+.anmeldung__app-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #E8F4FF;
+    border: 1px solid #B8D8F0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #004C7A;
+}
+
+.anmeldung__app-banner .material-symbols-outlined {
+    font-size: 20px;
+    flex-shrink: 0;
+    color: #006AA7;
+}
+
+.anmeldung__app-banner-btn {
+    margin-left: auto;
+    background: #006AA7;
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.anmeldung__app-banner-btn:hover,
+.anmeldung__app-banner-btn:active {
+    background: #004C7A;
+    color: #fff;
+}
+
+/* ============================================
+ * 15. Admin-Panel: Horizontaler Scroll-Fix
+ * ============================================ */
+
+/* Sichtbarer (aber dezenter) Scrollbar fuer die Tab-Leiste */
+.admin-panel__tabs {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-outline-variant, #ccc) transparent;
+}
+
+.admin-panel__tabs::-webkit-scrollbar {
+    display: block;
+    height: 3px;
+}
+
+.admin-panel__tabs::-webkit-scrollbar-thumb {
+    background: var(--md-sys-color-outline-variant, #ccc);
+    border-radius: 2px;
+}
+
+/* ============================================
+ * 16. i18n-Dateien-Editor
+ * ============================================ */
+
+/* Zweispaltiges Layout: Sidebar + Editor */
+.i18n-dat-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+    min-height: 520px;
+    border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.i18n-dat-sidebar {
+    border-right: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    background: var(--md-sys-color-surface-container, #f5f5f5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.i18n-dat-sidebar__kopf {
+    padding: 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+/* Modul-Liste */
+.i18n-dat-modul-liste {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.i18nd-modul-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: left;
+    color: var(--md-sys-color-on-surface);
+    transition: background 0.15s;
+    gap: 6px;
+}
+
+.i18nd-modul-btn:hover {
+    background: var(--md-sys-color-surface-container-high, #ebebeb);
+}
+
+.i18nd-modul-btn--aktiv {
+    background: var(--md-sys-color-secondary-container, #dce8f8) !important;
+    color: var(--md-sys-color-on-secondary-container, #1a237e);
+    font-weight: 600;
+}
+
+.i18nd-modul-name {
+    font-family: 'Roboto Mono', monospace, monospace;
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+/* Editor-Bereich */
+.i18n-dat-editor {
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Toolbar */
+.i18nd-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    flex-wrap: wrap;
+}
+
+/* Status-Badges */
+.i18nd-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.i18nd-badge--ok {
+    background: var(--md-sys-color-tertiary-container, #d0f0d0);
+    color: var(--md-sys-color-on-tertiary-container, #1a4a1a);
+}
+
+.i18nd-badge--fehlend {
+    background: var(--md-sys-color-error-container, #fce4e4);
+    color: var(--md-sys-color-error, #b00020);
+}
+
+.i18nd-badge--neu {
+    background: var(--md-sys-color-surface-container-highest, #e0e0e0);
+    color: var(--md-sys-color-on-surface-variant, #666);
+}
+
+/* Tabelle */
+.i18nd-tabelle {
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.i18nd-tabelle th,
+.i18nd-tabelle td {
+    padding: 6px 8px;
+    vertical-align: top;
+}
+
+/* Zeile mit fehlendem SV */
+.i18nd-row--fehlend {
+    background: var(--md-sys-color-error-container, rgba(176, 0, 32, 0.06)) !important;
+}
+
+/* Textarea mit fehlendem Wert */
+.i18nd-input--fehlend {
+    border-color: var(--md-sys-color-error, #b00020) !important;
+    background: rgba(176, 0, 32, 0.04) !important;
+}
+
+/* Filter-Buttons */
+.i18nd-filter-btn {
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+}
+
+.i18nd-filter-btn:hover {
+    background: var(--md-sys-color-surface-container-high, #ebebeb);
+}
+
+.i18nd-filter-btn--aktiv {
+    background: var(--md-sys-color-secondary-container, #dce8f8);
+    color: var(--md-sys-color-on-secondary-container, #1a237e);
+    font-weight: 600;
+}
+
+/* Responsive: Sidebar klappt auf kleinen Screens zusammen */
+@media (max-width: 680px) {
+    .i18n-dat-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+
+    .i18n-dat-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+        max-height: 180px;
+    }
+
+    .i18n-dat-modul-liste {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 6px;
+    }
+
+    .i18nd-modul-btn {
+        padding: 5px 10px;
+        border-radius: 8px;
+        width: auto;
+        flex: none;
+    }
+}
+
+/* ============================================
+ * Liga-Kronen: Badge-System
+ * ============================================ */
+
+/* Wrapper positioniert den Badge relativ zum Avatar */
+.krone-badge-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Krone-Badge allgemein */
+.krone-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    font-size: 14px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .5));
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
+}
+
+/* SVG im Badge auf font-size-basierte Größe skalieren */
+.krone-badge svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
+
+/* Seitenleiste: kleiner Avatar (24px) */
+.seitenleiste__fuss-btn .krone-badge {
+    font-size: 11px;
+    top: -5px;
+    right: -6px;
+}
+
+/* Unten-Leiste: kleiner Avatar (26px) */
+.unten-leiste__nav .krone-badge {
+    font-size: 11px;
+    top: -5px;
+    right: -6px;
+}
+
+/* Profil: großer Avatar (72px) */
+.profil__kopf .krone-badge {
+    font-size: 22px;
+    top: -10px;
+    right: -12px;
+}
+
+/* Rangliste: Krone-SVG neben dem Namen */
+.rangliste__krone {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    font-size: 14px;
+    line-height: 1;
+    vertical-align: middle;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+}
+
+.rangliste__krone svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
+
+/* Profil: Kronen-Info-Zeile */
+.profil__kronen-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--md-sys-color-secondary);
+    font-weight: 500;
+}
+
+.profil__kronen-info .material-symbols-outlined {
+    font-size: 16px;
+    color: #b8860b;
+}
+
+/* ---- Admin: Krone-Typ-Auswahl ---- */
+
+.admin-krone-auswahl {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.admin-krone-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border: 2px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    min-width: 88px;
+}
+
+.admin-krone-option:hover {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container);
+}
+
+.admin-krone-option--aktiv {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+}
+
+.admin-krone-option__vorschau {
+    font-size: 36px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
+}
+
+.admin-krone-option__vorschau svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
+
+.admin-krone-option__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: center;
+}
+
+.admin-krone-option--aktiv .admin-krone-option__label {
+    color: var(--md-sys-color-on-primary-container);
+}
+
+/* ---- Liga-Champions-Sektion ---- */
+
+.liga-champions {
+    margin-top: 32px;
+}
+
+.liga-champions__titel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 12px;
+}
+
+.liga-champion-karte {
+    margin-bottom: 12px;
+}
+
+.liga-champion-karte__kopf {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.liga-champion-karte__name {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.liga-champion-karte__datum {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.liga-champion-karte__liste {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.liga-champion-karte__eintrag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.liga-champion-karte__eintrag--rang1 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, .15), rgba(255, 215, 0, .05));
+    border: 1px solid rgba(255, 215, 0, .4);
+}
+
+.liga-champion-karte__eintrag--rang2 {
+    background: linear-gradient(135deg, rgba(192, 192, 192, .15), rgba(192, 192, 192, .05));
+    border: 1px solid rgba(192, 192, 192, .4);
+}
+
+.liga-champion-karte__eintrag--rang3 {
+    background: linear-gradient(135deg, rgba(205, 127, 50, .12), rgba(205, 127, 50, .04));
+    border: 1px solid rgba(205, 127, 50, .3);
+}
+
+.liga-champion-karte__krone {
+    font-size: 18px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,.4));
+}
+
+.liga-champion-karte__krone svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
+
+.liga-champion-karte__benutzer {
+    flex: 1;
+    font-weight: 500;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.liga-champion-karte__punkte {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    flex-shrink: 0;
+}
+
+.liga-champion-karte__leer {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+}
+
+
+/* ============================================
+ * Avatar-Picker Dialog
+ * ============================================ */
+
+.avatar-picker {
+    border: none;
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    padding: 0;
+    max-width: 480px;
+    width: min(480px, calc(100vw - 32px));
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    background: var(--md-sys-color-surface-container-low, #f7f7f7);
+}
+
+.avatar-picker::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.avatar-picker__kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 12px;
+}
+
+.avatar-picker__titel {
+    margin: 0;
+    font-size: var(--md-sys-typescale-title-large-size, 18px);
+    font-weight: 500;
+}
+
+.avatar-picker__raster {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 8px 20px 24px;
+}
+
+.avatar-picker__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 8px 4px 6px;
+    background: var(--md-sys-color-surface-container, #efefef);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.avatar-picker__option:hover {
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-color: var(--md-sys-color-outline-variant, #ccc);
+}
+
+.avatar-picker__option--aktiv {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container, #dce4ff);
+}
+
+.avatar-picker__bild {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.avatar-picker__name {
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .avatar-picker__raster {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 8px 16px 20px;
+    }
+
+    .avatar-picker__bild {
+        width: 52px;
+        height: 52px;
+    }
+}
+

@@ -1,0 +1,14 @@
+{
+    "de": {
+        "badge": "Hörverstehen",
+        "nochmal_vorlesen": "Nochmal vorlesen",
+        "anweisung_mc": "Welches Wort wurde vorgelesen?",
+        "anweisung_satz": "Baue den gehörten Satz aus den Wörtern zusammen."
+    },
+    "sv": {
+        "badge": "Hörförståelse",
+        "nochmal_vorlesen": "Läs upp igen",
+        "anweisung_mc": "Vilket ord lästes upp?",
+        "anweisung_satz": "Bygg den upplästa meningen av orden."
+    }
+}

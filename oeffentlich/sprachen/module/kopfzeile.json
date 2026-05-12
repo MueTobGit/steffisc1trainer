@@ -1,0 +1,16 @@
+{
+    "de": {
+        "menue_oeffnen": "Menü öffnen",
+        "streak_title": "Streak: {{tage}} Tage",
+        "thema_umschalten": "Dark Mode umschalten",
+        "browser_titel": "{{titel}} — Vokabeltrainer",
+        "dashboard": "Dashboard"
+    },
+    "sv": {
+        "menue_oeffnen": "Öppna meny",
+        "streak_title": "Streak: {{tage}} dagar",
+        "thema_umschalten": "Växla mörkt läge",
+        "browser_titel": "{{titel}} — Glosträning",
+        "dashboard": "Översikt"
+    }
+}

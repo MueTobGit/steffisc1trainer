@@ -1,0 +1,93 @@
+# CSV-Format: Schwedisch-Vokabeltrainer — Import/Export-Spezifikation
+
+## Grundregeln
+- Trennzeichen: Semikolon (;)
+- Kodierung: UTF-8 (mit BOM fuer Excel-Kompatibilitaet)
+- Erste Zeile = Kopfzeile mit Spaltennamen (Pflicht)
+- Spaltenreihenfolge ist beliebig (Zuordnung ueber Kopfzeile)
+- CSV kann Teilmengen enthalten (nicht alle Spalten noetig)
+- CSV kann unsortiert sein (F/S-Zeilen werden per schwedisch-Spalte zugeordnet)
+
+## Zeilentypen (Spalte "typ")
+Jede Datenzeile beginnt mit einem Typ-Wert:
+
+| typ | Bedeutung                              | Pflichtfelder                           |
+|-----|----------------------------------------|-----------------------------------------|
+| V   | Vokabel (Haupteintrag)                 | schwedisch, deutsch, wortart            |
+| F   | Form (gehoert zu einer V-Zeile)        | form_bezeichnung, form_wert             |
+| S   | Satz (gehoert zu einer V-Zeile)        | satz_sv, satz_de, benoetigte_form       |
+
+F- und S-Zeilen werden ihrer V-Zeile ueber die schwedisch-Spalte zugeordnet.
+D.h. eine F-Zeile mit schwedisch=hund gehoert zur V-Zeile mit schwedisch=hund.
+
+## Alle 16 Spalten
+
+| Spalte             | Relevant fuer | Beschreibung / erlaubte Werte                                         |
+|--------------------|---------------|-----------------------------------------------------------------------|
+| typ                | alle          | V, F oder S (Pflicht)                                                  |
+| schwedisch         | V, F, S       | Schwedisches Wort. Bei F/S: Zuordnungsschluessel zur V-Zeile          |
+| deutsch            | V             | Deutsche Uebersetzung                                                  |
+| wortart            | V             | Nomen, Verb, Adjektiv, Adverb, Pronomen, Praeposition, Konjunktion, Interjektion, Phrase |
+| genus              | V (Nomen)     | en oder ett                                                            |
+| verbgruppe         | V (Verb)      | 1, 2a, 2b, 3, 4                                                       |
+| sprachniveau       | V             | A1, A2, B1, B2, C1, C2 (Standard: A1)                                 |
+| kategorie          | V             | Kategoriename — wird automatisch erstellt falls nicht vorhanden        |
+| lektion            | V             | Lektionsname — wird automatisch erstellt falls nicht vorhanden         |
+| form_bezeichnung   | F             | z.B. bestimmt_singular, praesens, komparativ (siehe Tabelle unten)     |
+| form_wert          | F             | Tatsaechliche Wortform, z.B. "huset", "springer"                      |
+| satz_sv            | S             | Schwedischer Beispielsatz (Luecke = ___)                               |
+| satz_de            | S             | Deutsche Uebersetzung des Satzes                                       |
+| benoetigte_form    | S             | Welche Form die Luecke erwartet, z.B. "praesens"                      |
+| ist_privat         | V             | 0 oder 1 (nur bei Disaster-Recovery relevant)                          |
+| besitzer_id        | V             | Numerische User-ID des Eigentuemers (nur bei Disaster-Recovery)        |
+
+## Gueltige form_bezeichnung je Wortart
+
+| Wortart   | Gueltige Bezeichnungen                                                       |
+|-----------|-----------------------------------------------------------------------------|
+| Nomen     | unbestimmt_singular, bestimmt_singular, unbestimmt_plural, bestimmt_plural   |
+| Verb      | infinitiv, praesens, praeteritum, supinum, imperativ, perfekt_partizip       |
+| Adjektiv  | grundform, komparativ, superlativ, bestimmte_form, neutrum_form              |
+
+## Vollstaendiges Beispiel (14 Spalten, ohne ist_privat/besitzer_id)
+
+typ;schwedisch;deutsch;wortart;genus;verbgruppe;sprachniveau;kategorie;lektion;form_bezeichnung;form_wert;satz_sv;satz_de;benoetigte_form
+V;hund;Hund;Nomen;en;;A1;Tiere;Kapitel 1;;;;;
+F;hund;;;;;;;;unbestimmt_singular;en hund;;;
+F;hund;;;;;;;;bestimmt_singular;hunden;;;
+F;hund;;;;;;;;unbestimmt_plural;hundar;;;
+F;hund;;;;;;;;bestimmt_plural;hundarna;;;
+S;hund;;;;;;;;;;Jag har en ___;Ich habe einen Hund.;unbestimmt_singular
+V;tala;sprechen;Verb;;1;A1;;Kapitel 2;;;;;
+F;tala;;;;;;;;infinitiv;tala;;;
+F;tala;;;;;;;;praesens;talar;;;
+F;tala;;;;;;;;praeteritum;talade;;;
+F;tala;;;;;;;;supinum;talat;;;
+F;tala;;;;;;;;imperativ;tala;;;
+S;tala;;;;;;;;;;Hon ___ svenska.;Sie spricht Schwedisch.;praesens
+V;stor;gross;Adjektiv;;;A1;;Kapitel 1;;;;;
+F;stor;;;;;;;;grundform;stor;;;
+F;stor;;;;;;;;komparativ;stoerre;;;
+F;stor;;;;;;;;superlativ;stoerst;;;
+V;aldrig;nie;Adverb;;;A1;Allgemein;Kapitel 1;;;;;
+V;tack;danke;Phrase;;;A1;;Kapitel 1;;;;;
+
+## Export-Format (16 Spalten, mit ist_privat/besitzer_id)
+
+Beim Export mit "Private Vokabeln einschliessen" werden 2 zusaetzliche Spalten angehaengt:
+
+typ;schwedisch;deutsch;wortart;genus;verbgruppe;sprachniveau;kategorie;lektion;form_bezeichnung;form_wert;satz_sv;satz_de;benoetigte_form;ist_privat;besitzer_id
+V;hund;Hund;Nomen;en;;A1;Tiere;Kapitel 1;;;;;;0;
+V;mitt_ord;Mein Wort;Nomen;en;;A1;;;;;;;;1;42
+
+## Wichtige Hinweise
+
+1. Leere Felder: Semikolons muessen trotzdem vorhanden sein (oder die Spalte fehlt komplett in der Kopfzeile)
+2. F/S-Zeilen MUESSEN in der schwedisch-Spalte den gleichen Wert wie ihre V-Zeile haben (Zuordnungsschluessel)
+3. Wortart wird normalisiert: Eingabe "nomen"/"NOMEN"/"Nomen" -> gespeichert als "Nomen"
+4. Sprachniveau wird normalisiert auf Grossbuchstaben (a1 -> A1)
+5. Duplikate werden ueber schwedisch + wortart erkannt
+6. Kategorien und Lektionen werden automatisch erstellt, wenn sie noch nicht existieren
+7. Wenn ist_privat und besitzer_id fehlen, werden Vokabeln als oeffentlich importiert
+8. Bei Saetzen markiert ___ (3 Unterstriche) die Luecke, die der Lernende ausfuellen muss
+9. Schwedische Sonderzeichen (aa=å, ae=ä, oe=ö) koennen entweder als echte UTF-8-Zeichen (å, ä, ö) oder in der Ersatzschreibweise eingegeben werden

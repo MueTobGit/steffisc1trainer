@@ -1,0 +1,336 @@
+/* ============================================================
+   Vokabeltrainer — Anmeldung & Registrierung
+   ============================================================ */
+
+.anmeldung-ansicht {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, #004C7A 100%);
+    padding: 16px;
+}
+
+.anmeldung-container {
+    width: 100%;
+    max-width: 420px;
+    background-color: var(--md-sys-color-surface);
+    border-radius: var(--vt-radius-gross);
+    box-shadow: var(--vt-schatten-3);
+    overflow: hidden;
+}
+
+/* ---- Header ---- */
+.anmeldung__kopf {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    padding: 32px 24px 24px;
+    text-align: center;
+}
+
+.anmeldung__flagge {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.anmeldung__titel {
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.anmeldung__untertitel {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    opacity: 0.85;
+}
+
+/* ---- Tabs (Login / Registrieren) ---- */
+.anmeldung__tabs {
+    display: flex;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.anmeldung__tab {
+    flex: 1;
+    padding: 14px 16px;
+    text-align: center;
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    color: var(--md-sys-color-on-surface-variant);
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: color var(--vt-uebergang);
+}
+
+.anmeldung__tab:hover {
+    color: var(--md-sys-color-on-surface);
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.anmeldung__tab--aktiv {
+    color: var(--md-sys-color-primary);
+}
+
+.anmeldung__tab--aktiv::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background-color: var(--md-sys-color-primary);
+    border-radius: 3px 3px 0 0;
+}
+
+/* ---- Formulare ---- */
+.anmeldung__formular {
+    padding: 24px;
+}
+
+.anmeldung__formular .formular-gruppe {
+    margin-bottom: 20px;
+}
+
+.anmeldung__formular .eingabe {
+    height: 48px;
+}
+
+.anmeldung__submit {
+    width: 100%;
+    height: 48px;
+    margin-top: 8px;
+}
+
+/* ---- Passwort-Anforderungen ---- */
+.passwort-anforderungen {
+    margin-top: 8px;
+    font-size: var(--md-sys-typescale-label-medium-size);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.passwort-anforderung {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.passwort-anforderung .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.passwort-anforderung--erfuellt {
+    color: var(--md-sys-color-tertiary);
+}
+
+.passwort-anforderung--offen {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---- Passwort vergessen ---- */
+.anmeldung__link {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    color: var(--md-sys-color-primary);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+}
+
+.anmeldung__link:hover {
+    text-decoration: underline;
+}
+
+/* ---- E-Mail-Feld (groesser als Standard) ---- */
+.anmeldung__email-feld {
+    height: 52px !important;
+    font-size: 17px !important;
+}
+
+/* ---- Honeypot (absolut unsichtbar, kein Layouteinfluss) ---- */
+.anmeldung__honeypot {
+    position: absolute !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    tab-index: -1 !important;
+}
+
+/* ---- Fehler-Anzeige ---- */
+.anmeldung__fehler {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    border-radius: var(--vt-radius-klein);
+    font-size: var(--md-sys-typescale-body-medium-size);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.anmeldung__fehler.versteckt {
+    display: none;
+}
+
+/* ---- Impressum-Link ---- */
+.anmeldung__fuss {
+    padding: 16px 24px;
+    text-align: center;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.anmeldung__fuss a {
+    font-size: var(--md-sys-typescale-label-medium-size);
+    color: var(--md-sys-color-on-surface-variant);
+    margin: 0 8px;
+}
+
+.anmeldung__fuss a:hover {
+    color: var(--md-sys-color-primary);
+}
+
+/* ---- Passwort-Login-Link (Admin-Fallback) ---- */
+.anmeldung__passwort-link {
+    text-align: center;
+    margin-top: 20px;
+    padding-bottom: 4px;
+}
+
+.anmeldung__passwort-link button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--md-sys-color-outline);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.anmeldung__passwort-link button:hover {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---- Passwort-Ansicht Kopf ---- */
+.anmeldung__passwort-kopf {
+    margin-bottom: 4px;
+}
+
+/* ---- Passwort vergessen Ansicht ---- */
+.passwort-vergessen {
+    padding: 24px;
+}
+
+.passwort-vergessen__beschreibung {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.passwort-vergessen__zurueck {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 16px;
+}
+
+/* ---- Lader im Button ---- */
+.btn-lader {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: drehen 0.6s linear infinite;
+}
+
+.btn--ladend .btn-lader {
+    display: block;
+}
+
+.btn--ladend .btn-text {
+    opacity: 0.7;
+}
+
+@keyframes drehen {
+    to { transform: rotate(360deg); }
+}
+
+/* ---- Bestaetigung nach E-Mail-Versand ---- */
+.anmeldung__bestaetigung {
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.anmeldung__bestaetigung-icon {
+    margin-bottom: 16px;
+}
+
+.anmeldung__bestaetigung-icon .material-symbols-outlined {
+    font-size: 56px;
+    color: var(--md-sys-color-primary);
+}
+
+.anmeldung__bestaetigung-titel {
+    font-size: var(--md-sys-typescale-headline-small-size);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 12px;
+}
+
+.anmeldung__bestaetigung-text {
+    font-size: var(--md-sys-typescale-body-large-size);
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.anmeldung__bestaetigung-text strong {
+    color: var(--md-sys-color-on-surface);
+}
+
+.anmeldung__bestaetigung-hinweis {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.anmeldung__bestaetigung-tipps {
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--vt-radius-klein);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+    .anmeldung-ansicht {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .anmeldung-container {
+        max-width: none;
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    .anmeldung__kopf {
+        padding: 48px 24px 24px;
+    }
+}

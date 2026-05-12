@@ -1,0 +1,16 @@
+# API — CORS-Header + Authorization-Durchreichung fuer PHP-FPM
+
+# Authorization-Header an PHP weiterleiten (wird bei PHP-FPM sonst verschluckt)
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# OPTIONS-Preflight sofort beantworten
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# CORS-Header setzen
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>

@@ -1,0 +1,124 @@
+typ;schwedisch;deutsch;wortart;genus;verbgruppe;sprachniveau;kategorie;lektion;form_bezeichnung;form_wert;satz_sv;satz_de;benoetigte_form
+V;hund;Hund;Nomen;en;;A1;Tiere;
+F;;;;;;;;;unbestimmt_singular;en hund
+F;;;;;;;;;bestimmt_singular;hunden
+F;;;;;;;;;unbestimmt_plural;hundar
+F;;;;;;;;;bestimmt_plural;hundarna
+S;;;;;;;;;;;Jag har en ___;Ich habe einen Hund.;unbestimmt_singular
+V;katt;Katze;Nomen;en;;A1;Tiere;
+F;;;;;;;;;unbestimmt_singular;en katt
+F;;;;;;;;;bestimmt_singular;katten
+F;;;;;;;;;unbestimmt_plural;katter
+F;;;;;;;;;bestimmt_plural;katterna
+S;;;;;;;;;;;Min ___ heter Lisa.;Meine Katze heisst Lisa.;unbestimmt_singular
+V;hus;Haus;Nomen;ett;;A1;Wohnen;
+F;;;;;;;;;unbestimmt_singular;ett hus
+F;;;;;;;;;bestimmt_singular;huset
+F;;;;;;;;;unbestimmt_plural;hus
+F;;;;;;;;;bestimmt_plural;husen
+S;;;;;;;;;;;Vi bor i ett stort ___;Wir wohnen in einem grossen Haus.;unbestimmt_singular
+V;bok;Buch;Nomen;en;;A1;Schule;
+F;;;;;;;;;unbestimmt_singular;en bok
+F;;;;;;;;;bestimmt_singular;boken
+F;;;;;;;;;unbestimmt_plural;boecker
+F;;;;;;;;;bestimmt_plural;boeckerna
+V;skola;Schule;Nomen;en;;A1;Schule;
+F;;;;;;;;;unbestimmt_singular;en skola
+F;;;;;;;;;bestimmt_singular;skolan
+F;;;;;;;;;unbestimmt_plural;skolor
+F;;;;;;;;;bestimmt_plural;skolorna
+V;barn;Kind;Nomen;ett;;A1;Familie;
+F;;;;;;;;;unbestimmt_singular;ett barn
+F;;;;;;;;;bestimmt_singular;barnet
+F;;;;;;;;;unbestimmt_plural;barn
+F;;;;;;;;;bestimmt_plural;barnen
+V;vatten;Wasser;Nomen;ett;;A1;Essen;
+F;;;;;;;;;unbestimmt_singular;ett vatten
+F;;;;;;;;;bestimmt_singular;vattnet
+V;bil;Auto;Nomen;en;;A1;Verkehr;
+F;;;;;;;;;unbestimmt_singular;en bil
+F;;;;;;;;;bestimmt_singular;bilen
+F;;;;;;;;;unbestimmt_plural;bilar
+F;;;;;;;;;bestimmt_plural;bilarna
+V;vän;Freund;Nomen;en;;A1;Familie;
+F;;;;;;;;;unbestimmt_singular;en vän
+F;;;;;;;;;bestimmt_singular;vännen
+F;;;;;;;;;unbestimmt_plural;vänner
+F;;;;;;;;;bestimmt_plural;vännerna
+V;dag;Tag;Nomen;en;;A1;Zeit;
+F;;;;;;;;;unbestimmt_singular;en dag
+F;;;;;;;;;bestimmt_singular;dagen
+F;;;;;;;;;unbestimmt_plural;dagar
+F;;;;;;;;;bestimmt_plural;dagarna
+S;;;;;;;;;;;Det aer en fin ___;Es ist ein schoener Tag.;unbestimmt_singular
+V;tala;sprechen;Verb;;1;A1;;
+F;;;;;;;;;infinitiv;tala
+F;;;;;;;;;praesens;talar
+F;;;;;;;;;praeteritum;talade
+F;;;;;;;;;supinum;talat
+F;;;;;;;;;imperativ;tala
+S;;;;;;;;;;;Hon ___ svenska.;Sie spricht Schwedisch.;praesens
+V;arbeta;arbeiten;Verb;;1;A1;;
+F;;;;;;;;;infinitiv;arbeta
+F;;;;;;;;;praesens;arbetar
+F;;;;;;;;;praeteritum;arbetade
+F;;;;;;;;;supinum;arbetat
+F;;;;;;;;;imperativ;arbeta
+S;;;;;;;;;;;Jag ___ paa kontoret.;Ich arbeite im Buero.;praesens
+V;laesa;lesen;Verb;;2b;A1;;
+F;;;;;;;;;infinitiv;laesa
+F;;;;;;;;;praesens;laeser
+F;;;;;;;;;praeteritum;laeste
+F;;;;;;;;;supinum;laest
+F;;;;;;;;;imperativ;laes
+V;skriva;schreiben;Verb;;4;A1;;
+F;;;;;;;;;infinitiv;skriva
+F;;;;;;;;;praesens;skriver
+F;;;;;;;;;praeteritum;skrev
+F;;;;;;;;;supinum;skrivit
+F;;;;;;;;;imperativ;skriv
+S;;;;;;;;;;;Han ___ ett brev.;Er schreibt einen Brief.;praesens
+V;aeta;essen;Verb;;4;A1;Essen;
+F;;;;;;;;;infinitiv;aeta
+F;;;;;;;;;praesens;aeter
+F;;;;;;;;;praeteritum;aat
+F;;;;;;;;;supinum;aetit
+F;;;;;;;;;imperativ;aet
+V;dricka;trinken;Verb;;4;A1;Essen;
+F;;;;;;;;;infinitiv;dricka
+F;;;;;;;;;praesens;dricker
+F;;;;;;;;;praeteritum;drack
+F;;;;;;;;;supinum;druckit
+F;;;;;;;;;imperativ;drick
+V;gaa;gehen;Verb;;4;A1;Verkehr;
+F;;;;;;;;;infinitiv;gaa
+F;;;;;;;;;praesens;gaar
+F;;;;;;;;;praeteritum;gick
+F;;;;;;;;;supinum;gaatt
+F;;;;;;;;;imperativ;gaa
+V;komma;kommen;Verb;;4;A1;;
+F;;;;;;;;;infinitiv;komma
+F;;;;;;;;;praesens;kommer
+F;;;;;;;;;praeteritum;kom
+F;;;;;;;;;supinum;kommit
+F;;;;;;;;;imperativ;kom
+S;;;;;;;;;;;Kan du ___ imorgon?;Kannst du morgen kommen?;infinitiv
+V;stor;gross;Adjektiv;;;A1;;
+F;;;;;;;;;grundform;stor
+F;;;;;;;;;komparativ;stoerre
+F;;;;;;;;;superlativ;stoerst
+V;liten;klein;Adjektiv;;;A1;;
+F;;;;;;;;;grundform;liten
+F;;;;;;;;;komparativ;mindre
+F;;;;;;;;;superlativ;minst
+V;bra;gut;Adjektiv;;;A1;;
+F;;;;;;;;;grundform;bra
+F;;;;;;;;;komparativ;baettre
+F;;;;;;;;;superlativ;baest
+V;ny;neu;Adjektiv;;;A1;;
+F;;;;;;;;;grundform;ny
+F;;;;;;;;;komparativ;nyare
+F;;;;;;;;;superlativ;nyast
+V;aldrig;nie;Adverb;;;A1;;
+V;alltid;immer;Adverb;;;A1;;
+V;tack;danke;Phrase;;;A1;;

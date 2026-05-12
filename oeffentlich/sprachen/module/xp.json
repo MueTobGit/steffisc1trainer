@@ -1,0 +1,16 @@
+{
+    "de": {
+        "stern_bronze": "Bronze-Stern",
+        "stern_silber": "Silber-Stern",
+        "stern_gold": "Gold-Stern",
+        "naechster_stern": "Nächster {{stern}}",
+        "noch_xp": "Noch {{xp}} XP"
+    },
+    "sv": {
+        "stern_bronze": "Bronsstjärna",
+        "stern_silber": "Silverstjärna",
+        "stern_gold": "Guldstjärna",
+        "naechster_stern": "Nästa {{stern}}",
+        "noch_xp": "{{xp}} XP kvar"
+    }
+}

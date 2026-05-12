@@ -1,0 +1,12 @@
+{
+    "de": {
+        "zurueck": "Zurück zur Anmeldung",
+        "titel": "Impressum",
+        "datenschutz_titel": "Datenschutzerklärung"
+    },
+    "sv": {
+        "zurueck": "Tillbaka till inloggning",
+        "titel": "Impressum",
+        "datenschutz_titel": "Integritetspolicy"
+    }
+}

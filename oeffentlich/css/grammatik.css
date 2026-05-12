@@ -1,0 +1,1374 @@
+/* ============================================================
+   Grammatik — Modul-Styles
+   ============================================================ */
+
+/* Wrapper */
+.grammatik {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px 16px 80px;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+
+.grammatik-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0 20px;
+}
+
+.grammatik-header-icon {
+    font-size: 2.5rem;
+    color: var(--md-sys-color-primary);
+    flex-shrink: 0;
+}
+
+.grammatik-titel {
+    margin: 0 0 4px;
+    font-size: var(--md-sys-typescale-headline-small-size, 1.5rem);
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-untertitel {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ─── Tab-Navigation (neu) ───────────────────────────────── */
+
+.grammatik-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 2px solid var(--md-sys-color-outline-variant);
+    padding-bottom: 0;
+}
+
+.grammatik-tabs::-webkit-scrollbar { display: none; }
+
+.grammatik-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+}
+
+.grammatik-tab .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.grammatik-tab:hover {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-tab.aktiv {
+    color: var(--md-sys-color-primary);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--md-sys-color-primary-container) 40%, transparent);
+}
+
+.grammatik-tab.aktiv::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0; right: 0;
+    height: 2px;
+    background: var(--md-sys-color-primary);
+    border-radius: 2px 2px 0 0;
+}
+
+/* ─── Inhalts-Container ──────────────────────────────────── */
+
+.grammatik-inhalt {
+    min-height: 120px;
+}
+
+/* ─── Sektions-Überschrift ───────────────────────────────── */
+
+.grammatik-sektion {
+    margin-bottom: 8px;
+}
+
+.grammatik-sektion-titel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    margin: 0 0 14px;
+}
+
+.grammatik-sektion-titel .material-symbols-outlined {
+    font-size: 1.3rem;
+    color: var(--md-sys-color-primary);
+}
+
+.grammatik-sektion-info {
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant);
+    margin: -8px 0 14px;
+}
+
+/* ─── Unter-Sektion (Verbgruppen-Accordion) ──────────────── */
+
+.grammatik-untersek {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.grammatik-untersek-kopf {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--md-sys-color-surface-container-low);
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--md-sys-color-on-surface);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+
+.grammatik-untersek-kopf:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-untersek-kopf .material-symbols-outlined:first-child {
+    font-size: 1.2rem;
+    color: var(--md-sys-color-primary);
+}
+
+.grammatik-untersek-titel {
+    flex: 1;
+}
+
+.grammatik-untersek-pfeil {
+    font-size: 1.2rem !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+    transition: transform 0.2s;
+}
+
+.grammatik-untersek-body {
+    padding: 12px 14px 14px;
+}
+
+/* ─── Tabelle (Zahlen + Verben) ──────────────────────────── */
+
+.grammatik-tabelle-wrapper {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    margin-bottom: 4px;
+}
+
+.grammatik-tabelle {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.grammatik-tabelle thead th {
+    padding: 10px 14px;
+    text-align: left;
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.grammatik-tabelle tbody tr:hover td {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-tabelle tbody tr:not(:last-child) td {
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.grammatik-tabelle td {
+    padding: 9px 14px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-zahl-num {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--md-sys-color-primary);
+    width: 80px;
+}
+
+.grammatik-zahl-text {
+    font-size: 1rem;
+}
+
+/* Verb-Tabelle: Deutsch-Spalte */
+.grammatik-tabelle--verben .grammatik-verb-deutsch {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.85rem;
+}
+
+/* ─── TTS-Button ─────────────────────────────────────────── */
+
+.grammatik-tts-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.grammatik-tts-btn:hover {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.grammatik-tts-btn .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+/* ─── Uhrzeiten-Liste ────────────────────────────────────── */
+
+.grammatik-uhrzeit-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-radius: 10px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    overflow: hidden;
+}
+
+.grammatik-uhrzeit-zeile {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--md-sys-color-surface);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    transition: background 0.12s;
+}
+
+.grammatik-uhrzeit-zeile:last-child {
+    border-bottom: none;
+}
+
+.grammatik-uhrzeit-zeile:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-uhrzeit-sv {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-uhrzeit-de {
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ─── Lade-Indikator klein ───────────────────────────────── */
+
+.grammatik-lade--klein {
+    padding: 16px;
+}
+
+.grammatik-lade--klein .material-symbols-outlined {
+    font-size: 1.5rem;
+}
+
+/* ─── Karte: Regelüberschrift ────────────────────────────── */
+
+.grammatik-karte-regel {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* ─── Filter-Chips (alt – behalten für Rückwärtskompatibilität) ─ */
+
+.grammatik-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.grammatik-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.grammatik-chip .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.grammatik-chip:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-chip.aktiv {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-color: var(--md-sys-color-primary);
+    font-weight: 600;
+}
+
+/* ─── Gruppen-Header ─────────────────────────────────────── */
+
+.grammatik-gruppe-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.grammatik-gruppe-header .material-symbols-outlined {
+    font-size: 1.2rem;
+    color: var(--md-sys-color-primary);
+}
+
+.grammatik-gruppe-anzahl {
+    margin-left: auto;
+    font-size: 0.75rem;
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+/* ─── Karten ─────────────────────────────────────────────── */
+
+.grammatik-karte {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+    background: var(--md-sys-color-surface);
+}
+
+.grammatik-karte.offen {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: var(--md-sys-color-primary);
+}
+
+.grammatik-karte.fokussiert {
+    box-shadow: 0 0 0 3px var(--md-sys-color-primary);
+    animation: grammatik-puls 0.4s ease-out;
+}
+
+@keyframes grammatik-puls {
+    0%   { box-shadow: 0 0 0 0 var(--md-sys-color-primary); }
+    100% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* Karte: Kopfzeile (Button) */
+.grammatik-karte-kopf {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 12px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-karte-kopf:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-karte[data-wortart="nomen"] .grammatik-karte-kopf:hover,
+.grammatik-karte[data-wortart="nomen"].offen .grammatik-karte-kopf {
+    background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 30%, transparent);
+}
+
+.grammatik-karte[data-wortart="verb"].offen .grammatik-karte-kopf {
+    background: color-mix(in srgb, var(--md-sys-color-primary-container) 30%, transparent);
+}
+
+.grammatik-karte[data-wortart="adjektiv"].offen .grammatik-karte-kopf {
+    background: color-mix(in srgb, var(--md-sys-color-secondary-container) 30%, transparent);
+}
+
+.grammatik-karte-titel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.grammatik-karte-gruppe {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.grammatik-karte-sep {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.grammatik-karte-form {
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.grammatik-karte-pfeil {
+    flex-shrink: 0;
+    font-size: 1.4rem;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: transform 0.2s;
+}
+
+.grammatik-karte.offen .grammatik-karte-pfeil {
+    transform: rotate(180deg);
+}
+
+/* Karte: Inhalt */
+.grammatik-karte-inhalt {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.grammatik-regeltext {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-regeltext h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 12px 0 8px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-regeltext p {
+    margin: 6px 0;
+}
+
+.grammatik-regeltext ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.grammatik-regeltext li {
+    margin: 4px 0;
+}
+
+.grammatik-regeltext strong {
+    color: var(--md-sys-color-primary);
+}
+
+/* ─── Admin-Aktionen ─────────────────────────────────────── */
+
+.grammatik-karte-aktionen {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.grammatik-aktion-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.grammatik-aktion-btn .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.grammatik-aktion-btn:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.grammatik-aktion-btn--loeschen:hover {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    border-color: var(--md-sys-color-error);
+}
+
+/* ─── FAB (Admin: Neue Regel) ────────────────────────────── */
+
+.grammatik-fab {
+    position: fixed;
+    bottom: 88px;   /* über der Unterleiste */
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.grammatik-fab:hover {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    transform: scale(1.05);
+}
+
+.grammatik-fab .material-symbols-outlined {
+    font-size: 1.5rem;
+}
+
+/* ─── Dialog ─────────────────────────────────────────────── */
+
+.grammatik-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.grammatik-dialog {
+    background: var(--md-sys-color-surface);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.grammatik-dialog-titel {
+    margin: 0 0 20px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.grammatik-dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.grammatik-dialog-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+.grammatik-dialog-form input,
+.grammatik-dialog-form select,
+.grammatik-dialog-form textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface);
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.grammatik-dialog-form input:focus,
+.grammatik-dialog-form select:focus,
+.grammatik-dialog-form textarea:focus {
+    outline: 2px solid var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+.grammatik-dialog-form textarea {
+    resize: vertical;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+.grammatik-dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* ─── Zustände ───────────────────────────────────────────── */
+
+.grammatik-lade {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.grammatik-lade .material-symbols-outlined {
+    font-size: 3rem;
+    animation: grammatik-drehen 1s linear infinite;
+}
+
+@keyframes grammatik-drehen {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.grammatik-fehler,
+.grammatik-leer {
+    text-align: center;
+    padding: 32px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.grammatik-fehler {
+    color: var(--md-sys-color-error);
+}
+
+/* ─── Zurück-Button (bei Deeplink aus Training) ──────────── */
+
+.grammatik-zurueck-btn {
+    position: sticky;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 16px auto 0;
+    padding: 10px 20px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    transition: opacity var(--vt-uebergang), transform var(--vt-uebergang);
+    z-index: 10;
+}
+
+.grammatik-zurueck-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.grammatik-zurueck-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .grammatik {
+        padding: 12px 12px 80px;
+    }
+
+    .grammatik-header {
+        padding: 16px 0 14px;
+    }
+
+    .grammatik-fab {
+        bottom: 72px;
+        right: 16px;
+    }
+
+    .grammatik-dialog {
+        padding: 16px;
+    }
+}
+
+/* ─── Form-Chips (Karten-Kopf) ──────────────────────────── */
+
+.grammatik-karte-formen {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.grammatik-form-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ─── Admin-Dialog: Formen-Fieldset ─────────────────────── */
+
+.grammatik-dialog-formen-fieldset {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 0;
+}
+
+.grammatik-dialog-formen-fieldset legend {
+    padding: 0 6px;
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+#grammatik-formen-checkboxen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 8px;
+}
+
+.grammatik-form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.grammatik-form-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--md-sys-color-primary);
+    cursor: pointer;
+}
+
+.grammatik-formen-leer {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* ─── Kein-Eintrag-Banner ────────────────────────────────── */
+
+.grammatik-kein-eintrag-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-radius: 12px;
+    font-size: 0.95rem;
+}
+
+.grammatik-kein-eintrag-banner .material-symbols-outlined {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+}
+
+/* ─── Grammar-Button ohne Regel (gedimmt) ────────────────── */
+
+.grammatik-icon-btn--kein-eintrag {
+    opacity: 0.45;
+}
+
+/* ─── Training: Grammatik-Popup (Bottom-Sheet / zentriert) ── */
+
+.grammatik-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;      /* Mobile: Blatt von unten */
+    justify-content: center;
+    z-index: 2000;
+    animation: grammatik-popup-einblenden 0.18s ease-out;
+}
+
+@keyframes grammatik-popup-einblenden {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.grammatik-popup {
+    position: relative;
+    background: var(--md-sys-color-surface);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 48px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 72vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    animation: grammatik-popup-hochschieben 0.22s ease-out;
+}
+
+@keyframes grammatik-popup-hochschieben {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Desktop: zentriertes Modal */
+@media (min-width: 600px) {
+    .grammatik-popup-overlay {
+        align-items: center;
+        padding: 16px;
+    }
+
+    .grammatik-popup {
+        border-radius: 20px;
+        max-height: 80vh;
+        padding: 24px 24px 32px;
+    }
+}
+
+/* Schließen-Button (X) oben rechts */
+.grammatik-popup-schliessen {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--md-sys-color-surface-variant);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.grammatik-popup-schliessen:hover {
+    background: var(--md-sys-color-outline-variant);
+}
+
+.grammatik-popup-schliessen .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+/* Inhalt */
+.grammatik-popup-inhalt {
+    margin-top: 4px;
+}
+
+.grammatik-popup-titel {
+    margin: 0 40px 10px 0;     /* Platz für Schließen-Button */
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+}
+
+.grammatik-popup-formen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+/* Lade-Indikator */
+.grammatik-popup-laden {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.grammatik-popup-laden .material-symbols-outlined {
+    font-size: 2rem;
+    animation: grammatik-drehen 1s linear infinite;
+}
+
+/* Fehler / Kein Eintrag */
+.grammatik-popup-fehler,
+.grammatik-popup-kein-eintrag {
+    text-align: center;
+    padding: 24px 16px;
+}
+
+.grammatik-popup-fehler {
+    color: var(--md-sys-color-error);
+    font-size: 0.9rem;
+}
+
+.grammatik-popup-kein-eintrag {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.95rem;
+}
+
+.grammatik-popup-kein-eintrag .material-symbols-outlined {
+    font-size: 2.5rem;
+    color: var(--md-sys-color-secondary);
+}
+
+.grammatik-popup-kein-eintrag p {
+    margin: 0;
+}
+
+/* ─── Training / Schnell-Üben: Grammatik-Aufgaben ────────── */
+
+/* Chip-Trenner zwischen normalen Chips und Grammatik-Chips */
+.training__chip-trenner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--md-sys-color-on-surface-variant);
+    margin: 6px 0 2px;
+}
+
+.training__chip-trenner::before,
+.training__chip-trenner::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--md-sys-color-outline-variant);
+}
+
+/* Grammatik-Aufgabe: Hauptcontainer */
+.grammatik-aufgabe {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 16px;
+    background: var(--md-sys-color-surface);
+    border-radius: 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Header: Badge + Niveau */
+.grammatik-aufgabe__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.grammatik-aufgabe__badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.grammatik-aufgabe__niveau {
+    font-size: 0.75rem;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Verb (groß) */
+.grammatik-aufgabe__verb {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface);
+    text-align: center;
+}
+
+/* Stamm-Bindestrich beim Endungs-Matching (kombiner–) */
+.grammatik-aufgabe__stamm-strich {
+    color: var(--md-sys-color-primary);
+    font-weight: 400;
+    opacity: 0.7;
+    margin-left: 1px;
+}
+
+/* Deutsche Übersetzung */
+.grammatik-aufgabe__deutsch {
+    font-size: 0.95rem;
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: center;
+}
+
+/* Kontext-Hinweis (Partikelverb) */
+.grammatik-aufgabe__kontext {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--md-sys-color-secondary);
+    font-style: italic;
+}
+
+/* Frage-Label */
+.grammatik-aufgabe__frage {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    text-align: center;
+}
+
+/* Button-Grid (Optionen) */
+.grammatik-aufgabe__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Einzelner Option-Button */
+.grammatik-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 2px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    font-family: inherit;
+}
+
+.grammatik-btn:hover:not(:disabled) {
+    background: var(--md-sys-color-primary-container);
+    border-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.grammatik-btn:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.grammatik-btn--richtig {
+    background: color-mix(in srgb, #4caf50 20%, transparent) !important;
+    border-color: #4caf50 !important;
+    color: #1b5e20 !important;
+    opacity: 1 !important;
+}
+
+.grammatik-btn--falsch {
+    background: color-mix(in srgb, #f44336 20%, transparent) !important;
+    border-color: #f44336 !important;
+    color: #b71c1c !important;
+    opacity: 1 !important;
+}
+
+/* Feedback-Bereich */
+.grammatik-aufgabe__feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--md-sys-color-surface-variant);
+}
+
+/* Falsch-Feedback Text */
+.grammatik-feedback--falsch {
+    color: var(--md-sys-color-error);
+    font-size: 0.9rem;
+}
+
+/* Richtig-Feedback Text */
+.grammatik-feedback--richtig {
+    color: var(--md-sys-color-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Formen-Tabelle (starkes_verb) */
+.grammatik-formen-tabelle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+}
+
+.grammatik-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.875rem;
+}
+
+.grammatik-form span {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.75rem;
+}
+
+.grammatik-form strong {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 600;
+}
+
+/* Grammatikregel-Link */
+.grammatik-aufgabe__regel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: none;
+    color: var(--md-sys-color-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: center;
+    transition: background 0.15s;
+}
+
+.grammatik-aufgabe__regel-link:hover {
+    background: var(--md-sys-color-primary-container);
+}
+
+.grammatik-aufgabe__regel-link .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+/* Weiter-Button */
+.grammatik-aufgabe__weiter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 24px;
+    border-radius: 24px;
+    border: none;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: stretch;
+    transition: opacity 0.15s;
+}
+
+.grammatik-aufgabe__weiter:hover {
+    opacity: 0.9;
+}
+
+.grammatik-aufgabe__weiter .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+/* Prüfen-Button (Genus-Block) */
+.grammatik-aufgabe__pruefen {
+    align-self: center;
+}
+
+/* ─── Genus-Block: Wort-Karten ───────────────────────────── */
+
+.grammatik-woerter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.grammatik-wort-karte {
+    padding: 18px 12px;
+    border-radius: 12px;
+    border: 2px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    font-family: inherit;
+}
+
+.grammatik-wort-karte:hover:not(:disabled) {
+    transform: scale(1.03);
+    border-color: var(--md-sys-color-primary);
+}
+
+.grammatik-wort-karte:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.grammatik-wort-karte--markiert {
+    background: var(--md-sys-color-primary-container);
+    border-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.grammatik-wort-karte--richtig {
+    background: color-mix(in srgb, #4caf50 20%, transparent) !important;
+    border-color: #4caf50 !important;
+    color: #1b5e20 !important;
+}
+
+.grammatik-wort-karte--falsch {
+    background: color-mix(in srgb, #f44336 20%, transparent) !important;
+    border-color: #f44336 !important;
+    color: #b71c1c !important;
+}
+
+.grammatik-wort-karte:disabled {
+    cursor: default;
+}
+
+/* Dark-mode adjustments */
+[data-thema="dunkel"] .grammatik-btn--richtig {
+    background: color-mix(in srgb, #4caf50 25%, transparent) !important;
+    color: #a5d6a7 !important;
+}
+
+[data-thema="dunkel"] .grammatik-btn--falsch {
+    background: color-mix(in srgb, #f44336 25%, transparent) !important;
+    color: #ef9a9a !important;
+}
+
+[data-thema="dunkel"] .grammatik-wort-karte--richtig {
+    background: color-mix(in srgb, #4caf50 25%, transparent) !important;
+    color: #a5d6a7 !important;
+}
+
+[data-thema="dunkel"] .grammatik-wort-karte--falsch {
+    background: color-mix(in srgb, #f44336 25%, transparent) !important;
+    color: #ef9a9a !important;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .grammatik-aufgabe__verb {
+        font-size: 1.5rem;
+    }
+
+    .grammatik-btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .grammatik-woerter-grid {
+        gap: 8px;
+    }
+
+    .grammatik-wort-karte {
+        padding: 14px 8px;
+        font-size: 1rem;
+    }
+
+    .grammatik-tab {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+
+    .grammatik-tab .material-symbols-outlined {
+        font-size: 1rem;
+    }
+
+    .grammatik-uhrzeit-zeile {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+    }
+
+    .grammatik-uhrzeit-de {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .grammatik-uhrzeit-zeile .grammatik-tts-btn {
+        grid-column: 2;
+        grid-row: 1 / 3;
+    }
+}
+
+/* ─── Präpositions-Aufgaben ──────────────────────────────── */
+
+.praep-satz {
+    font-size: 1.15rem;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-surface);
+    padding: 4px 0;
+}
+
+.praep-luecke {
+    display: inline-block;
+    min-width: 48px;
+    border-bottom: 2px solid var(--md-sys-color-primary);
+    color: var(--md-sys-color-primary);
+    font-weight: 700;
+    margin: 0 4px;
+    text-align: center;
+}
+
+.praep-loesung {
+    color: var(--md-sys-color-primary);
+    font-weight: 700;
+    border-bottom: 2px solid var(--md-sys-color-primary);
+    padding-bottom: 1px;
+}
+
+.grammatik-aufgabe__merksatz {
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+    padding-top: 4px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin-top: 4px;
+}
+

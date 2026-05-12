@@ -1,0 +1,18 @@
+{
+    "de": {
+        "punkte": "Punkte",
+        "name": "Name",
+        "keine_teilnehmer": "Noch keine Teilnehmer",
+        "unbekannt": "Unbekannt",
+        "du": "Du",
+        "liga_sieger": "Früherer Liga-Sieger"
+    },
+    "sv": {
+        "punkte": "Poäng",
+        "name": "Namn",
+        "keine_teilnehmer": "Inga deltagare ännu",
+        "unbekannt": "Okänd",
+        "du": "Du",
+        "liga_sieger": "Tidigare ligavinnare"
+    }
+}

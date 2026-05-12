@@ -1,0 +1,10 @@
+{
+    "de": {
+        "badge": "Zuordnung",
+        "zaehler": "{{aktuell}} / {{gesamt}} Paare"
+    },
+    "sv": {
+        "badge": "Matchning",
+        "zaehler": "{{aktuell}} / {{gesamt}} par"
+    }
+}

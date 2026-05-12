@@ -1,0 +1,34 @@
+{
+    "de": {
+        "neue_titel": "Neue Belohnung!",
+        "neue_untertitel": "Du kannst dir eine neue Belohnung verdienen",
+        "bedingungen_titel": "Dafür musst du Folgendes erledigen:",
+        "bed_streak": "Streak: {{tage}} Tage",
+        "bed_streak_relativ": "Streak +{{tage}} Tage seit Start",
+        "bed_vokabeln": "Vokabeln sicher gelernt: {{anzahl}}",
+        "bed_vokabeln_relativ": "Vokabeln gelernt +{{anzahl}} seit Start",
+        "bed_geuebt": "Vokabeln geübt +{{anzahl}} seit Start",
+        "los_gehts": "Los geht’s!",
+        "leiter_titel": "Gruppenbelohnung: Fortschritt!",
+        "leiter_titel_alle": "Gruppenbelohnung erreicht!",
+        "leiter_fortschritt": "{{aktuell}} von {{gesamt}} Mitgliedern haben «{{titel}}» freigeschaltet.",
+        "leiter_fortschritt_alle": "Alle {{gesamt}} Mitglieder haben «{{titel}}» erreicht!",
+        "leiter_btn": "Super!"
+    },
+    "sv": {
+        "neue_titel": "Ny belöning!",
+        "neue_untertitel": "Du kan tjäna en ny belöning",
+        "bedingungen_titel": "För detta måste du göra följande:",
+        "bed_streak": "Streak: {{tage}} dagar",
+        "bed_streak_relativ": "Streak +{{tage}} dagar sedan start",
+        "bed_vokabeln": "Glosor säkert inlärda: {{anzahl}}",
+        "bed_vokabeln_relativ": "Glosor inlärda +{{anzahl}} sedan start",
+        "bed_geuebt": "Glosor övade +{{anzahl}} sedan start",
+        "los_gehts": "Nu kör vi!",
+        "leiter_titel": "Gruppbelöning: Framsteg!",
+        "leiter_titel_alle": "Gruppbelöning uppnådd!",
+        "leiter_fortschritt": "{{aktuell}} av {{gesamt}} medlemmar har låst upp «{{titel}}».",
+        "leiter_fortschritt_alle": "Alla {{gesamt}} medlemmar har uppnått «{{titel}}»!",
+        "leiter_btn": "Toppen!"
+    }
+}

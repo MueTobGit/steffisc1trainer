@@ -1,0 +1,1176 @@
+/* ============================================
+ * Gamification CSS
+ *
+ * Styles fuer Phase 6: Streak-Anzeige, XP-Leiste,
+ * Statistik, Belohnungen, Fortschritt.
+ * ============================================ */
+
+/* ============================================
+ * 1. Streak-Anzeige Komponente
+ * ============================================ */
+
+.streak-anzeige {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.streak-anzeige__icon {
+    color: var(--vt-farbe-streak, #FF6D00);
+    transition: color 0.3s;
+}
+
+.streak-anzeige__wert {
+    font-weight: 600;
+    line-height: 1;
+}
+
+.streak-anzeige__label {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Groessen */
+.streak-anzeige--klein .streak-anzeige__icon { font-size: 20px; }
+.streak-anzeige--klein .streak-anzeige__wert { font-size: 16px; }
+.streak-anzeige--klein .streak-anzeige__label { font-size: var(--md-sys-typescale-label-small-size, 11px); }
+
+.streak-anzeige--mittel .streak-anzeige__icon { font-size: 28px; }
+.streak-anzeige--mittel .streak-anzeige__wert { font-size: 22px; }
+.streak-anzeige--mittel .streak-anzeige__label { font-size: var(--md-sys-typescale-label-medium-size, 12px); }
+
+.streak-anzeige--gross .streak-anzeige__icon { font-size: 40px; }
+.streak-anzeige--gross .streak-anzeige__wert { font-size: 32px; }
+.streak-anzeige--gross .streak-anzeige__label { font-size: var(--md-sys-typescale-body-medium-size, 14px); }
+
+/* Inaktiv (Streak = 0) */
+.streak-anzeige--inaktiv .streak-anzeige__icon {
+    color: var(--md-sys-color-outline);
+    opacity: 0.5;
+}
+
+.streak-anzeige--inaktiv .streak-anzeige__wert {
+    color: var(--md-sys-color-outline);
+}
+
+/* Animiert (Flammen-Flackern) */
+.streak-anzeige--animiert .streak-anzeige__icon {
+    animation: flamme-flackern 1.5s ease-in-out infinite;
+}
+
+
+/* ============================================
+ * 2. XP-Leiste Komponente
+ * ============================================ */
+
+.xp-leiste {
+    width: 100%;
+}
+
+.xp-leiste__kopf {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.xp-leiste__label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+.xp-leiste__werte {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+}
+
+.xp-leiste__balken {
+    height: 10px;
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.xp-leiste__fuellung {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+}
+
+.xp-leiste__fuss {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.xp-leiste__prozent {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.xp-leiste__fehlend {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Kompakt-Variante */
+.xp-leiste--kompakt .xp-leiste__balken {
+    height: 6px;
+}
+
+
+/* ============================================
+ * 3. Statistik Modul
+ * ============================================ */
+
+.statistik {
+    max-width: 900px;
+}
+
+.statistik__kopf {
+    margin-bottom: 24px;
+}
+
+.statistik__kopf h2 {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+}
+
+.statistik__uebersicht {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.statistik__stat-karte {
+    text-align: center;
+    padding: 16px 12px;
+}
+
+.statistik__stat-karte--klickbar {
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.statistik__stat-karte--klickbar:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--md-sys-elevation-2, 0 2px 6px rgba(0,0,0,0.15));
+}
+
+.statistik__stat-karte--klickbar:active {
+    transform: translateY(0);
+}
+
+.fortschritt__detail-sektion {
+    margin-top: 12px;
+    margin-bottom: 16px;
+}
+
+.fortschritt__statistik-kacheln {
+    margin-bottom: 0;
+}
+
+.statistik__stat-icon {
+    margin-bottom: 8px;
+}
+
+.statistik__stat-icon .material-symbols-outlined {
+    font-size: 28px;
+}
+
+.statistik__stat-wert {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.statistik__stat-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 2px;
+}
+
+.statistik__xp-bereich {
+    margin-bottom: 24px;
+}
+
+.statistik__trainings {
+    margin-bottom: 24px;
+}
+
+.statistik__trainings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    text-align: center;
+}
+
+.statistik__trainings-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statistik__trainings-wert {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.statistik__trainings-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+
+/* ============================================
+ * 4. Statistik — Aktivitaeten
+ * ============================================ */
+
+.statistik__aktivitaeten {
+    margin-bottom: 24px;
+}
+
+.statistik__aktivitaet {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #ccc);
+}
+
+.statistik__aktivitaet:last-child {
+    border-bottom: none;
+}
+
+.statistik__aktivitaet-icon {
+    font-size: 20px;
+    color: var(--md-sys-color-primary);
+    flex-shrink: 0;
+}
+
+.statistik__aktivitaet-inhalt {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.statistik__aktivitaet-text {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statistik__aktivitaet-zeit {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 2px;
+}
+
+
+/* ============================================
+ * 5. Belohnungen Modul
+ * ============================================ */
+
+.belohnungen {
+    max-width: 900px;
+}
+
+.belohnungen__kopf {
+    margin-bottom: 24px;
+}
+
+.belohnungen__kopf h2 {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.belohnungen__kopf p {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+}
+
+.belohnungen__gesamt-fortschritt {
+    margin-top: 12px;
+    height: 8px;
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.belohnungen__gesamt-fortschritt-fuellung {
+    height: 100%;
+    background: var(--md-sys-color-primary);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.belohnungen__kategorie {
+    margin-bottom: 32px;
+}
+
+.belohnungen__kategorie-titel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--md-sys-typescale-title-medium-size, 16px);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.belohnungen__kategorie-titel .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--md-sys-color-primary);
+}
+
+.belohnungen__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+
+/* ============================================
+ * 6. Belohnungen — Karten
+ * ============================================ */
+
+.belohnungen__karte {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    background: var(--md-sys-color-surface-container-low, #f5f5f5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.belohnungen__karte--freigeschaltet {
+    background: var(--md-sys-color-surface-container);
+    border-left: 4px solid var(--md-sys-color-primary);
+}
+
+.belohnungen__karte--freigeschaltet:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--md-sys-elevation-level1);
+}
+
+.belohnungen__karte--gesperrt {
+    opacity: 0.7;
+}
+
+.belohnungen__karte-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.belohnungen__karte-icon .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.belohnungen__karte--gesperrt .belohnungen__karte-icon {
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    color: var(--md-sys-color-outline);
+}
+
+.belohnungen__karte-inhalt {
+    flex: 1;
+    min-width: 0;
+}
+
+.belohnungen__karte-titel {
+    font-size: var(--md-sys-typescale-title-small-size, 14px);
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.belohnungen__karte-beschreibung {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 6px;
+}
+
+.belohnungen__karte-meta {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    display: flex;
+    gap: 12px;
+}
+
+.belohnungen__karte-meta-xp {
+    color: var(--vt-farbe-xp, #FFB300);
+    font-weight: 500;
+}
+
+
+/* ============================================
+ * 7. Belohnungen — Fortschrittsbalken
+ * ============================================ */
+
+.belohnungen__karte-fortschritt {
+    margin-top: 8px;
+}
+
+.belohnungen__karte-balken {
+    height: 6px;
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.belohnungen__karte-fuellung {
+    height: 100%;
+    background: var(--md-sys-color-primary);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.belohnungen__karte-fortschritt-text {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: right;
+}
+
+.belohnungen__karte-fortschritt-label {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    min-width: 90px;
+    flex-shrink: 0;
+}
+
+.belohnungen__karte-fortschritt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.belohnungen__karte-fortschritt--kompakt {
+    margin-top: 4px;
+}
+
+.belohnungen__karte-fortschritt--kompakt .belohnungen__karte-balken {
+    height: 4px;
+}
+
+.belohnungen__karte-datum {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.belohnungen__karte-gruppe {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-secondary);
+    margin-top: 2px;
+}
+
+.belohnungen__karte-gruppe .material-symbols-outlined {
+    font-size: 13px;
+}
+
+/* Kriterien-Zeile (Leiter-Ansicht) */
+.belohnungen__karte-kriterien-zeile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.belohnungen__karte-kriterien-text {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    flex: 1;
+}
+
+.belohnungen__expand-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: var(--md-sys-color-on-surface-variant);
+    flex-shrink: 0;
+}
+
+.belohnungen__expand-btn .material-symbols-outlined {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+}
+
+/* Echt-Karte: column-Layout damit expand-bereich unter icon+inhalt liegt */
+.belohnungen__karte--echt {
+    flex-direction: column;
+    gap: 0;
+}
+
+.belohnungen__karte-zeile {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Aufklappbarer Mitglieder-Bereich */
+.belohnungen__expand-bereich {
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.belohnungen__expand-lade,
+.belohnungen__expand-fehler {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 4px 0;
+}
+
+.belohnungen__expand-fehler {
+    color: var(--md-sys-color-error);
+}
+
+/* Mitglieder-Liste */
+.belohnungen__mitglieder-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.belohnungen__mitglied-eintrag {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-container-low, #f5f5f5);
+}
+
+.belohnungen__mitglied-eintrag--erreicht {
+    background: color-mix(in srgb, var(--vt-farbe-gold, #FFD700) 12%, transparent);
+}
+
+.belohnungen__mitglied-name {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 2px;
+}
+
+.belohnungen__mitglied-name .material-symbols-outlined {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.belohnungen__mitglied-check {
+    color: var(--vt-farbe-gold, #FFD700) !important;
+}
+
+.belohnungen__mitglied-leer {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 4px 0;
+}
+
+/* Echt-Karte Sonderrahmung */
+.belohnungen__karte--echt.belohnungen__karte--freigeschaltet {
+    border-color: var(--vt-farbe-gold, #FFD700);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--vt-farbe-gold, #FFD700) 40%, transparent);
+}
+
+
+/* ============================================
+ * 8. Fortschritt Modul
+ * ============================================ */
+
+.fortschritt {
+    max-width: 900px;
+}
+
+.fortschritt__kopf {
+    margin-bottom: 24px;
+}
+
+.fortschritt__kopf h2 {
+    font-size: var(--md-sys-typescale-headline-small-size, 24px);
+    font-weight: 500;
+}
+
+.fortschritt__level {
+    margin-bottom: 24px;
+}
+
+.fortschritt__streak {
+    margin-bottom: 24px;
+}
+
+.fortschritt__sterne {
+    margin-bottom: 24px;
+}
+
+.fortschritt__stufen {
+    margin-bottom: 24px;
+}
+
+.fortschritt__richtungen {
+    margin-bottom: 24px;
+}
+
+.fortschritt__vokabeln {
+    margin-bottom: 24px;
+}
+
+
+/* ============================================
+ * 9. Fortschritt — Stufen-Chart
+ * ============================================ */
+
+.fortschritt__stufen-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.fortschritt__stufe-reihe {
+    display: grid;
+    grid-template-columns: 140px 1fr 40px;
+    gap: 10px;
+    align-items: center;
+}
+
+.fortschritt__stufe-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fortschritt__stufe-balken-bg {
+    height: 12px;
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.fortschritt__stufe-balken {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+}
+
+.fortschritt__stufe-anzahl {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    font-weight: 500;
+    text-align: right;
+    color: var(--md-sys-color-on-surface);
+}
+
+.fortschritt__stufe-reihe--klickbar {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 6px;
+    margin: 0 -6px;
+    transition: background 0.15s;
+}
+
+.fortschritt__stufe-reihe--klickbar:hover {
+    background: var(--md-sys-color-surface-container-high, #e8e8e8);
+}
+
+.fortschritt__stufe-reihe--leer {
+    cursor: default;
+    opacity: 0.45;
+}
+
+/* ---- Stufen-Overlay ---- */
+
+.fortschritt__overlay-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.fortschritt__overlay-dialog {
+    background: var(--md-sys-color-surface);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.24);
+    overflow: hidden;
+}
+
+.fortschritt__overlay-kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    flex-shrink: 0;
+}
+
+.fortschritt__overlay-titel {
+    font-size: var(--md-sys-typescale-title-medium-size, 16px);
+    font-weight: 600;
+}
+
+.fortschritt__overlay-schliessen {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--md-sys-color-on-surface-variant);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.fortschritt__overlay-schliessen:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.fortschritt__overlay-inhalt {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px 0;
+}
+
+.fortschritt__overlay-liste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.fortschritt__overlay-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--md-sys-color-surface-container, #f5f5f5);
+    gap: 12px;
+}
+
+.fortschritt__overlay-item:last-child {
+    border-bottom: none;
+}
+
+.fortschritt__overlay-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.fortschritt__overlay-schwedisch {
+    font-weight: 500;
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fortschritt__overlay-deutsch {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fortschritt__overlay-stern {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    color: var(--md-sys-color-on-surface-variant);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+
+.fortschritt__overlay-stern:hover {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--vt-farbe-gold, #FFD700);
+}
+
+.fortschritt__overlay-stern--aktiv {
+    color: var(--vt-farbe-gold, #FFD700);
+}
+
+
+/* ============================================
+ * 10. Fortschritt — Level-Anzeige
+ * ============================================ */
+
+.fortschritt__level-anzeige {
+    margin-top: 12px;
+}
+
+.fortschritt__level-aktuell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.fortschritt__level-name {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+}
+
+.fortschritt__level-quote {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.fortschritt__level-formen {
+    margin-bottom: 12px;
+}
+
+.fortschritt__level-formen-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.fortschritt__level-formen-liste {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface);
+    line-height: 1.5;
+}
+
+.fortschritt__level-fertig {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-tertiary, #4CAF50);
+    font-weight: 500;
+    padding: 8px 0;
+}
+
+.fortschritt__level-naechster {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 8px 12px;
+    background: var(--md-sys-color-surface-container, #f0f0f0);
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+}
+
+
+/* ============================================
+ * Fortschritt — Richtungen
+ * ============================================ */
+
+.fortschritt__richtung-reihe {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #ccc);
+}
+
+.fortschritt__richtung-reihe:last-child {
+    border-bottom: none;
+}
+
+.fortschritt__richtung-reihe--gesamt {
+    font-weight: 500;
+    border-top: 2px solid var(--md-sys-color-outline-variant, #ccc);
+    border-bottom: none;
+}
+
+.fortschritt__richtung-label {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-on-surface);
+}
+
+.fortschritt__richtung-wert {
+    font-size: var(--md-sys-typescale-body-medium-size, 14px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+
+/* ============================================
+ * Fortschritt — Vokabel-Uebersicht
+ * ============================================ */
+
+.fortschritt__vok-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    text-align: center;
+}
+
+.fortschritt__vok-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 8px;
+}
+
+.fortschritt__vok-item--hervorgehoben {
+    background: var(--md-sys-color-primary-container);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+}
+
+.fortschritt__vok-wert {
+    font-size: var(--md-sys-typescale-title-large-size, 22px);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.fortschritt__vok-item--hervorgehoben .fortschritt__vok-wert {
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.fortschritt__vok-label {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.fortschritt__vok-item--hervorgehoben .fortschritt__vok-label {
+    color: var(--md-sys-color-on-primary-container);
+}
+
+
+/* ============================================
+ * 11. Animationen
+ * ============================================ */
+
+@keyframes flamme-flackern {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    25% {
+        transform: scale(1.1) rotate(-3deg);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.05) rotate(2deg);
+        opacity: 1;
+    }
+    75% {
+        transform: scale(1.12) rotate(-2deg);
+        opacity: 0.95;
+    }
+}
+
+
+/* ============================================
+ * Gemeinsame Karten-Styles (Ergaenzung)
+ * ============================================ */
+
+.karte__titel {
+    font-size: var(--md-sys-typescale-title-medium-size, 16px);
+    font-weight: 500;
+    padding: 0 0 8px 0;
+    margin-bottom: 4px;
+}
+
+.karte__inhalt {
+    padding: 8px 16px 16px;
+}
+
+
+/* ============================================
+ * Dashboard-Erweiterungen (Streak + XP-Leiste)
+ * ============================================ */
+
+.dashboard__streak-bereich {
+    margin-bottom: 24px;
+}
+
+.dashboard__xp-leiste-bereich {
+    margin-bottom: 24px;
+}
+
+
+/* ============================================
+ * 12. Responsive
+ * ============================================ */
+
+@media (max-width: 768px) {
+    /* Statistik */
+    .statistik__uebersicht {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .statistik__trainings-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Belohnungen */
+    .belohnungen__grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Fortschritt */
+    .fortschritt__stufe-reihe {
+        grid-template-columns: 100px 1fr 35px;
+        gap: 8px;
+    }
+
+    .fortschritt__vok-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    /* Statistik */
+    .statistik__uebersicht {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .statistik__stat-karte {
+        padding: 12px 8px;
+    }
+
+    .statistik__trainings-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    /* Belohnungen */
+    .belohnungen__karte {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Fortschritt */
+    .fortschritt__stufe-reihe {
+        grid-template-columns: 80px 1fr 30px;
+        gap: 6px;
+    }
+
+    .fortschritt__stufe-label {
+        font-size: var(--md-sys-typescale-label-small-size, 11px);
+    }
+
+    .fortschritt__vok-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .fortschritt__level-aktuell {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+
+/* ============================================
+ * 12b. Fortschritt — Sprachniveau-Fortschritt
+ * ============================================ */
+
+.fortschritt__sprachniveau {
+    margin-bottom: 24px;
+}
+
+.fortschritt__niveau-hinweis {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 4px;
+    margin-bottom: 16px;
+}
+
+.fortschritt__niveau-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fortschritt__niveau-zeile {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fortschritt__niveau-kopf {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.fortschritt__niveau-label {
+    font-size: var(--md-sys-typescale-title-small-size, 14px);
+    font-weight: 600;
+}
+
+.fortschritt__niveau-zahlen {
+    font-size: var(--md-sys-typescale-body-small-size, 12px);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.fortschritt__niveau-balken {
+    height: 10px;
+    background: var(--md-sys-color-surface-container-high, #e0e0e0);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.fortschritt__niveau-fuellung {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s ease;
+}
+
+.fortschritt__niveau-prozent {
+    font-size: var(--md-sys-typescale-label-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    text-align: right;
+}
+
+/* ============================================
+ * 13. Dark Mode
+ * ============================================ */
+
+[data-thema="dunkel"] .belohnungen__karte {
+    background: var(--md-sys-color-surface-container);
+}
+
+[data-thema="dunkel"] .belohnungen__karte--freigeschaltet {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+[data-thema="dunkel"] .fortschritt__level-naechster {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+[data-thema="dunkel"] .xp-leiste__balken,
+[data-thema="dunkel"] .belohnungen__gesamt-fortschritt,
+[data-thema="dunkel"] .belohnungen__karte-balken,
+[data-thema="dunkel"] .fortschritt__stufe-balken-bg {
+    background: var(--md-sys-color-surface-container-highest, #333);
+}

@@ -1,0 +1,30 @@
+{
+    "de": {
+        "titel": "Training abgeschlossen!",
+        "genauigkeit": "Genauigkeit",
+        "richtig": "Richtig",
+        "xp_verdient": "XP verdient",
+        "level_erreicht": "Level {{level}}: {{label}} erreicht!",
+        "bonus_xp": "+{{xp}} Bonus-XP",
+        "echte_belohnung": "Echte Belohnung freigeschaltet!",
+        "neue_belohnungen": "Neue Belohnungen!",
+        "nochmal": "Nochmal üben",
+        "nochmal_gemischt": "Nochmal üben (gemischt)",
+        "andere_auswahl": "Andere Auswahl",
+        "zum_dashboard": "Zum Dashboard"
+    },
+    "sv": {
+        "titel": "Träningen klar!",
+        "genauigkeit": "Träffsäkerhet",
+        "richtig": "Rätt",
+        "xp_verdient": "XP intjänade",
+        "level_erreicht": "Nivå {{level}}: {{label}} uppnådd!",
+        "bonus_xp": "+{{xp}} Bonus-XP",
+        "echte_belohnung": "Riktig belöning upplåst!",
+        "neue_belohnungen": "Nya belöningar!",
+        "nochmal": "Öva igen",
+        "nochmal_gemischt": "Öva igen (blandat)",
+        "andere_auswahl": "Annat val",
+        "zum_dashboard": "Till översikten"
+    }
+}

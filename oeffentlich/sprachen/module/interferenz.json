@@ -1,0 +1,30 @@
+{
+    "de": {
+        "titel": "Hej!",
+        "text": "Du hast noch <strong>{{anzahl}}</strong> fällige Vokabeln zum Wiederholen. Dein Gehirn lernt am besten, wenn Altes erst fest sitzt. Möchtest du heute wirklich neue Wörter lernen oder erst Wiederholungen machen?",
+        "nur_wiederholen": "Nur wiederholen",
+        "keine_neuen_heute": "Keine neuen Vokabeln heute",
+        "trotzdem_neue": "Trotzdem neue Wörter",
+        "neue_wie_eingestellt": "{{anzahl}} neue wie eingestellt",
+        "heute_nur_neue": "Heute nur {{anzahl}} neue",
+        "modus_fuer_heute": "{{modus}}-Modus für heute",
+        "modus_entspannt": "Entspannt",
+        "modus_normal": "Normal",
+        "modus_intensiv": "Intensiv",
+        "modus_intensiv_plus": "Intensiv+"
+    },
+    "sv": {
+        "titel": "Hej!",
+        "text": "Du har fortfarande <strong>{{anzahl}}</strong> glosor att repetera. Din hjärna lär sig bäst när det gamla sitter fast först. Vill du verkligen lära dig nya ord idag eller repetera först?",
+        "nur_wiederholen": "Bara repetera",
+        "keine_neuen_heute": "Inga nya glosor idag",
+        "trotzdem_neue": "Nya ord ändå",
+        "neue_wie_eingestellt": "{{anzahl}} nya som inställt",
+        "heute_nur_neue": "Idag bara {{anzahl}} nya",
+        "modus_fuer_heute": "{{modus}}-läge för idag",
+        "modus_entspannt": "Avslappnat",
+        "modus_normal": "Normal",
+        "modus_intensiv": "Intensiv",
+        "modus_intensiv_plus": "Intensiv+"
+    }
+}

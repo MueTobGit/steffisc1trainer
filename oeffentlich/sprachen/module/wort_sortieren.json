@@ -1,0 +1,12 @@
+{
+    "de": {
+        "badge": "Satz bauen",
+        "platzhalter": "Tippe die Wörter in der richtigen Reihenfolge…",
+        "loesung_label": "Richtige Reihenfolge:"
+    },
+    "sv": {
+        "badge": "Bygg mening",
+        "platzhalter": "Tryck på orden i rätt ordning…",
+        "loesung_label": "Rätt ordning:"
+    }
+}

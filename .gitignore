@@ -1,0 +1,14 @@
+# Lokale Umgebungskonfiguration (Zugangsdaten, API-Keys) — NIE einchecken
+konfiguration/umgebung.php
+
+# Datenbank-Backups (können sensible Daten enthalten)
+backups/
+
+# Upload-Verzeichnisse (Nutzerdaten, kein Code)
+oeffentlich/uploads/bilder/
+oeffentlich/uploads/audio/
+oeffentlich/uploads/avatare/
+oeffentlich/uploads/gruppen/
+
+# Composer-Abhängigkeiten (werden via composer install erzeugt)
+vendor/

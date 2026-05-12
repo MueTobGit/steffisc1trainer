@@ -1,0 +1,9 @@
+# PHP-Ausfuehrung in Uploads gesperrt — Apache 2.4 Syntax
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Nur erlaubte Dateitypen durchlassen
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|mp3|wav|ogg)$">
+    Require all granted
+</FilesMatch>

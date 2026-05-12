@@ -1,0 +1,18 @@
+{
+    "de": {
+        "netzwerk": "Netzwerkfehler — bitte Verbindung prüfen.",
+        "server": "Serverfehler — bitte später erneut versuchen.",
+        "sitzung_abgelaufen": "Sitzung abgelaufen — bitte erneut anmelden.",
+        "titel": "Fehler",
+        "modul_in_entwicklung": "Modul wird entwickelt",
+        "modul_nicht_verfuegbar": "Das Modul <strong>{{modul}}</strong> ist noch nicht verfügbar."
+    },
+    "sv": {
+        "netzwerk": "Nätverksfel — kontrollera anslutningen.",
+        "server": "Serverfel — försök igen senare.",
+        "sitzung_abgelaufen": "Sessionen har gått ut — logga in igen.",
+        "titel": "Fel",
+        "modul_in_entwicklung": "Modulen är under utveckling",
+        "modul_nicht_verfuegbar": "Modulen <strong>{{modul}}</strong> är inte tillgänglig ännu."
+    }
+}
