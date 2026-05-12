@@ -5,10 +5,7 @@ konfiguration/umgebung.php
 backups/
 
 # Upload-Verzeichnisse (Nutzerdaten, kein Code)
-oeffentlich/uploads/bilder/
-oeffentlich/uploads/audio/
-oeffentlich/uploads/avatare/
-oeffentlich/uploads/gruppen/
+oeffentlich/uploads/
 
 # Composer-Abhängigkeiten (werden via composer install erzeugt)
 vendor/
