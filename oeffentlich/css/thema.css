@@ -1,6 +1,6 @@
-/* ============================================================
+﻿/* ============================================================
    Vokabeltrainer — Thema (Material Design Tokens)
-   Schwedisch-inspirierte Farben + Dark Mode
+   Union Jack Farben + Dark Mode
    ============================================================ */
 
 /* ---- Lokale Schriften (DSGVO-konform) ---- */
@@ -58,17 +58,17 @@
    Light Mode (Standard)
    ============================================================ */
 :root {
-    /* ---- Primaer: Schwedisch Blau ---- */
-    --md-sys-color-primary: #006AA7;
+    /* ---- Primaer: Union Jack Navy ---- */
+    --md-sys-color-primary: #012169;
     --md-sys-color-on-primary: #FFFFFF;
-    --md-sys-color-primary-container: #C8E6FF;
-    --md-sys-color-on-primary-container: #001E36;
+    --md-sys-color-primary-container: #C8D4F5;
+    --md-sys-color-on-primary-container: #000D3A;
 
-    /* ---- Sekundaer: Schwedisch Gelb ---- */
-    --md-sys-color-secondary: #B08F00;
+    /* ---- Sekundaer: Union Jack Rot ---- */
+    --md-sys-color-secondary: #C8102E;
     --md-sys-color-on-secondary: #FFFFFF;
-    --md-sys-color-secondary-container: #FECC02;
-    --md-sys-color-on-secondary-container: #3A2F00;
+    --md-sys-color-secondary-container: #FFD9DD;
+    --md-sys-color-on-secondary-container: #40000B;
 
     /* ---- Tertiaer: Gruen (Richtig) ---- */
     --md-sys-color-tertiary: #2E7D32;
@@ -182,7 +182,7 @@
     --md-sys-color-primary-container: #00497E;
     --md-sys-color-on-primary-container: #C8E6FF;
 
-    --md-sys-color-secondary: #FECC02;
+    --md-sys-color-secondary: #FF6B7A;
     --md-sys-color-on-secondary: #3A2F00;
     --md-sys-color-secondary-container: #544600;
     --md-sys-color-on-secondary-container: #FFE24C;
@@ -217,7 +217,7 @@
 
     --md-sys-color-inverse-surface: #E2E2E8;
     --md-sys-color-inverse-on-surface: #2F3033;
-    --md-sys-color-inverse-primary: #006AA7;
+    --md-sys-color-inverse-primary: #99A8D8;
 
     --vt-schatten-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --vt-schatten-2: 0 3px 6px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25);
@@ -304,7 +304,7 @@ html[data-schrift="gross"] {
         --md-sys-color-primary-container: #00497E;
         --md-sys-color-on-primary-container: #C8E6FF;
 
-        --md-sys-color-secondary: #FECC02;
+        --md-sys-color-secondary: #FF6B7A;
         --md-sys-color-on-secondary: #3A2F00;
         --md-sys-color-secondary-container: #544600;
         --md-sys-color-on-secondary-container: #FFE24C;
@@ -339,7 +339,7 @@ html[data-schrift="gross"] {
 
         --md-sys-color-inverse-surface: #E2E2E8;
         --md-sys-color-inverse-on-surface: #2F3033;
-        --md-sys-color-inverse-primary: #006AA7;
+        --md-sys-color-inverse-primary: #99A8D8;
 
         --vt-schatten-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
         --vt-schatten-2: 0 3px 6px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25);

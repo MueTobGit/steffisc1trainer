@@ -8,7 +8,7 @@
  * Format ist kompatibel mit importieren.php (Roundtrip).
  * Query-Parameter:
  *   - kategorie_id: Filter nach Kategorie
- *   - lektion_id: Filter nach Lektion
+ *   - themenfeld_id: Filter nach themenfeld
  *   - sprachniveau: Filter nach Niveau
  *   - wortart: Filter nach Wortart
  *   - auch_private: 1 = private Vokabeln aller User einschliessen (nur Admin)
@@ -35,7 +35,7 @@ admin_erzwingen($benutzer);
 
 // --- Filter ---
 $kategorie_id = get_param_int('kategorie_id', 0);
-$lektion_id   = get_param_int('lektion_id', 0);
+$themenfeld_id   = get_param_int('themenfeld_id', 0);
 $sprachniveau = get_param('sprachniveau');
 $wortart      = get_param('wortart');
 $auch_private = get_param('auch_private', '0') === '1';
@@ -53,9 +53,9 @@ if ($kategorie_id > 0) {
     $params[] = $kategorie_id;
 }
 
-if ($lektion_id > 0) {
-    $join = 'JOIN lektion_vokabeln lv ON lv.vokabel_id = v.id AND lv.lektion_id = ?';
-    array_unshift($params, $lektion_id);
+if ($themenfeld_id > 0) {
+    $join = 'JOIN themenfeld_vokabeln lv ON lv.vokabel_id = v.id AND lv.themenfeld_id = ?';
+    array_unshift($params, $themenfeld_id);
 }
 
 if ($sprachniveau !== null && $sprachniveau !== '') {
@@ -73,7 +73,7 @@ $where = 'WHERE ' . implode(' AND ', $bedingungen);
 // --- Vokabeln laden ---
 $sql = "
     SELECT DISTINCT
-        v.id, v.schwedisch, v.deutsch, v.wortart, v.genus, v.verbgruppe,
+        v.id, v.englisch, v.deutsch, v.wortart,
         v.sprachniveau, v.kategorie_id,
         v.ist_privat, v.besitzer_id,
         k.name AS kategorie_name,
@@ -83,7 +83,7 @@ $sql = "
     LEFT JOIN kategorien k ON k.id = v.kategorie_id
     LEFT JOIN benutzer b   ON b.id = v.besitzer_id
     {$where}
-    ORDER BY v.ist_privat ASC, v.schwedisch ASC
+    ORDER BY v.ist_privat ASC, v.englisch ASC
 ";
 
 $stmt = $pdo->prepare($sql);
@@ -101,11 +101,7 @@ if (!empty($vokabeln)) {
 
     // Alle Formen in einer Query
     $bulk = $pdo->prepare("
-        SELECT vokabel_id, form_bezeichnung, form_wert
-        FROM vokabel_formen
-        WHERE vokabel_id IN ({$platzhalter})
-        ORDER BY reihenfolge ASC
-    ");
+        SELECT NULL AS vokabel_id, NULL AS form_bezeichnung, NULL AS form_wert FROM vokabeln WHERE 1=0");
     $bulk->execute($vids);
     foreach ($bulk->fetchAll() as $r) {
         $formen_map[(int) $r['vokabel_id']][] = $r;
@@ -113,7 +109,7 @@ if (!empty($vokabeln)) {
 
     // Alle Saetze in einer Query
     $bulk = $pdo->prepare("
-        SELECT vokabel_id, schwedisch_satz, deutsch_satz, benoetigte_form
+        SELECT vokabel_id, englisch_satz, deutsch_satz, benoetigte_form
         FROM saetze
         WHERE vokabel_id IN ({$platzhalter}) AND aktiv = 1
         ORDER BY id ASC
@@ -123,11 +119,11 @@ if (!empty($vokabeln)) {
         $saetze_map[(int) $r['vokabel_id']][] = $r;
     }
 
-    // Erste Lektion je Vokabel in einer Query
+    // Erste themenfeld je Vokabel in einer Query
     $bulk = $pdo->prepare("
         SELECT lv.vokabel_id, MIN(l.titel) AS titel
-        FROM lektion_vokabeln lv
-        JOIN lektionen l ON l.id = lv.lektion_id AND l.aktiv = 1
+        FROM themenfeld_vokabeln lv
+        JOIN themenfelder l ON l.id = lv.themenfeld_id AND l.aktiv = 1
         WHERE lv.vokabel_id IN ({$platzhalter})
         GROUP BY lv.vokabel_id
     ");
@@ -149,7 +145,7 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 echo "\xEF\xBB\xBF";
 
 // Kopfzeile (2 zusaetzliche Spalten: ist_privat, besitzer_id)
-echo "typ;schwedisch;deutsch;wortart;genus;verbgruppe;sprachniveau;kategorie;lektion;form_bezeichnung;form_wert;satz_sv;satz_de;benoetigte_form;ist_privat;besitzer_id\n";
+echo "typ;englisch;deutsch;wortart;sprachniveau;kategorie;themenfeld;form_bezeichnung;form_wert;satz_en;satz_de;benoetigte_form;ist_privat;besitzer_id\n";
 
 foreach ($vokabeln as $v) {
     $vid         = (int) $v['id'];
@@ -160,11 +156,9 @@ foreach ($vokabeln as $v) {
     // V-Zeile
     echo _csv_zeile([
         'V',
-        $v['schwedisch'],
+        $v['englisch'],
         $v['deutsch'],
         $v['wortart'],
-        $v['genus'] ?? '',
-        $v['verbgruppe'] ?? '',
         $v['sprachniveau'],
         $v['kategorie_name'] ?? '',
         $lektion_name,
@@ -174,25 +168,13 @@ foreach ($vokabeln as $v) {
     ]);
 
     // F-Zeilen
-    foreach ($formen_map[$vid] ?? [] as $f) {
-        echo _csv_zeile([
-            'F',
-            $v['schwedisch'],
-            '', '', '', '', '', '', '',
-            $f['form_bezeichnung'],
-            $f['form_wert'],
-            '', '', '',
-            '', '',
-        ]);
-    }
-
     // S-Zeilen
     foreach ($saetze_map[$vid] ?? [] as $s) {
         echo _csv_zeile([
             'S',
-            $v['schwedisch'],
-            '', '', '', '', '', '', '', '', '',
-            $s['schwedisch_satz'],
+            $v['englisch'],
+            '', '', '', '', '', '', '', '',
+            $s['englisch_satz'],
             $s['deutsch_satz'],
             $s['benoetigte_form'],
             '', '',

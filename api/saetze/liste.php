@@ -10,10 +10,10 @@
  *   - seite, pro_seite
  *   - vokabel_id: Filter nach Vokabel
  *   - kategorie_id: Filter nach Kategorie der Vokabel
- *   - lektion_id: Filter nach Lektion der Vokabel
+ *   - themenfeld_id: Filter nach Lektion der Vokabel
  *   - sprachniveau: Filter
- *   - suche: In schwedisch_satz oder deutsch_satz suchen
- *   - sortierung: vokabel_schwedisch|vokabel_deutsch|sprachniveau|id (Standard: id DESC)
+ *   - suche: In englisch_satz oder deutsch_satz suchen
+ *   - sortierung: vokabel_englisch|vokabel_deutsch|sprachniveau|id (Standard: id DESC)
  *   - auch_private: 1 = Nur Admin; zeigt alle privaten Inhalte aller User
  *   - nur_privat: 1 = Nur Admin; zeigt ausschliesslich private Saetze
  *   - besitzer_id: Nur Admin + auch_private; filtert private Saetze nach Besitzer-ID
@@ -39,7 +39,7 @@ $benutzer_id = (int) $benutzer['id'];
 
 $vokabel_id   = get_param_int('vokabel_id', 0);
 $kategorie_id = get_param_int('kategorie_id', 0);
-$lektion_id   = get_param_int('lektion_id', 0);
+$themenfeld_id   = get_param_int('themenfeld_id', 0);
 $sprachniveau = get_param('sprachniveau');
 $suche        = get_param('suche');
 $sortierung   = get_param('sortierung', 'id');
@@ -68,10 +68,10 @@ if ($kategorie_id > 0) {
     $params[]      = $kategorie_id;
 }
 
-if ($lektion_id > 0) {
+if ($themenfeld_id > 0) {
     // Saetze-Vokabeln, die in der Lektion sind
-    $join_lektion  = 'JOIN lektion_vokabeln lv ON lv.vokabel_id = s.vokabel_id AND lv.lektion_id = ?';
-    array_unshift($params, $lektion_id);
+    $join_lektion  = 'JOIN themenfeld_vokabeln lv ON lv.vokabel_id = s.vokabel_id AND lv.themenfeld_id = ?';
+    array_unshift($params, $themenfeld_id);
 }
 
 if ($sprachniveau !== null && $sprachniveau !== '') {
@@ -81,7 +81,7 @@ if ($sprachniveau !== null && $sprachniveau !== '') {
 }
 
 if ($suche !== null && mb_strlen($suche) >= 2) {
-    $bedingungen[] = '(s.schwedisch_satz LIKE ? OR s.deutsch_satz LIKE ? OR v.schwedisch LIKE ? OR v.deutsch LIKE ?)';
+    $bedingungen[] = '(s.englisch_satz LIKE ? OR s.deutsch_satz LIKE ? OR v.englisch LIKE ? OR v.deutsch LIKE ?)';
     $such_param    = '%' . $suche . '%';
     $params[]      = $such_param;
     $params[]      = $such_param;
@@ -106,7 +106,7 @@ $where = 'WHERE ' . implode(' AND ', $bedingungen);
 // --- Sortierung ---
 $sortier_map = [
     'id'                => 's.id',
-    'vokabel_schwedisch' => 'v.schwedisch',
+    'vokabel_englisch' => 'v.englisch',
     'vokabel_deutsch'   => 'v.deutsch',
     'sprachniveau'      => 's.sprachniveau',
 ];
@@ -135,17 +135,15 @@ $sql = "
     SELECT DISTINCT
         s.id,
         s.vokabel_id,
-        s.schwedisch_satz,
+        s.englisch_satz,
         s.deutsch_satz,
         s.benoetigte_form,
         s.sprachniveau,
-        s.media_id,
         s.aktiv,
         s.aktualisiert_am,
         s.ist_privat,
         s.besitzer_id,
-        s.gruppen_id,
-        v.schwedisch AS vokabel_schwedisch,
+        v.englisch AS vokabel_englisch,
         v.deutsch    AS vokabel_deutsch,
         v.wortart    AS vokabel_wortart,
         b.benutzername AS besitzer_name
@@ -168,12 +166,10 @@ $saetze = $stmt->fetchAll();
 foreach ($saetze as &$s) {
     $s['id']         = (int) $s['id'];
     $s['vokabel_id'] = (int) $s['vokabel_id'];
-    $s['media_id']   = $s['media_id'] !== null ? (int) $s['media_id'] : null;
     $s['aktiv']      = (bool) $s['aktiv'];
     $s['ist_privat'] = (bool) $s['ist_privat'];
-    $s['besitzer_id']= $s['besitzer_id'] !== null ? (int) $s['besitzer_id'] : null;
-    $s['gruppen_id'] = $s['gruppen_id'] !== null ? (int) $s['gruppen_id'] : null;
-}
+    $s['besitzer_id']= $s['besitzer_id'] !== null ? (int) $s['besitzer_id'] : null;}
 unset($s);
 
 json_paginiert($saetze, $paginierung);
+

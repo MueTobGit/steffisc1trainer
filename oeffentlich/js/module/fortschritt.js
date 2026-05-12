@@ -9,11 +9,9 @@
 import { apiGet, apiPost } from '../api-client.js';
 import { holen } from '../zustand.js';
 import { navigieren } from '../router.js';
-import { esc, zahlFormatieren, levelLabel } from '../hilfs-funktionen.js';
+import { esc, zahlFormatieren } from '../hilfs-funktionen.js';
 import { lade_anzeige_rendern, lade_anzeige_entfernen } from '../komponenten/lade-anzeige.js';
 import { leer_zustand_rendern } from '../komponenten/leer-zustand.js';
-import { streak_anzeige_erstellen } from '../komponenten/streak-anzeige.js';
-import { xp_leiste_erstellen } from '../komponenten/xp-leiste.js';
 import { paginierung_rendern } from '../komponenten/paginierung.js';
 import { t, aktuelle_sprache } from '../dienste/sprache.js';
 
@@ -53,6 +51,7 @@ export async function rendern() {
 
     const wrapper = document.createElement('div');
     wrapper.className = 'fortschritt';
+    wrapper.style.cssText = 'display:flex;flex-direction:column;gap:16px;';
     container.appendChild(wrapper);
 
     lade_anzeige_rendern(wrapper);
@@ -86,6 +85,267 @@ export function aufraeumen() {
     // Nichts aufzuraeumen
 }
 
+export function stil_einfuegen() {
+    if (document.getElementById('fortschritt-stil')) return;
+    const s = document.createElement('style');
+    s.id = 'fortschritt-stil';
+    s.textContent = `
+
+        /* ── Stufen-Chart ─────────────────────────────────── */
+
+        .fortschritt__stufen-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .fortschritt__stufe-reihe {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: var(--vt-radius-klein, 6px);
+            transition: background var(--vt-uebergang, .15s ease);
+        }
+
+        .fortschritt__stufe-reihe--klickbar {
+            cursor: pointer;
+        }
+
+        .fortschritt__stufe-reihe--klickbar:not(.fortschritt__stufe-reihe--leer):hover {
+            background: var(--md-sys-color-surface-container-high);
+        }
+
+        .fortschritt__stufe-reihe--leer {
+            opacity: 0.38;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .fortschritt__stufe-label {
+            font-size: 13px;
+            min-width: 150px;
+            white-space: nowrap;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .fortschritt__stufe-balken-bg {
+            flex: 1;
+            height: 10px;
+            background: var(--md-sys-color-surface-container-highest);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .fortschritt__stufe-balken {
+            height: 100%;
+            border-radius: 999px;
+            transition: width .4s ease;
+        }
+
+        .fortschritt__stufe-anzahl {
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 32px;
+            text-align: right;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        /* ── Sprachniveau-Balken ───────────────────────────── */
+
+        .fortschritt__niveau-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .fortschritt__niveau-zeile {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .fortschritt__niveau-kopf {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .fortschritt__niveau-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .fortschritt__niveau-zahlen {
+            font-size: 12px;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .fortschritt__niveau-balken {
+            height: 8px;
+            background: var(--md-sys-color-surface-container-highest);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .fortschritt__niveau-fuellung {
+            height: 100%;
+            border-radius: 999px;
+            transition: width .4s ease;
+        }
+
+        .fortschritt__niveau-prozent {
+            font-size: 11px;
+            color: var(--md-sys-color-on-surface-variant);
+            text-align: right;
+        }
+
+        /* ── Overlay ───────────────────────────────────────── */
+
+        .fortschritt__overlay-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 300;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+        }
+
+        @media (min-width: 540px) {
+            .fortschritt__overlay-bg {
+                align-items: center;
+                padding: 24px;
+            }
+        }
+
+        .fortschritt__overlay-dialog {
+            background: var(--md-sys-color-surface-container-low);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 520px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--md-sys-elevation-3, 0 4px 20px rgba(0,0,0,.25));
+        }
+
+        @media (min-width: 540px) {
+            .fortschritt__overlay-dialog {
+                border-radius: 16px;
+            }
+        }
+
+        .fortschritt__overlay-kopf {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 16px 12px;
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            flex-shrink: 0;
+        }
+
+        .fortschritt__overlay-titel {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .fortschritt__overlay-schliessen {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            color: var(--md-sys-color-on-surface-variant);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--vt-uebergang, .15s ease);
+        }
+
+        .fortschritt__overlay-schliessen:hover {
+            background: var(--md-sys-color-surface-container-high);
+        }
+
+        .fortschritt__overlay-inhalt {
+            overflow-y: auto;
+            flex: 1;
+            padding: 8px 0;
+        }
+
+        /* ── Overlay-Liste (Vokabeln) ──────────────────────── */
+
+        .fortschritt__overlay-liste {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .fortschritt__overlay-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        }
+
+        .fortschritt__overlay-item:last-child {
+            border-bottom: none;
+        }
+
+        .fortschritt__overlay-item-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .fortschritt__overlay-englisch {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .fortschritt__overlay-deutsch {
+            font-size: 13px;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .fortschritt__overlay-stern {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            color: var(--md-sys-color-on-surface-variant);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background var(--vt-uebergang, .15s ease), color var(--vt-uebergang, .15s ease);
+        }
+
+        .fortschritt__overlay-stern:hover {
+            background: var(--md-sys-color-surface-container-high);
+            color: var(--md-sys-color-secondary);
+        }
+
+        .fortschritt__overlay-stern--aktiv {
+            color: var(--md-sys-color-secondary);
+        }
+
+        .fortschritt__overlay-stern--aktiv:hover {
+            color: var(--md-sys-color-on-surface-variant);
+        }
+    `;
+    document.head.appendChild(s);
+}
+
 // ============================================
 // Seite aufbauen
 // ============================================
@@ -104,199 +364,34 @@ function _seite_rendern(wrapper, stat_daten, fort_daten, aktivitaeten_daten) {
     kopf.innerHTML = `<h2>${esc(t('fortschritt.titel'))}</h2>`;
     wrapper.appendChild(kopf);
 
-    // --- 1. Streak ---
-    const streakBereich = document.createElement('section');
-    streakBereich.className = 'fortschritt__streak';
-
-    const streakKarte = document.createElement('div');
-    streakKarte.className = 'karte';
-    streakKarte.style.padding = '16px';
-
-    const streakTitel = document.createElement('div');
-    streakTitel.className = 'karte__titel';
-    streakTitel.textContent = t('fortschritt.streak');
-    streakKarte.appendChild(streakTitel);
-
-    const streakInhalt = document.createElement('div');
-    streakInhalt.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:12px 0;';
-    streakInhalt.appendChild(streak_anzeige_erstellen(s.streak_tage, {
-        animiert: s.streak_tage > 0,
-        groesse: 'gross',
-        label: true,
-    }));
-    streakKarte.appendChild(streakInhalt);
-
-    if (s.laengstes_streak > 0) {
-        const laengstes = document.createElement('div');
-        laengstes.style.cssText = 'text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:var(--md-sys-typescale-body-small-size,12px);';
-        laengstes.textContent = t('fortschritt.laengstes_streak', { anzahl: s.laengstes_streak });
-        streakKarte.appendChild(laengstes);
-    }
-
-    streakBereich.appendChild(streakKarte);
-    wrapper.appendChild(streakBereich);
-
-    // --- 2. Vokabel-Uebersicht ---
+    // --- 1. Vokabel-Uebersicht ---
     _vokabeln_uebersicht_rendern(wrapper, stat_daten);
 
-    // --- 3. Statistik-Kacheln (4 klickbare Karten) ---
-    _statistik_kacheln_rendern(wrapper, stat_daten, fort_daten);
+    // --- 2. Trainings-Statistik ---
+    _trainings_stats_rendern(wrapper, tr);
 
-    // --- 4. Sprachniveau ---
+    // --- 3. Sprachniveau ---
     const niv_daten = fort_daten.sprachniveau_fortschritt;
     if (niv_daten && niv_daten.length > 0) {
         _sprachniveau_rendern(wrapper, niv_daten);
     }
 
-    // --- 5. Vokabel-Stufen ---
+    // --- 4. Vokabel-Stufen ---
     _stufen_chart_rendern(wrapper, stufen);
 
-    // --- 6. Letzte Aktivitaeten ---
+    // --- 5. Letzte Aktivitaeten ---
     _aktivitaeten_bereich_rendern(wrapper, aktivitaeten_daten);
 }
 
-// ============================================
-// Statistik-Kacheln (XP, Level, Sterne, Vokabeln sicher gelernt)
-// ============================================
-
-function _statistik_kacheln_rendern(wrapper, stat_daten, fort_daten) {
-    const s = stat_daten.statistik;
-    const tr = stat_daten.trainings;
-    const sf = stat_daten.stern_fortschritt || {};
-    const vokabeln_sicher = stat_daten.vokabeln_sicher_gelernt ?? s.gesamt_vokabeln_gelernt ?? 0;
-
+function _trainings_stats_rendern(wrapper, tr) {
+    if (!tr) return;
     const bereich = document.createElement('section');
     bereich.className = 'fortschritt__statistik-kacheln';
 
-    // Kachel-Grid
-    const grid = document.createElement('div');
-    grid.className = 'statistik__uebersicht';
-
-    // -- XP-Kachel --
-    const xpKachel = _stat_kachel('star', t('statistik.xp'), zahlFormatieren(s.xp), 'var(--vt-farbe-xp)');
-    grid.appendChild(xpKachel);
-
-    // -- Level-Kachel --
-    const levelKachel = _stat_kachel('school', t('statistik.level', { level: s.globales_level }), levelLabel(s.globales_level), 'var(--md-sys-color-primary)');
-    grid.appendChild(levelKachel);
-
-    // -- Sterne-Kachel (mit farbigen Icons) --
-    const sterneKachel = document.createElement('div');
-    sterneKachel.className = 'karte statistik__stat-karte statistik__stat-karte--klickbar';
-    sterneKachel.innerHTML = `
-        <div class="statistik__stat-icon" style="color:var(--vt-farbe-gold, #FFD700)">
-            <span class="material-symbols-outlined">workspace_premium</span>
-        </div>
-        <div class="statistik__stat-wert statistik__sterne-wert">
-            <span style="color:#FFD700">${s.gold_sterne || 0}</span><span class="material-symbols-outlined" style="font-size:16px;color:#FFD700;vertical-align:middle">workspace_premium</span>
-            <span style="color:#C0C0C0;margin-left:4px">${s.silber_sterne || 0}</span><span class="material-symbols-outlined" style="font-size:16px;color:#C0C0C0;vertical-align:middle">workspace_premium</span>
-            <span style="color:#CD7F32;margin-left:4px">${s.bronze_sterne || 0}</span><span class="material-symbols-outlined" style="font-size:16px;color:#CD7F32;vertical-align:middle">workspace_premium</span>
-        </div>
-        <div class="statistik__stat-label">${esc(t('statistik.sterne'))}</div>
-    `;
-    grid.appendChild(sterneKachel);
-
-    // -- Vokabeln sicher gelernt --
-    const vokKachel = _stat_kachel('dictionary', t('fortschritt.sicher_gelernt'), zahlFormatieren(vokabeln_sicher), 'var(--md-sys-color-secondary)');
-    grid.appendChild(vokKachel);
-
-    bereich.appendChild(grid);
-
-    // --- Aufklappbare Detail-Sektionen ---
-
-    // Sterne-Details (fuer XP + Sterne Klick)
-    const sterneDetails = document.createElement('div');
-    sterneDetails.className = 'fortschritt__detail-sektion versteckt';
-    sterneDetails.id = 'fortschritt-sterne-details';
-
-    const sterneDetailKarte = document.createElement('div');
-    sterneDetailKarte.className = 'karte';
-    sterneDetailKarte.style.padding = '16px';
-
-    const sterneDetailTitel = document.createElement('div');
-    sterneDetailTitel.className = 'karte__titel';
-    sterneDetailTitel.textContent = t('fortschritt.xp_sterne_fortschritt');
-    sterneDetailKarte.appendChild(sterneDetailTitel);
-
-    const sterneDetailInhalt = document.createElement('div');
-    sterneDetailInhalt.style.cssText = 'display:flex;flex-direction:column;gap:16px;margin-top:8px;';
-    sterneDetailInhalt.appendChild(xp_leiste_erstellen(s.xp, { stern: 'bronze', naechste_schwelle: sf.naechster_bronze ?? null }));
-    sterneDetailInhalt.appendChild(xp_leiste_erstellen(s.xp, { stern: 'silber', naechste_schwelle: sf.naechster_silber ?? null }));
-    sterneDetailInhalt.appendChild(xp_leiste_erstellen(s.xp, { stern: 'gold',   naechste_schwelle: sf.naechster_gold   ?? null }));
-    sterneDetailKarte.appendChild(sterneDetailInhalt);
-    sterneDetails.appendChild(sterneDetailKarte);
-    bereich.appendChild(sterneDetails);
-
-    // Level-Details (Sprachlevel-Overlay)
-    const levelDetails = document.createElement('div');
-    levelDetails.className = 'fortschritt__detail-sektion versteckt';
-    levelDetails.id = 'fortschritt-level-details';
-
-    const beherrschungsquote = fort_daten.beherrschungsquote ?? s.beherrschungsquote ?? 0;
-    const level = s.globales_level;
-    const level_konfiguration = fort_daten.level_konfiguration || null;
-    const _lk_fuer = (nr) => level_konfiguration?.find(l => l.level === nr);
-    const _fallback_namen = {
-        1: t('fortschritt.level_einsteiger'),
-        2: t('fortschritt.level_lernender'),
-        3: t('fortschritt.level_fortgeschrittener'),
-        4: t('fortschritt.level_experte'),
-        5: t('fortschritt.level_meister'),
-    };
-
-    const alle_formen = [];
-    for (let l = 1; l <= level; l++) {
-        const formen = _lk_fuer(l)?.formen || [];
-        alle_formen.push(...formen);
-    }
-
-    const levelDetailKarte = document.createElement('div');
-    levelDetailKarte.className = 'karte';
-    levelDetailKarte.style.padding = '16px';
-
-    let levelDetailHTML = `
-        <div class="karte__titel">${esc(t('fortschritt.sprachlevel'))}</div>
-        <div class="fortschritt__level-anzeige" style="margin-top:8px">
-            <div class="fortschritt__level-aktuell">
-                <span class="fortschritt__level-name">${esc(_lk_fuer(level)?.name || _fallback_namen[level] || t('fortschritt.level_unbekannt'))}</span>
-                <span class="fortschritt__level-quote">${esc(t('fortschritt.wortschatz_gemeistert', { prozent: beherrschungsquote }))}</span>
-            </div>
-    `;
-
-    if (alle_formen.length > 0) {
-        levelDetailHTML += `
-            <div class="fortschritt__level-formen">
-                <div class="fortschritt__level-formen-label">${esc(t('fortschritt.freigeschaltete_formen'))}</div>
-                <div class="fortschritt__level-formen-liste">${alle_formen.map(f => esc(f)).join(', ')}</div>
-            </div>
-        `;
-    }
-
-    if (level === 5) {
-        levelDetailHTML += `<div class="fortschritt__level-fertig">${esc(t('fortschritt.alle_formen'))}</div>`;
-    } else {
-        const naechster_lk = _lk_fuer(level + 1);
-        const naechster_name = naechster_lk?.name || _fallback_namen[level + 1] || '';
-        const naechste_schwelle = naechster_lk?.schwelle ?? null;
-        if (naechster_name && naechste_schwelle !== null) {
-            levelDetailHTML += `<div class="fortschritt__level-naechster">${esc(t('fortschritt.naechster_titel', { name: naechster_name, schwelle: naechste_schwelle }))}</div>`;
-        }
-    }
-
-    levelDetailHTML += `</div>`;
-    levelDetailKarte.innerHTML = levelDetailHTML;
-    levelDetails.appendChild(levelDetailKarte);
-    bereich.appendChild(levelDetails);
-
-    // Trainings-Statistik-Details (fuer Vokabeln sicher gelernt Klick)
-    const trainingsDetails = document.createElement('div');
-    trainingsDetails.className = 'fortschritt__detail-sektion versteckt';
-    trainingsDetails.id = 'fortschritt-trainings-details';
-
-    const trainingsKarte = document.createElement('div');
-    trainingsKarte.className = 'karte';
-    trainingsKarte.style.padding = '16px';
-    trainingsKarte.innerHTML = `
+    const karte = document.createElement('div');
+    karte.className = 'karte';
+    karte.style.padding = '16px';
+    karte.innerHTML = `
         <div class="karte__titel">${esc(t('statistik.trainings_titel'))}</div>
         <div class="karte__inhalt">
             <div class="statistik__trainings-grid">
@@ -319,45 +414,10 @@ function _statistik_kacheln_rendern(wrapper, stat_daten, fort_daten) {
             </div>
         </div>
     `;
-    trainingsDetails.appendChild(trainingsKarte);
-    bereich.appendChild(trainingsDetails);
-
+    bereich.appendChild(karte);
     wrapper.appendChild(bereich);
-
-    // --- Klick-Events fuer Kacheln ---
-    xpKachel.addEventListener('click', () => _detail_toggle('fortschritt-sterne-details'));
-    sterneKachel.addEventListener('click', () => _detail_toggle('fortschritt-sterne-details'));
-    levelKachel.addEventListener('click', () => _detail_toggle('fortschritt-level-details'));
-    vokKachel.addEventListener('click', () => _detail_toggle('fortschritt-trainings-details'));
 }
 
-function _stat_kachel(icon, label, wert, farbe) {
-    const karte = document.createElement('div');
-    karte.className = 'karte statistik__stat-karte statistik__stat-karte--klickbar';
-    karte.innerHTML = `
-        <div class="statistik__stat-icon" style="color:${farbe}">
-            <span class="material-symbols-outlined">${icon}</span>
-        </div>
-        <div class="statistik__stat-wert">${esc(wert)}</div>
-        <div class="statistik__stat-label">${esc(label)}</div>
-    `;
-    return karte;
-}
-
-function _detail_toggle(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const war_sichtbar = !el.classList.contains('versteckt');
-
-    // Alle Detail-Sektionen schliessen
-    document.querySelectorAll('.fortschritt__detail-sektion').forEach(s => s.classList.add('versteckt'));
-
-    // Gewahlte Sektion oeffnen (wenn sie nicht bereits offen war)
-    if (!war_sichtbar) {
-        el.classList.remove('versteckt');
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-}
 
 // ============================================
 // Sprachniveau-Fortschritt
@@ -383,11 +443,6 @@ function _sprachniveau_rendern(wrapper, niveaus) {
     kartenTitel.textContent = t('fortschritt.sprachniveau');
     karte.appendChild(kartenTitel);
 
-    const hinweis = document.createElement('div');
-    hinweis.className = 'fortschritt__niveau-hinweis';
-    hinweis.textContent = t('fortschritt.niveau_hinweis');
-    karte.appendChild(hinweis);
-
     const liste = document.createElement('div');
     liste.className = 'fortschritt__niveau-liste';
 
@@ -404,10 +459,7 @@ function _sprachniveau_rendern(wrapper, niveaus) {
 
         const zahlen = document.createElement('span');
         zahlen.className = 'fortschritt__niveau-zahlen';
-        const dbHinweis = n.in_db < n.ziel
-            ? ` ${t('fortschritt.im_system', { anzahl: n.in_db })}`
-            : '';
-        zahlen.textContent = `${zahlFormatieren(n.gemeistert)} / ${zahlFormatieren(n.ziel)}${dbHinweis}`;
+        zahlen.textContent = `${zahlFormatieren(n.gemeistert)} / ${zahlFormatieren(n.in_db)}`;
 
         kopf.appendChild(label);
         kopf.appendChild(zahlen);
@@ -584,7 +636,7 @@ function _overlay_liste_rendern(inhalt, eintraege) {
         const text = document.createElement('div');
         text.className = 'fortschritt__overlay-item-text';
         text.innerHTML = `
-            <span class="fortschritt__overlay-schwedisch">${esc(e.schwedisch)}</span>
+            <span class="fortschritt__overlay-englisch">${esc(e.englisch)}</span>
             <span class="fortschritt__overlay-deutsch">${esc(e.deutsch)}</span>
         `;
 

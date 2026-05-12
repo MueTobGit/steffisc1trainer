@@ -6,7 +6,8 @@
  */
 
 import { esc } from '../hilfs-funktionen.js';
-import { vorlesen, tts_verfuegbar } from '../dienste/sprach-dienst.js';
+const vorlesen = () => {};
+const tts_verfuegbar = () => false;
 import { apiGet, apiPost } from '../api-client.js';
 import { t } from '../dienste/sprache.js';
 
@@ -81,10 +82,6 @@ export function frage_anzeige_erstellen(frage, optionen = {}) {
         meta.dataset.wortart = frage.vokabel_wortart.toLowerCase();
         kopf_rechts.appendChild(meta);
 
-        // Grammatik-Button im Header — immer für Nomen/Verb/Adjektiv bei Vokabel-Fragen
-        if (frage.typ === 'vokabel' && _GRAMMATIK_WORTARTEN.has(frage.vokabel_wortart)) {
-            kopf_rechts.appendChild(_grammatik_icon_button(frage.grammatik_regel_id ?? null, '1.2rem'));
-        }
     }
 
     // Beenden-Button (X)
@@ -303,11 +300,6 @@ function _eingabe_modus(container, frage, onAntwort) {
             hint_zeile.appendChild(stichwort_el);
         }
 
-        // Grammatik-Symbol — immer für Nomen/Verb/Adjektiv
-        if (_GRAMMATIK_WORTARTEN.has(frage.vokabel_wortart)) {
-            hint_zeile.appendChild(_grammatik_icon_button(frage.grammatik_regel_id ?? null, '1.1rem'));
-        }
-
         // Hint-Button für den deutschen Satz
         if (frage.kontext) {
             const hint_btn = document.createElement('button');
@@ -341,10 +333,6 @@ function _eingabe_modus(container, frage, onAntwort) {
         hinweis.textContent = frage.hinweis;
         frage_bereich.appendChild(hinweis);
 
-        // Grammatik-Symbol bei Flexions-Hinweis — immer für Nomen/Verb/Adjektiv
-        if (frage.typ === 'flexion' && _GRAMMATIK_WORTARTEN.has(frage.vokabel_wortart)) {
-            hinweis.appendChild(_grammatik_icon_button(frage.grammatik_regel_id ?? null, '1.8rem'));
-        }
     }
 
     // TTS-Button

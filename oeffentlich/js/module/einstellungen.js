@@ -14,14 +14,12 @@ import { thema_anwenden } from '../komponenten/kopfzeile.js';
 import { navigieren } from '../router.js';
 import { apiFehlerAnzeigen } from '../benachrichtigungen.js';
 import { t } from '../dienste/sprache.js';
-import {
-    benachrichtigungen_verfuegbar,
-    berechtigung_anfragen,
-    uebungs_erinnerung_setzen,
-    streak_warnung_setzen,
-    konfig_laden,
-    alle_deaktivieren,
-} from '../dienste/android-benachrichtigungen.js';
+const benachrichtigungen_verfuegbar = () => false;
+const berechtigung_anfragen = async () => false;
+const uebungs_erinnerung_setzen = () => {};
+const streak_warnung_setzen = () => {};
+const konfig_laden = async () => null;
+const alle_deaktivieren = () => {};
 
 // ============================================
 // Konstanten

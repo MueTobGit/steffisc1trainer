@@ -5,9 +5,9 @@
  * POST /api/vokabeln/importieren_pruefen.php
  *
  * Parst das CSV und gibt zurueck:
- *   - duplikate: Vokabeln, die bereits in der DB existieren (schwedisch + wortart)
+ *   - duplikate: Vokabeln, die bereits in der DB existieren (englisch + wortart)
  *   - synonyme:  Vokabeln im CSV, deren deutsche Uebersetzung + Wortart bereits
- *                bei einem anderen schwedischen Wort vorhanden ist
+ *                bei einem anderen englischen Wort vorhanden ist
  *   - neu:       Anzahl wirklich neuer Vokabeln
  *
  * Nur Admin. Schreibt NICHTS in die DB.
@@ -56,7 +56,7 @@ if (!in_array('typ', $kopfzeile, true)) {
 $spalten = array_flip($kopfzeile);
 
 // CSV in V-Gruppen aufteilen (nur V-Zeilen relevant fuer Analyse)
-$vokabeln_csv = []; // [{schwedisch, deutsch, wortart, ...}]
+$vokabeln_csv = []; // [{englisch, deutsch, wortart, ...}]
 
 foreach ($zeilen as $zeile) {
     $felder = str_getcsv($zeile, ';');
@@ -70,16 +70,16 @@ foreach ($zeilen as $zeile) {
         continue;
     }
 
-    $schwedisch = $zeile_daten['schwedisch'] ?? '';
+    $englisch = $zeile_daten['englisch'] ?? '';
     $deutsch    = $zeile_daten['deutsch'] ?? '';
     $wortart    = ucfirst(mb_strtolower($zeile_daten['wortart'] ?? ''));
 
-    if ($schwedisch === '' || $deutsch === '' || $wortart === '') {
+    if ($englisch === '' || $deutsch === '' || $wortart === '') {
         continue;
     }
 
     $vokabeln_csv[] = [
-        'schwedisch' => $schwedisch,
+        'englisch' => $englisch,
         'deutsch'    => $deutsch,
         'wortart'    => $wortart,
     ];
@@ -100,16 +100,16 @@ $synonyme  = [];
 $neu       = 0;
 
 foreach ($vokabeln_csv as $vok) {
-    $schwedisch = $vok['schwedisch'];
+    $englisch = $vok['englisch'];
     $deutsch    = $vok['deutsch'];
     $wortart    = $vok['wortart'];
 
-    // 1. Duplikat-Check: schwedisch + wortart bereits als OEFFENTLICHE Vokabel vorhanden?
+    // 1. Duplikat-Check: englisch + wortart bereits als OEFFENTLICHE Vokabel vorhanden?
     // (Private Vokabeln einzelner User zählen nicht als Import-Duplikat)
     $stmt = $pdo->prepare(
-        'SELECT id, schwedisch, deutsch, wortart FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1'
+        'SELECT id, englisch, deutsch, wortart FROM vokabeln WHERE englisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1'
     );
-    $stmt->execute([$schwedisch, $wortart]);
+    $stmt->execute([$englisch, $wortart]);
     $bestehend = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($bestehend !== false) {
@@ -120,11 +120,11 @@ foreach ($vokabeln_csv as $vok) {
                             && !str_contains($db_deutsch_norm, $csv_deutsch_norm);
 
         $duplikate[] = [
-            'csv_schwedisch'      => $schwedisch,
+            'csv_englisch'      => $englisch,
             'csv_deutsch'         => $deutsch,
             'csv_wortart'         => $wortart,
             'db_id'               => (int) $bestehend['id'],
-            'db_schwedisch'       => $bestehend['schwedisch'],
+            'db_englisch'       => $bestehend['englisch'],
             'db_deutsch'          => $bestehend['deutsch'],
             'schein_duplikat'     => $schein_duplikat,
         ];
@@ -132,24 +132,24 @@ foreach ($vokabeln_csv as $vok) {
         continue;
     }
 
-    // 2. Synonym-Check: gleiche deutsche Uebersetzung + gleiche Wortart, anderes schwedisches Wort?
+    // 2. Synonym-Check: gleiche deutsche Uebersetzung + gleiche Wortart, anderes englisches Wort?
     // (Nur oeffentliche Vokabeln — private zaehlen nicht als Synonym-Kandidaten)
     $stmt = $pdo->prepare(
-        'SELECT id, schwedisch, deutsch, wortart FROM vokabeln
-         WHERE deutsch = ? AND wortart = ? AND schwedisch != ? AND ist_privat = 0
+        'SELECT id, englisch, deutsch, wortart FROM vokabeln
+         WHERE deutsch = ? AND wortart = ? AND englisch != ? AND ist_privat = 0
          LIMIT 5'
     );
-    $stmt->execute([$deutsch, $wortart, $schwedisch]);
+    $stmt->execute([$deutsch, $wortart, $englisch]);
     $synonym_kandidaten = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (!empty($synonym_kandidaten)) {
         foreach ($synonym_kandidaten as $syn) {
             $synonyme[] = [
-                'csv_schwedisch'  => $schwedisch,
+                'csv_englisch'  => $englisch,
                 'csv_deutsch'     => $deutsch,
                 'csv_wortart'     => $wortart,
                 'db_id'           => (int) $syn['id'],
-                'db_schwedisch'   => $syn['schwedisch'],
+                'db_englisch'   => $syn['englisch'],
                 'db_deutsch'      => $syn['deutsch'],
                 'db_wortart'      => $syn['wortart'],
             ];

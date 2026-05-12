@@ -3,9 +3,32 @@
  * API Antwort-Helfer
  *
  * Standardisierte JSON-Antworten fuer alle API-Endpoints.
+ * Ausgabepuffer + globaler Exception-Handler stellen sicher,
+ * dass PHP-Warnings oder uncaught Exceptions nie die JSON-Antwort korrumpieren.
  */
 
 declare(strict_types=1);
+
+// Ausgabe puffern — damit PHP-Notices/Warnings nicht vor das JSON gelangen
+ob_start();
+
+// Globaler Exception-Handler: uncaught Exceptions → JSON-Fehlerantwort statt HTML-Seite
+set_exception_handler(function (\Throwable $e): void {
+    while (ob_get_level() > 0) ob_end_clean();
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    error_log('[API uncaught] ' . get_class($e) . ': ' . $e->getMessage()
+        . ' in ' . $e->getFile() . ':' . $e->getLine());
+    echo json_encode([
+        'erfolg' => false,
+        'fehler' => [
+            'code'      => 'SERVERFEHLER',
+            'nachricht' => 'Interner Serverfehler.',
+            'debug'     => (ini_get('display_errors') ? $e->getMessage() : null),
+        ]
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+});
 
 /**
  * Erfolgs-Antwort senden
@@ -16,6 +39,7 @@ declare(strict_types=1);
  */
 function json_erfolg(mixed $daten = null, string $nachricht = '', int $status = 200): void
 {
+    while (ob_get_level() > 0) ob_end_clean();
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
 
@@ -43,6 +67,7 @@ function json_erfolg(mixed $daten = null, string $nachricht = '', int $status = 
  */
 function json_fehler(string $code, string $nachricht, int $status = 400, array $details = []): void
 {
+    while (ob_get_level() > 0) ob_end_clean();
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+  <!-- Navy background -->
+  <rect width="60" height="60" fill="#012169"/>
+  <!-- St Andrew white saltire -->
+  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#fff" stroke-width="12"/>
+  <!-- St Patrick red saltire (simplified) -->
+  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#C8102E" stroke-width="4"/>
+  <!-- St George white fimbriation -->
+  <rect x="22" y="0" width="16" height="60" fill="#fff"/>
+  <rect x="0" y="22" width="60" height="16" fill="#fff"/>
+  <!-- St George red cross -->
+  <rect x="25" y="0" width="10" height="60" fill="#C8102E"/>
+  <rect x="0" y="25" width="60" height="10" fill="#C8102E"/>
+</svg>

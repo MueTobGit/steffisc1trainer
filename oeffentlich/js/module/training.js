@@ -9,14 +9,12 @@
 import { apiGet, apiPost } from '../api-client.js';
 import { holen, setzen } from '../zustand.js';
 import { navigieren } from '../router.js';
-import { esc, levelLabel } from '../hilfs-funktionen.js';
+import { esc } from '../hilfs-funktionen.js';
 import { benachrichtigen, erfolg, fehler as fehlerToast, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 import { lade_anzeige_rendern, lade_anzeige_entfernen } from '../komponenten/lade-anzeige.js';
 import { leer_zustand_rendern } from '../komponenten/leer-zustand.js';
 import { frage_anzeige_erstellen } from '../komponenten/frage-anzeige.js';
 import { ergebnis_anzeige_erstellen } from '../komponenten/ergebnis-anzeige.js';
-import { sprach_dienst_init } from '../dienste/sprach-dienst.js';
-import { letztes_training_melden } from '../dienste/android-benachrichtigungen.js';
 import { interferenz_pruefen } from '../komponenten/interferenz-dialog.js';
 import { t } from '../dienste/sprache.js';
 
@@ -38,14 +36,13 @@ let _trotzdem_richtig_anzahl = 0; // Wie oft "Trotzdem richtig" in dieser Sitzun
 
 let _einstellungen = {
     modus: 'gemischt',
-    richtung: 'DS',
+    richtung: 'DE',
     lektion_ids: [],
     favoriten: false,
     nur_faellige: false,
     anzahl: 20,
     level: null,
-    autovorlesen: true,  // Standardmäßig aktiv beim Training
-    faellige_einmischen: true,  // Fällige Vokabeln aus anderen Lektionen
+    faellige_einmischen: true,
 };
 
 // Daten fuer Auswahl-Bildschirm
@@ -63,7 +60,6 @@ let _aufgaben_ids = new Set(); // IDs der Aufgaben-Lektionen (immer zugänglich,
  * Training-Modul rendern
  */
 export async function rendern(params) {
-    sprach_dienst_init();
 
     const inhalt = document.getElementById('inhalt');
     if (!inhalt) return;
@@ -120,12 +116,11 @@ export function aufraeumen() {
     _trotzdem_richtig_anzahl = 0;
     _einstellungen = {
         modus: 'gemischt',
-        richtung: 'DS',
+        richtung: 'DE',
         lektion_ids: [],
         favoriten: false,
         anzahl: 20,
         level: null,
-        autovorlesen: true,
         faellige_einmischen: true,
     };
     _kategorien = [];
@@ -150,10 +145,6 @@ const LS_KEY_GRUPPE = 'vt_training_letzte_gruppe';
 // ============================================
 
 async function _auswahl_rendern(wrapper) {
-    // Statistik fuer globales Level (vor dem Laden lesen)
-    const statistik = holen('statistik');
-    const globales_level = statistik?.globales_level || 1;
-
     wrapper.innerHTML = `
         <div class="lernmodus">
             <div class="verwaltung__kopf">
@@ -176,38 +167,21 @@ async function _auswahl_rendern(wrapper) {
                         <button type="button" class="training__chip ${_einstellungen.modus === 'satz' ? 'training__chip--aktiv' : ''}" data-wert="satz">
                             <span class="material-symbols-outlined">chat_bubble</span> ${t('training.modus_saetze')}
                         </button>
-                        <button type="button" class="training__chip ${_einstellungen.modus === 'flexion' ? 'training__chip--aktiv' : ''}" data-wert="flexion">
-                            <span class="material-symbols-outlined">schema</span> ${t('training.modus_flexionen')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.modus === 'grammatik' ? 'training__chip--aktiv' : ''}" data-wert="grammatik">
-                            <span class="material-symbols-outlined">abc</span> ${t('training.modus_grammatik')}
-                        </button>
                     </div>
                 </div>
 
                 <div class="training__option-gruppe" id="training-opt-richtung">
                     <div class="training__option-label">${t('training.richtung')}</div>
                     <div class="training__chips" data-name="richtung">
-                        <button type="button" class="training__chip ${_einstellungen.richtung === 'DS' ? 'training__chip--aktiv' : ''}" data-wert="DS">
-                            SV<span class="material-symbols-outlined">arrow_forward</span>DE
+                        <button type="button" class="training__chip ${_einstellungen.richtung === 'DE' ? 'training__chip--aktiv' : ''}" data-wert="DE">
+                            DE<span class="material-symbols-outlined">arrow_forward</span>EN
                         </button>
-                        <button type="button" class="training__chip ${_einstellungen.richtung === 'SD' ? 'training__chip--aktiv' : ''}" data-wert="SD">
-                            SV<span class="material-symbols-outlined">arrow_back</span>DE
+                        <button type="button" class="training__chip ${_einstellungen.richtung === 'ED' ? 'training__chip--aktiv' : ''}" data-wert="ED">
+                            EN<span class="material-symbols-outlined">arrow_forward</span>DE
                         </button>
                         <button type="button" class="training__chip ${_einstellungen.richtung === 'beides' ? 'training__chip--aktiv' : ''}" data-wert="beides">
-                            SV<span class="material-symbols-outlined">swap_horiz</span>DE
+                            DE<span class="material-symbols-outlined">swap_horiz</span>EN
                         </button>
-                    </div>
-                </div>
-
-                <div class="training__option-gruppe" id="training-opt-level">
-                    <div class="training__option-label">
-                        ${t('training.schwierigkeitsgrad')} <strong id="training-level-wert">${_einstellungen.level ? _einstellungen.level + ' · ' + levelLabel(_einstellungen.level) : t('training.level_auto') + ' (' + globales_level + ')'}</strong>
-                    </div>
-                    <input type="range" class="training__slider" id="training-level-slider"
-                        min="0" max="5" step="1" value="${_einstellungen.level || 0}">
-                    <div class="training__slider-labels">
-                        <span>${t('training.level_auto')}</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                     </div>
                 </div>
 
@@ -221,21 +195,6 @@ async function _auswahl_rendern(wrapper) {
                         <span>5</span><span>10</span><span>15</span><span>20</span><span>25</span>
                         <span>30</span><span>35</span><span>40</span><span>45</span><span>50</span>
                     </div>
-                </div>
-
-                <div class="training__option-gruppe training__option-gruppe--toggle">
-                    <label class="training__toggle-label" id="training-opt-autovorlesen">
-                        <span class="training__toggle-wrapper">
-                            <input type="checkbox" class="training__toggle-input" id="training-autovorlesen"
-                                ${_einstellungen.autovorlesen ? 'checked' : ''}>
-                            <span class="training__toggle-track"></span>
-                        </span>
-                        <span class="training__toggle-text">
-                            <span class="material-symbols-outlined training__toggle-icon">volume_up</span>
-                            ${t('training.vorlesen')}
-                        </span>
-                        <span class="training__toggle-hinweis">${t('training.vorlesen_hinweis')}</span>
-                    </label>
                 </div>
 
                 <div class="training__option-gruppe training__option-gruppe--toggle">
@@ -275,27 +234,17 @@ async function _auswahl_rendern(wrapper) {
     // Daten parallel laden
     try {
         const benutzer = holen('benutzer');
-        const apiPromises = [
+        const [kat_erg, lek_erg, fav_erg] = await Promise.all([
             apiGet('kategorien/liste.php'),
-            apiGet('lektionen/liste.php', { pro_seite: 100 }),
+            apiGet('themenfelder/liste.php', { pro_seite: 500 }),
             apiGet('favoriten/laden.php'),
-        ];
-        apiPromises.push(apiGet('lektionen/lernpfad.php'));
-
-        const [kat_erg, lek_erg, fav_erg, lp_erg] = await Promise.all(apiPromises);
+        ]);
 
         _kategorien = kat_erg.erfolg ? kat_erg.daten : [];
         _lektionen = lek_erg.erfolg ? (lek_erg.daten?.eintraege || lek_erg.daten || []) : [];
         _favoriten_anzahl = fav_erg.erfolg ? (Array.isArray(fav_erg.daten) ? fav_erg.daten.length : 0) : 0;
-
-        // Lernpfad-Map aufbauen (Freischalt-Status je Lektion)
-        if (lp_erg?.erfolg && Array.isArray(lp_erg.daten?.lektionen)) {
-            _lernpfad_map = new Map(lp_erg.daten.lektionen.map(l => [l.id, l]));
-            _aufgaben_ids = new Set((lp_erg.daten.aufgegebene_lektionen || []).map(l => l.id));
-        } else {
-            _lernpfad_map = null;
-            _aufgaben_ids = new Set();
-        }
+        _lernpfad_map = null;
+        _aufgaben_ids = new Set();
     } catch (e) {
         console.error('Training Daten laden fehlgeschlagen:', e);
     }
@@ -319,17 +268,6 @@ async function _auswahl_rendern(wrapper) {
     if (slider) {
         slider.addEventListener('input', () => {
             anzahl_wert.textContent = slider.value;
-        });
-    }
-
-    const level_slider = wrapper.querySelector('#training-level-slider');
-    const level_wert = wrapper.querySelector('#training-level-wert');
-    if (level_slider) {
-        level_slider.addEventListener('input', () => {
-            const v = parseInt(level_slider.value);
-            level_wert.textContent = v === 0
-                ? `${t('training.level_auto')} (${globales_level})`
-                : `${v} · ${levelLabel(v)}`;
         });
     }
 
@@ -647,10 +585,6 @@ function _einstellungen_lesen(wrapper) {
     const fav_cb = wrapper.querySelector('#training-favoriten');
     _einstellungen.favoriten = fav_cb?.checked || false;
 
-    // Autovorlesen
-    const av_cb = wrapper.querySelector('#training-autovorlesen');
-    _einstellungen.autovorlesen = av_cb?.checked || false;
-
     // Fällige Vokabeln einmischen
     const fael_cb = wrapper.querySelector('#training-faellige');
     _einstellungen.faellige_einmischen = fael_cb?.checked ?? true;
@@ -669,7 +603,7 @@ async function _training_starten(wrapper) {
     const startPayload = {
         modus: _einstellungen.modus,
         richtung: _einstellungen.richtung,
-        lektion_ids: _einstellungen.lektion_ids,
+        themenfeld_ids: _einstellungen.lektion_ids,
         favoriten: _einstellungen.favoriten,
         nur_faellige: _einstellungen.nur_faellige,
         anzahl: _einstellungen.anzahl,
@@ -837,9 +771,6 @@ function _grammatik_frage_rendern(frage, wrapper) {
         <div class="grammatik-aufgabe__frage">${frage_titel}</div>
         <div class="grammatik-aufgabe__buttons" id="grammatik-buttons"></div>
         <div class="grammatik-aufgabe__feedback" id="grammatik-feedback" style="display:none"></div>
-        ${frage.grammatik_regel_id ? `<button type="button" class="grammatik-aufgabe__regel-link" id="grammatik-regel-btn">
-            <span class="material-symbols-outlined">info</span> ${t('training.grammatikregel')}
-        </button>` : ''}
         <button type="button" class="grammatik-aufgabe__weiter" id="grammatik-weiter" style="display:none">
             ${t('allgemein.weiter')} <span class="material-symbols-outlined">arrow_forward</span>
         </button>
@@ -855,17 +786,6 @@ function _grammatik_frage_rendern(frage, wrapper) {
         btn.addEventListener('click', () => _grammatik_option_gewaehlt(option, frage, el, wrapper));
         buttons_container.appendChild(btn);
     });
-
-    // Grammatikregel-Link
-    const regel_btn = el.querySelector('#grammatik-regel-btn');
-    if (regel_btn) {
-        regel_btn.addEventListener('click', () => {
-            // Existierendes Grammatik-Popup nutzen (analog zu frage-anzeige.js)
-            document.dispatchEvent(new CustomEvent('grammatik_regel_popup', {
-                detail: { regel_id: frage.grammatik_regel_id }
-            }));
-        });
-    }
 
     wrapper.appendChild(el);
 }
@@ -1052,24 +972,6 @@ async function _fragen_abgeschlossen(wrapper) {
     }
 
     _zusammenfassung = ergebnis.daten;
-
-    // Statistik im Store aktualisieren
-    const zf = ergebnis.daten.zusammenfassung;
-    const aktuelle_statistik = holen('statistik') || {};
-    setzen('statistik', {
-        ...aktuelle_statistik,
-        xp: zf.xp_gesamt,
-        streak_tage: zf.streak_tage,
-        bronze_sterne: zf.sterne?.bronze || aktuelle_statistik.bronze_sterne,
-        silber_sterne: zf.sterne?.silber || aktuelle_statistik.silber_sterne,
-        gold_sterne: zf.sterne?.gold || aktuelle_statistik.gold_sterne,
-        globales_level: ergebnis.daten.level_aufstieg
-            ? ergebnis.daten.level_aufstieg.nach
-            : (aktuelle_statistik.globales_level || 1),
-    });
-
-    // Letztes Training an Android melden (für Benachrichtigungs-Unterdrückung)
-    letztes_training_melden();
 
     _ansicht = 'zusammenfassung';
     rendern();

@@ -24,11 +24,7 @@ declare(strict_types=1);
  */
 function eigene_gruppen_ids(PDO $pdo, int $benutzer_id): array
 {
-    $stmt = $pdo->prepare(
-        'SELECT gruppen_id FROM gruppen_mitglieder WHERE benutzer_id = ?'
-    );
-    $stmt->execute([$benutzer_id]);
-    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    return []; // Kein Gruppen-Feature im C1-Trainer
 }
 
 /**
@@ -85,9 +81,9 @@ function sichtbarkeits_bedingung(
     if ($alias === 'v') {
         $platzhalter2 = implode(',', array_fill(0, count($gruppen_ids), '?'));
         $lektion_sub  = " OR {$alias}.id IN (
-            SELECT lv.vokabel_id FROM lektion_vokabeln lv
-            JOIN lektionen l ON l.id = lv.lektion_id
-            WHERE l.gruppen_id IN ({$platzhalter2}) AND l.aktiv = 1
+            SELECT tv.vokabel_id FROM themenfeld_vokabeln tv
+            JOIN themenfelder t ON t.id = tv.themenfeld_id
+            WHERE t.gruppen_id IN ({$platzhalter2}) AND t.aktiv = 1
         )";
         $lektion_params = $gruppen_ids;
     }

@@ -57,9 +57,7 @@ $sql = "
     SELECT
         b.id, b.benutzername, b.vorname, b.nachname, b.email, b.spitzname,
         b.rolle, b.aktiv, b.letzter_login, b.erstellt_am,
-        COALESCE(s.xp, 0) AS xp,
-        COALESCE(s.globales_level, 1) AS globales_level,
-        COALESCE(s.streak_tage, 0) AS streak_tage
+        COALESCE(s.gesamt_trainings, 0) AS gesamt_trainings
     FROM benutzer b
     LEFT JOIN benutzer_statistik s ON s.benutzer_id = b.id
     {$where}
@@ -76,10 +74,8 @@ $eintraege = $stmt->fetchAll();
 
 foreach ($eintraege as &$e) {
     $e['id'] = (int) $e['id'];
-    $e['aktiv'] = (bool) $e['aktiv'];
-    $e['xp'] = (int) $e['xp'];
-    $e['globales_level'] = (int) $e['globales_level'];
-    $e['streak_tage'] = (int) $e['streak_tage'];
+    $e['aktiv']             = (bool) $e['aktiv'];
+    $e['gesamt_trainings']  = (int) $e['gesamt_trainings'];
 }
 unset($e);
 

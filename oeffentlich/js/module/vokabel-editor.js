@@ -1,8 +1,8 @@
 /**
  * Vokabel-Editor — Erstellen / Bearbeiten
  *
- * Dynamische Wortart-Felder, Formen, Synonyme, Saetze inline.
- * Komplexestes Frontend-Modul.
+ * Tab-Reihenfolge: englisch → deutsch → wortart → Speichern&Nächste → Speichern → Abbrechen → sekundäre Felder
+ * Neu-Modus: Kategorie, Sprachniveau und Themenfeld aus letzter Eingabe vorbelegen.
  */
 
 import { apiGet, apiPost, apiPut } from '../api-client.js';
@@ -13,47 +13,23 @@ import { t } from '../dienste/sprache.js';
 import { lade_anzeige_rendern } from '../komponenten/lade-anzeige.js';
 import { erfolg, fehler, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 
-// Wortart → Formen-Felder (Funktion, da t() erst nach Sprach-Init verfuegbar)
-function _wortart_formen() {
-    return {
-        Nomen: [
-            { key: 'unbestimmt_singular', label: t('vokabel_editor.form_unbestimmt_sg'), beispiel: 'en hund' },
-            { key: 'bestimmt_singular', label: t('vokabel_editor.form_bestimmt_sg'), beispiel: 'hunden' },
-            { key: 'unbestimmt_plural', label: t('vokabel_editor.form_unbestimmt_pl'), beispiel: 'hundar' },
-            { key: 'bestimmt_plural', label: t('vokabel_editor.form_bestimmt_pl'), beispiel: 'hundarna' },
-        ],
-        Verb: [
-            { key: 'infinitiv', label: t('vokabel_editor.form_infinitiv'), beispiel: 'tala' },
-            { key: 'praesens', label: t('vokabel_editor.form_praesens'), beispiel: 'talar' },
-            { key: 'praeteritum', label: t('vokabel_editor.form_praeteritum'), beispiel: 'talade' },
-            { key: 'supinum', label: t('vokabel_editor.form_supinum'), beispiel: 'talat' },
-            { key: 'imperativ', label: t('vokabel_editor.form_imperativ'), beispiel: 'tala!' },
-            { key: 'perfekt_partizip', label: t('vokabel_editor.form_perfekt_partizip'), beispiel: 'talad' },
-        ],
-        Adjektiv: [
-            { key: 'grundform', label: t('vokabel_editor.form_grundform'), beispiel: 'stor' },
-            { key: 'komparativ', label: t('vokabel_editor.form_komparativ'), beispiel: 'stoerre' },
-            { key: 'superlativ', label: t('vokabel_editor.form_superlativ'), beispiel: 'stoerst' },
-            { key: 'bestimmte_form', label: t('vokabel_editor.form_bestimmte'), beispiel: 'stora' },
-            { key: 'neutrum_form', label: t('vokabel_editor.form_neutrum'), beispiel: 'stort' },
-        ],
-    };
-}
+// LS-Keys für gemerkerte Werte
+const LS_KATEGORIE   = 'vt_vok_kategorie';
+const LS_NIVEAU      = 'vt_vok_niveau';
+const LS_THEMENFELD  = 'vt_vok_themenfeld';
 
-let _modus = 'neu'; // 'neu' oder 'bearbeiten'
+let _modus = 'neu'; // 'neu' | 'bearbeiten'
 let _vokabelId = null;
 let _vokabelDaten = null;
 let _synonyme = [];
 let _kategorien = [];
+let _themenfelder = [];
+let _naechste = false; // Flag: "Speichern und nächste" wurde gedrückt
 
-/**
- * Modul rendern
- */
 export async function rendern(params = {}) {
     const container = document.getElementById('inhalt');
     if (!container) return;
 
-    // Modus erkennen
     if (params.id) {
         _modus = 'bearbeiten';
         _vokabelId = parseInt(params.id, 10);
@@ -66,11 +42,18 @@ export async function rendern(params = {}) {
 
     lade_anzeige_rendern(container);
 
-    // Kategorien laden
-    const katErgebnis = await apiGet('kategorien/liste.php');
-    if (katErgebnis.erfolg) {
-        _kategorien = katErgebnis.daten || [];
-    }
+    // Kategorien + Themenfelder parallel laden
+    const admin = ist_admin();
+    const [katErg, tfErg] = await Promise.all([
+        admin ? apiGet('kategorien/liste.php') : Promise.resolve({ erfolg: false }),
+        apiGet('themenfelder/liste.php', {
+            pro_seite: 500,
+            ...(admin ? {} : { nur_privat: '1' }),
+        }),
+    ]);
+
+    _kategorien  = katErg.erfolg ? (katErg.daten || []) : [];
+    _themenfelder = tfErg.erfolg ? (tfErg.daten?.eintraege || []) : [];
 
     // Bei Bearbeiten: Vokabel laden
     if (_modus === 'bearbeiten') {
@@ -83,10 +66,9 @@ export async function rendern(params = {}) {
         _vokabelDaten = ergebnis.daten;
         _synonyme = _vokabelDaten.synonyme || [];
 
-        // Berechtigungspruefung: Nur Admin oder Besitzer der eigenen privaten Vokabel
         const benutzer = holen('benutzer');
         const istEigenePrivate = _vokabelDaten.ist_privat && _vokabelDaten.besitzer_id === benutzer?.id;
-        if (!ist_admin() && !istEigenePrivate) {
+        if (!admin && !istEigenePrivate) {
             fehler(t('vokabel_editor.keine_berechtigung') || 'Diese Vokabel kann nur von Administratoren bearbeitet werden.');
             navigieren('/vokabeln');
             return;
@@ -94,33 +76,31 @@ export async function rendern(params = {}) {
     }
 
     _formular_rendern(container);
-
-    // Lektionen-Dropdown befuellen (nur Non-Admin)
-    if (!ist_admin()) {
-        const lekErg = await apiGet('lektionen/liste.php?nur_privat=1&pro_seite=200&nur_aktive=1');
-        const lekSelect = document.getElementById('ed-lektion');
-        if (lekErg.erfolg && lekSelect) {
-            for (const l of (lekErg.daten?.eintraege || [])) {
-                const opt = document.createElement('option');
-                opt.value = l.id;
-                opt.textContent = l.titel + (l.vokabel_anzahl > 0 ? ` (${l.vokabel_anzahl})` : '');
-                lekSelect.appendChild(opt);
-            }
-        }
-    }
 }
 
-/**
- * Formular rendern
- */
 function _formular_rendern(container) {
+    const admin = ist_admin();
     const v = _vokabelDaten || {};
-    const titel = _modus === 'neu' ? t('vokabel_editor.titel_neu') : t('vokabel_editor.titel_bearbeiten', {wort: v.schwedisch || t('vokabel_liste.titel')});
+    const titel = _modus === 'neu'
+        ? t('vokabel_editor.titel_neu')
+        : t('vokabel_editor.titel_bearbeiten', { wort: v.englisch || t('vokabel_liste.titel') });
+
+    // Gemerkte Werte (nur im Neu-Modus)
+    const letzteKat    = _modus === 'neu' ? (localStorage.getItem(LS_KATEGORIE) || '')  : '';
+    const letztesNiv   = _modus === 'neu' ? (localStorage.getItem(LS_NIVEAU)    || 'C1') : (v.sprachniveau || 'C1');
+    const letztesTf    = _modus === 'neu' ? (localStorage.getItem(LS_THEMENFELD) || '') : '';
+
+    // Themenfeld-Optionen
+    const tfOptionen = _themenfelder.map(tf =>
+        `<option value="${tf.id}" ${((_modus === 'neu' ? letztesTf : String(v.themenfeld_id || '')) === String(tf.id)) ? 'selected' : ''}>
+            ${esc(tf.titel)}${tf.kategorie_name ? ' · ' + esc(tf.kategorie_name) : ''}
+        </option>`
+    ).join('');
 
     container.innerHTML = `
         <div class="editor-formular">
             <div class="editor-formular__kopf">
-                <button class="btn btn--text" id="btn-zurueck">
+                <button class="btn btn--text" id="btn-zurueck" tabindex="-1">
                     <span class="material-symbols-outlined" style="font-size:20px">arrow_back</span>
                     ${t('vokabel_editor.zurueck')}
                 </button>
@@ -128,77 +108,72 @@ function _formular_rendern(container) {
             </div>
 
             <form id="vokabel-form" class="editor-formular__inhalt">
-                <!-- Grunddaten -->
+                <!-- Primäre Pflichtfelder -->
                 <fieldset class="editor-formular__abschnitt">
                     <legend>${t('vokabel_editor.grunddaten')}</legend>
 
                     <div class="editor-formular__reihe">
                         <div class="formular-gruppe">
-                            <label class="formular-label" for="ed-schwedisch">${t('vokabel_editor.schwedisch')}</label>
-                            <input class="eingabe" type="text" id="ed-schwedisch" name="schwedisch"
-                                value="${esc(v.schwedisch || '')}" required placeholder="${t('vokabel_editor.schwedisch_placeholder')}">
+                            <label class="formular-label" for="ed-englisch">Englisch</label>
+                            <input class="eingabe" type="text" id="ed-englisch" name="englisch"
+                                value="${esc(v.englisch || '')}" required tabindex="1"
+                                placeholder="z.B. to accomplish" autocomplete="off">
                         </div>
                         <div class="formular-gruppe">
                             <label class="formular-label" for="ed-deutsch">${t('vokabel_editor.deutsch')}</label>
                             <input class="eingabe" type="text" id="ed-deutsch" name="deutsch"
-                                value="${esc(v.deutsch || '')}" required placeholder="${t('vokabel_editor.deutsch_placeholder')}">
+                                value="${esc(v.deutsch || '')}" required tabindex="2"
+                                placeholder="${t('vokabel_editor.deutsch_placeholder')}" autocomplete="off">
                         </div>
                     </div>
 
                     <div class="editor-formular__reihe">
                         <div class="formular-gruppe">
                             <label class="formular-label" for="ed-wortart">${t('vokabel_editor.wortart')}</label>
-                            <select class="eingabe" id="ed-wortart" name="wortart" required>
+                            <select class="eingabe" id="ed-wortart" name="wortart" required tabindex="3">
                                 <option value="">${t('vokabel_editor.waehlen')}</option>
                                 ${['Nomen','Verb','Adjektiv','Adverb','Pronomen','Praeposition','Konjunktion','Interjektion','Phrase']
                                     .map(w => `<option value="${w}" ${v.wortart === w ? 'selected' : ''}>${w}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="formular-gruppe">
-                            <label class="formular-label" for="ed-sprachniveau">${t('vokabel_editor.sprachniveau')}</label>
-                            <select class="eingabe" id="ed-sprachniveau" name="sprachniveau">
-                                ${['A1','A2','B1','B2','C1','C2']
-                                    .map(n => `<option value="${n}" ${(v.sprachniveau || 'A1') === n ? 'selected' : ''}>${n}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="editor-formular__reihe" id="wortart-spezifisch">
-                        <!-- Genus/Verbgruppe (dynamisch) -->
-                    </div>
-
-                    ${ist_admin() ? `
-                    <div class="editor-formular__reihe">
-                        <div class="formular-gruppe">
-                            <label class="formular-label" for="ed-kategorie">${t('vokabel_editor.kategorie')}</label>
-                            <select class="eingabe" id="ed-kategorie" name="kategorie_id">
-                                <option value="">${t('vokabel_editor.keine_kategorie')}</option>
-                            </select>
-                        </div>
-                    </div>
-                    ` : `
-                    <div class="editor-formular__reihe">
-                        <div class="formular-gruppe">
-                            <label class="formular-label" for="ed-lektion">${t('vokabel_editor.lektion')}</label>
-                            <select class="eingabe" id="ed-lektion" name="lektion_id">
-                                <option value="">${t('vokabel_editor.keine_lektion')}</option>
-                            </select>
-                        </div>
-                    </div>
-                    `}
-
-                    <div class="formular-gruppe">
-                        <label class="formular-label" for="ed-notizen">${t('vokabel_editor.notizen')}</label>
-                        <textarea class="eingabe" id="ed-notizen" name="notizen" rows="2"
-                            placeholder="${t('vokabel_editor.notizen_placeholder')}">${esc(v.notizen || '')}</textarea>
                     </div>
                 </fieldset>
 
-                <!-- Formen -->
-                <fieldset class="editor-formular__abschnitt" id="formen-abschnitt">
-                    <legend>${t('vokabel_editor.formen')}</legend>
-                    <div id="formen-bereich">
-                        <!-- Dynamisch je Wortart -->
+                <!-- Sekundäre Felder -->
+                <fieldset class="editor-formular__abschnitt">
+                    <legend>${t('vokabel_editor.weitere_angaben')}</legend>
+
+                    <div class="editor-formular__reihe">
+                        <div class="formular-gruppe">
+                            <label class="formular-label" for="ed-sprachniveau">${t('vokabel_editor.sprachniveau')}</label>
+                            <select class="eingabe" id="ed-sprachniveau" name="sprachniveau" tabindex="7">
+                                ${['A1','A2','B1','B2','C1','C2']
+                                    .map(n => `<option value="${n}" ${letztesNiv === n ? 'selected' : ''}>${n}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        ${admin ? `
+                        <div class="formular-gruppe">
+                            <label class="formular-label" for="ed-kategorie">${t('vokabel_editor.kategorie')}</label>
+                            <select class="eingabe" id="ed-kategorie" name="kategorie_id" tabindex="8">
+                                <option value="">${t('vokabel_editor.keine_kategorie')}</option>
+                            </select>
+                        </div>
+                        ` : ''}
+
+                        <div class="formular-gruppe">
+                            <label class="formular-label" for="ed-themenfeld">${t('vokabel_editor.themenfeld')}</label>
+                            <select class="eingabe" id="ed-themenfeld" name="themenfeld_id" tabindex="9">
+                                <option value="">${t('vokabel_editor.kein_themenfeld')}</option>
+                                ${tfOptionen}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="formular-gruppe">
+                        <label class="formular-label" for="ed-notizen">${t('vokabel_editor.notizen')}</label>
+                        <textarea class="eingabe" id="ed-notizen" name="notizen" rows="2" tabindex="10"
+                            placeholder="${t('vokabel_editor.notizen_placeholder')}">${esc(v.notizen || '')}</textarea>
                     </div>
                 </fieldset>
 
@@ -206,74 +181,79 @@ function _formular_rendern(container) {
                 <fieldset class="editor-formular__abschnitt">
                     <legend>${t('vokabel_editor.synonyme')}</legend>
                     <div id="synonyme-bereich"></div>
-                    <button type="button" class="btn btn--text" id="btn-synonym-hinzufuegen">
+                    <button type="button" class="btn btn--text" id="btn-synonym-hinzufuegen" tabindex="-1">
                         <span class="material-symbols-outlined" style="font-size:18px">add</span>
                         ${t('vokabel_editor.synonym_hinzufuegen')}
                     </button>
                 </fieldset>
 
-                <!-- Aktionen -->
-                <div class="editor-formular__aktionen">
-                    <button type="button" class="btn btn--text" id="btn-abbrechen">${t('allgemein.abbrechen')}</button>
-                    <button type="submit" class="btn btn--gefuellt" id="btn-speichern">
+                <!-- Aktionen — visuell unten, Tab-Reihenfolge 4/5/6 via tabindex -->
+                <div class="editor-formular__aktionen" id="aktionen-unten">
+                    ${_modus === 'neu' ? `
+                    <button type="button" class="btn btn--gefuellt" id="btn-speichern-naechste" tabindex="4">
+                        <span class="material-symbols-outlined" style="font-size:20px">save</span>
+                        ${t('vokabel_editor.speichern_und_naechste')}
+                    </button>
+                    ` : ''}
+                    <button type="submit" class="btn ${_modus === 'neu' ? 'btn--umrandet' : 'btn--gefuellt'}" id="btn-speichern" tabindex="5">
                         <span class="material-symbols-outlined" style="font-size:20px">save</span>
                         ${t('allgemein.speichern')}
                     </button>
+                    <button type="button" class="btn btn--text" id="btn-abbrechen" tabindex="6">${t('allgemein.abbrechen')}</button>
                 </div>
             </form>
         </div>
     `;
 
-    // Kategorien befuellen (nur Admin)
-    if (ist_admin()) {
-        _kategorien_select_befuellen();
+    // Kategorien-Select befüllen (nur Admin)
+    if (admin) {
+        _kategorien_select_befuellen(letzteKat);
     }
 
-    // Wortart-spezifische Felder
-    _wortart_felder_aktualisieren();
-
-    // Formen laden (bei Bearbeiten)
-    _formen_rendern();
-
-    // Synonyme rendern
     _synonyme_rendern();
 
     // Event-Listener
     document.getElementById('btn-zurueck')?.addEventListener('click', () => navigieren('/vokabeln'));
     document.getElementById('btn-abbrechen')?.addEventListener('click', () => navigieren('/vokabeln'));
 
-    document.getElementById('ed-wortart')?.addEventListener('change', () => {
-        _wortart_felder_aktualisieren();
-        _formen_rendern();
-    });
-
     document.getElementById('btn-synonym-hinzufuegen')?.addEventListener('click', () => {
         _synonyme.push({ synonym: '', sprache: 'de' });
         _synonyme_rendern();
     });
 
-    document.getElementById('vokabel-form')?.addEventListener('submit', _speichern);
+    document.getElementById('btn-speichern-naechste')?.addEventListener('click', () => {
+        _naechste = true;
+        document.getElementById('vokabel-form')?.requestSubmit();
+    });
+
+    document.getElementById('vokabel-form')?.addEventListener('submit', e => {
+        if (!_naechste) {
+            // normaler Submit: _naechste bleibt false
+        }
+        _speichern(e);
+    });
+
+    // Englisch-Feld fokussieren
+    document.getElementById('ed-englisch')?.focus();
 }
 
-/**
- * Kategorien-Select befuellen
- */
-function _kategorien_select_befuellen() {
+function _kategorien_select_befuellen(letzteKat = '') {
     const select = document.getElementById('ed-kategorie');
     if (!select) return;
 
-    const aktuelleKat = _vokabelDaten?.kategorie_id;
+    const aktuelleKat = _vokabelDaten?.kategorie_id
+        ? String(_vokabelDaten.kategorie_id)
+        : letzteKat;
 
     function _optionen(kategorien, prefix = '') {
         for (const kat of kategorien) {
             const option = document.createElement('option');
             option.value = kat.id;
             option.textContent = prefix + kat.name;
-            if (kat.id === aktuelleKat) option.selected = true;
+            if (String(kat.id) === aktuelleKat) option.selected = true;
             select.appendChild(option);
-
-            if (kat.kinder && kat.kinder.length > 0) {
-                _optionen(kat.kinder, prefix + '\u00A0\u00A0\u00A0');
+            if (kat.kinder?.length > 0) {
+                _optionen(kat.kinder, prefix + '   ');
             }
         }
     }
@@ -281,93 +261,6 @@ function _kategorien_select_befuellen() {
     _optionen(_kategorien);
 }
 
-/**
- * Wortart-spezifische Felder (Genus/Verbgruppe) aktualisieren
- */
-function _wortart_felder_aktualisieren() {
-    const container = document.getElementById('wortart-spezifisch');
-    if (!container) return;
-
-    const wortart = document.getElementById('ed-wortart')?.value || '';
-    const v = _vokabelDaten || {};
-
-    if (wortart === 'Nomen') {
-        container.innerHTML = `
-            <div class="formular-gruppe">
-                <label class="formular-label" for="ed-genus">${t('vokabel_editor.genus')}</label>
-                <select class="eingabe" id="ed-genus" name="genus" required>
-                    <option value="">${t('vokabel_editor.waehlen')}</option>
-                    <option value="en" ${v.genus === 'en' ? 'selected' : ''}>en (utrum)</option>
-                    <option value="ett" ${v.genus === 'ett' ? 'selected' : ''}>ett (neutrum)</option>
-                </select>
-            </div>
-        `;
-    } else if (wortart === 'Verb') {
-        container.innerHTML = `
-            <div class="formular-gruppe">
-                <label class="formular-label" for="ed-verbgruppe">${t('vokabel_editor.verbgruppe')}</label>
-                <select class="eingabe" id="ed-verbgruppe" name="verbgruppe" required>
-                    <option value="">${t('vokabel_editor.waehlen')}</option>
-                    ${['1','2a','2b','3','4','deponens'].map(g =>
-                        `<option value="${g}" ${v.verbgruppe === g ? 'selected' : ''}>${t('vokabel_editor.verbgruppe_option', {g})}</option>`
-                    ).join('')}
-                </select>
-            </div>
-        `;
-    } else {
-        container.innerHTML = '';
-    }
-}
-
-/**
- * Formen-Felder rendern (abhaengig von Wortart)
- */
-function _formen_rendern() {
-    const bereich = document.getElementById('formen-bereich');
-    const abschnitt = document.getElementById('formen-abschnitt');
-    if (!bereich) return;
-
-    const wortart = document.getElementById('ed-wortart')?.value || '';
-    const formenDefinition = _wortart_formen()[wortart];
-
-    if (!formenDefinition) {
-        if (abschnitt) abschnitt.style.display = 'none';
-        bereich.innerHTML = '';
-        return;
-    }
-
-    if (abschnitt) abschnitt.style.display = '';
-
-    // Bestehende Formen-Werte
-    const bestehendeFormen = {};
-    if (_vokabelDaten?.formen) {
-        for (const f of _vokabelDaten.formen) {
-            bestehendeFormen[f.form_bezeichnung] = f.form_wert;
-        }
-    }
-
-    let html = '<div class="editor-formular__formen-grid">';
-
-    for (const form of formenDefinition) {
-        const wert = bestehendeFormen[form.key] || '';
-        html += `
-            <div class="formular-gruppe">
-                <label class="formular-label" for="form-${form.key}">${esc(form.label)}</label>
-                <input class="eingabe" type="text" id="form-${form.key}"
-                    data-form="${form.key}"
-                    value="${esc(wert)}"
-                    placeholder="${esc(form.beispiel)}">
-            </div>
-        `;
-    }
-
-    html += '</div>';
-    bereich.innerHTML = html;
-}
-
-/**
- * Synonyme rendern
- */
 function _synonyme_rendern() {
     const bereich = document.getElementById('synonyme-bereich');
     if (!bereich) return;
@@ -381,15 +274,16 @@ function _synonyme_rendern() {
     _synonyme.forEach((syn, index) => {
         html += `
             <div class="editor-formular__synonym-reihe" data-index="${index}">
-                <input class="eingabe eingabe--klein" type="text"
+                <input class="eingabe eingabe--klein" type="text" tabindex="-1"
                     data-synonym-index="${index}"
                     value="${esc(syn.synonym)}"
                     placeholder="${t('vokabel_editor.synonym_placeholder')}">
-                <select class="eingabe eingabe--klein" data-synonym-sprache="${index}">
-                    <option value="de" ${syn.sprache === 'de' ? 'selected' : ''}>${t('vokabel_editor.sprache_deutsch')}</option>
-                    <option value="sv" ${syn.sprache === 'sv' ? 'selected' : ''}>${t('vokabel_editor.sprache_schwedisch')}</option>
+                <select class="eingabe eingabe--klein" data-synonym-sprache="${index}" tabindex="-1">
+                    <option value="de" ${syn.sprache === 'de' ? 'selected' : ''}>Deutsch</option>
+                    <option value="en" ${syn.sprache === 'en' ? 'selected' : ''}>Englisch</option>
                 </select>
-                <button type="button" class="btn-icon btn-icon--gefaehrlich" data-synonym-entfernen="${index}">
+                <button type="button" class="btn-icon btn-icon--gefaehrlich" tabindex="-1"
+                    data-synonym-entfernen="${index}">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -398,7 +292,6 @@ function _synonyme_rendern() {
 
     bereich.innerHTML = html;
 
-    // Entfernen-Buttons
     bereich.querySelectorAll('[data-synonym-entfernen]').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.synonymEntfernen, 10);
@@ -407,7 +300,6 @@ function _synonyme_rendern() {
         });
     });
 
-    // Wert-Updates
     bereich.querySelectorAll('[data-synonym-index]').forEach(input => {
         input.addEventListener('input', () => {
             const idx = parseInt(input.dataset.synonymIndex, 10);
@@ -423,120 +315,103 @@ function _synonyme_rendern() {
     });
 }
 
-/**
- * Speichern
- */
 async function _speichern(e) {
     e.preventDefault();
+    const naechste = _naechste;
+    _naechste = false;
 
-    const btn = document.getElementById('btn-speichern');
+    const btn = naechste
+        ? document.getElementById('btn-speichern-naechste')
+        : document.getElementById('btn-speichern');
     if (btn) {
         btn.disabled = true;
         btn.textContent = t('vokabel_editor.speichern_laden');
     }
 
-    // Grunddaten sammeln
     const daten = {
-        schwedisch: document.getElementById('ed-schwedisch')?.value?.trim(),
-        deutsch: document.getElementById('ed-deutsch')?.value?.trim(),
-        wortart: document.getElementById('ed-wortart')?.value,
-        sprachniveau: document.getElementById('ed-sprachniveau')?.value || 'A1',
-        notizen: document.getElementById('ed-notizen')?.value?.trim() || null,
+        englisch:     document.getElementById('ed-englisch')?.value?.trim(),
+        deutsch:      document.getElementById('ed-deutsch')?.value?.trim(),
+        wortart:      document.getElementById('ed-wortart')?.value,
+        sprachniveau: document.getElementById('ed-sprachniveau')?.value || 'C1',
+        notizen:      document.getElementById('ed-notizen')?.value?.trim() || null,
     };
 
-    // Admin: Kategorie; Non-Admin: Lektion (optional)
-    if (ist_admin()) {
+    const admin = ist_admin();
+    if (admin) {
         daten.kategorie_id = document.getElementById('ed-kategorie')?.value || null;
-    } else {
-        const lekVal = document.getElementById('ed-lektion')?.value;
-        if (lekVal) daten.lektion_id = parseInt(lekVal, 10);
     }
+    const tfVal = document.getElementById('ed-themenfeld')?.value;
+    if (tfVal) daten.themenfeld_id = parseInt(tfVal, 10);
 
-    // Genus/Verbgruppe
-    if (daten.wortart === 'Nomen') {
-        daten.genus = document.getElementById('ed-genus')?.value || null;
-    } else if (daten.wortart === 'Verb') {
-        daten.verbgruppe = document.getElementById('ed-verbgruppe')?.value || null;
-    }
-
-    // Formen sammeln
-    const formen = [];
-    document.querySelectorAll('[data-form]').forEach(input => {
-        const wert = input.value.trim();
-        if (wert) {
-            formen.push({
-                form_bezeichnung: input.dataset.form,
-                form_wert: wert,
-            });
-        }
-    });
-
-    // Synonyme (aktuelle Werte aus Feldern lesen)
+    // Synonyme aus Feldern lesen
     document.querySelectorAll('[data-synonym-index]').forEach(input => {
         const idx = parseInt(input.dataset.synonymIndex, 10);
-        if (_synonyme[idx]) {
-            _synonyme[idx].synonym = input.value.trim();
-        }
+        if (_synonyme[idx]) _synonyme[idx].synonym = input.value.trim();
     });
-
     const synonyme = _synonyme.filter(s => s.synonym);
 
-    // Validierung
-    if (!daten.schwedisch || !daten.deutsch || !daten.wortart) {
+    if (!daten.englisch || !daten.deutsch || !daten.wortart) {
         fehler(t('vokabel_editor.pflichtfelder'));
-        _btn_zuruecksetzen(btn);
+        _btn_zuruecksetzen(btn, naechste);
         return;
     }
 
     try {
         let ergebnis;
-
         if (_modus === 'neu') {
-            // Alles in einem Request
-            daten.formen = formen;
             daten.synonyme = synonyme;
             ergebnis = await apiPost('vokabeln/erstellen.php', daten);
         } else {
-            // Vokabel aktualisieren
             ergebnis = await apiPut(`vokabeln/aktualisieren.php?id=${_vokabelId}`, daten);
         }
 
         if (!ergebnis.erfolg) {
             apiFehlerAnzeigen(ergebnis);
-            _btn_zuruecksetzen(btn);
+            _btn_zuruecksetzen(btn, naechste);
             return;
         }
 
         const vokabelId = _modus === 'neu' ? ergebnis.daten.id : _vokabelId;
 
-        // Bei Bearbeiten: Formen und Synonyme separat speichern
         if (_modus === 'bearbeiten') {
-            // Formen speichern
-            const formenErg = await apiPost(`vokabeln/formen_speichern.php?id=${vokabelId}`, { formen });
-            if (!formenErg.erfolg) {
-                console.warn('Formen speichern fehlgeschlagen:', formenErg);
-            }
-
-            // Synonyme speichern
             const synErg = await apiPost(`vokabeln/synonyme_speichern.php?id=${vokabelId}`, { synonyme });
-            if (!synErg.erfolg) {
-                console.warn('Synonyme speichern fehlgeschlagen:', synErg);
-            }
+            if (!synErg.erfolg) console.warn('Synonyme speichern fehlgeschlagen:', synErg);
+        }
+
+        // Werte merken (nur im Neu-Modus sinnvoll)
+        if (_modus === 'neu') {
+            const katVal = document.getElementById('ed-kategorie')?.value || '';
+            const nivVal = document.getElementById('ed-sprachniveau')?.value || 'C1';
+            const tfSel  = document.getElementById('ed-themenfeld')?.value || '';
+            if (katVal) localStorage.setItem(LS_KATEGORIE,  katVal);
+            localStorage.setItem(LS_NIVEAU,     nivVal);
+            if (tfSel)  localStorage.setItem(LS_THEMENFELD, tfSel);
         }
 
         erfolg(_modus === 'neu' ? t('vokabel_editor.erstellt') : t('vokabel_editor.aktualisiert'));
-        navigieren('/vokabeln');
+
+        if (naechste && _modus === 'neu') {
+            // Formular zurücksetzen, Fokus auf Englisch
+            _vokabelDaten = null;
+            _synonyme = [];
+            _formular_rendern(document.getElementById('inhalt'));
+        } else {
+            navigieren('/vokabeln');
+        }
 
     } catch (err) {
         fehler(t('vokabel_editor.speichern_fehler'));
         console.error('Speichern-Fehler:', err);
-        _btn_zuruecksetzen(btn);
+        _btn_zuruecksetzen(btn, naechste);
     }
 }
 
-function _btn_zuruecksetzen(btn) {
-    if (btn) {
-        btn.disabled = false;
+function _btn_zuruecksetzen(btn, naechste) {
+    if (!btn) return;
+    btn.disabled = false;
+    if (naechste) {
+        btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px">save</span> ${t('vokabel_editor.speichern_und_naechste')}`;
+    } else {
         btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px">save</span> ${t('allgemein.speichern')}`;
     }
 }
@@ -546,4 +421,6 @@ export function aufraeumen() {
     _vokabelId = null;
     _vokabelDaten = null;
     _synonyme = [];
+    _themenfelder = [];
+    _naechste = false;
 }

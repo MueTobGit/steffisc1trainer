@@ -97,17 +97,6 @@ if (isset($daten['reihenfolge'])) {
     $params[] = (int) $daten['reihenfolge'];
 }
 
-// Media-ID
-if (array_key_exists('media_id', $daten)) {
-    $media_id = null;
-    if ($daten['media_id'] !== null && $daten['media_id'] !== '') {
-        $media_id = positive_ganzzahl_validieren($daten['media_id'], 'media_id');
-        id_existiert($media_id, 'medien', 'Medium');
-    }
-    $felder[] = 'media_id = ?';
-    $params[] = $media_id;
-}
-
 // Aktiv
 if (isset($daten['aktiv'])) {
     $felder[] = 'aktiv = ?';
@@ -133,7 +122,6 @@ $aktualisiert = $stmt->fetch();
 $aktualisiert['id'] = (int) $aktualisiert['id'];
 $aktualisiert['eltern_id'] = $aktualisiert['eltern_id'] !== null ? (int) $aktualisiert['eltern_id'] : null;
 $aktualisiert['reihenfolge'] = (int) $aktualisiert['reihenfolge'];
-$aktualisiert['media_id'] = $aktualisiert['media_id'] !== null ? (int) $aktualisiert['media_id'] : null;
 $aktualisiert['aktiv'] = (bool) $aktualisiert['aktiv'];
 
 json_erfolg($aktualisiert, 'Kategorie erfolgreich aktualisiert.');

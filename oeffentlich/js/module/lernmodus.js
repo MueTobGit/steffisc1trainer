@@ -15,7 +15,8 @@ import { erfolg, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 import { lade_anzeige_rendern } from '../komponenten/lade-anzeige.js';
 import { leer_zustand_rendern } from '../komponenten/leer-zustand.js';
 import { vokabel_karte_erstellen } from '../komponenten/vokabel-karte.js';
-import { sprach_dienst_init, vorlesen_stoppen } from '../dienste/sprach-dienst.js';
+const sprach_dienst_init = () => {};
+const vorlesen_stoppen = () => {};
 import { holen } from '../zustand.js';
 import { t } from '../dienste/sprache.js';
 

@@ -27,22 +27,22 @@ $pdo = db_verbindung();
 $sql = "
     SELECT
         v1.id          AS id_a,
-        v1.schwedisch  AS schwedisch_a,
+        v1.englisch  AS englisch_a,
         v1.deutsch,
         v1.wortart,
         s.synonym      AS synonym_text,
         v2.id          AS id_b,
-        v2.schwedisch  AS schwedisch_b
+        v2.englisch  AS englisch_b
     FROM synonyme s
     JOIN  vokabeln v1
           ON  v1.id        = s.vokabel_id
           AND v1.aktiv     = 1
           AND v1.ist_privat = 0
     LEFT JOIN vokabeln v2
-          ON  v2.schwedisch  = s.synonym
+          ON  v2.englisch  = s.synonym
           AND v2.aktiv       = 1
           AND v2.ist_privat  = 0
-    WHERE s.sprache = 'sv'
+    WHERE s.sprache = 'en'
     ORDER BY v1.id, s.synonym
 ";
 
@@ -71,14 +71,15 @@ foreach ($alle as $row) {
 
     $paare[] = [
         'id_a'          => $id_a,
-        'schwedisch_a'  => $row['schwedisch_a'],
+        'englisch_a'  => $row['englisch_a'],
         'deutsch'       => $row['deutsch'],
         'wortart'       => $row['wortart'],
         'synonym_text'  => $row['synonym_text'],
         'id_b'          => $id_b,
-        'schwedisch_b'  => $row['schwedisch_b'] ?? $row['synonym_text'],
+        'englisch_b'  => $row['englisch_b'] ?? $row['synonym_text'],
         'bidirektional' => $id_b !== null,
     ];
 }
 
 json_erfolg($paare, count($paare) . ' Synonym-Paar(e) gefunden.');
+

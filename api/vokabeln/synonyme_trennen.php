@@ -46,14 +46,14 @@ $pdo = db_verbindung();
 
 // Wörter laden (für bidirektionale Löschung)
 if ($id_b > 0) {
-    $stmt = $pdo->prepare('SELECT id, schwedisch FROM vokabeln WHERE id IN (?, ?) AND aktiv = 1');
+    $stmt = $pdo->prepare('SELECT id, englisch FROM vokabeln WHERE id IN (?, ?) AND aktiv = 1');
     $stmt->execute([$id_a, $id_b]);
 } else {
-    $stmt = $pdo->prepare('SELECT id, schwedisch FROM vokabeln WHERE id = ? AND aktiv = 1');
+    $stmt = $pdo->prepare('SELECT id, englisch FROM vokabeln WHERE id = ? AND aktiv = 1');
     $stmt->execute([$id_a]);
 }
 $vokabeln = $stmt->fetchAll();
-$wort_map  = array_column($vokabeln, 'schwedisch', 'id');
+$wort_map  = array_column($vokabeln, 'englisch', 'id');
 
 if (!isset($wort_map[$id_a])) {
     fehler_ungueltige_eingabe('Vokabel A nicht gefunden.');
@@ -63,7 +63,7 @@ $pdo->beginTransaction();
 
 try {
     $geloescht = 0;
-    $del = $pdo->prepare("DELETE FROM synonyme WHERE vokabel_id = ? AND synonym = ? AND sprache = 'sv'");
+    $del = $pdo->prepare("DELETE FROM synonyme WHERE vokabel_id = ? AND synonym = ? AND sprache = 'en'");
 
     if ($id_b > 0 && isset($wort_map[$id_b])) {
         // Bidirektional: A→B und B→A
@@ -94,3 +94,4 @@ try {
     error_log('Synonyme trennen fehlgeschlagen: ' . $e->getMessage());
     fehler_server('Synonyme konnten nicht getrennt werden.');
 }
+

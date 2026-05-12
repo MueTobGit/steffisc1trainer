@@ -62,7 +62,6 @@ $sql = "
         k.beschreibung,
         k.eltern_id,
         k.reihenfolge,
-        k.media_id,
         k.aktiv,
         k.erstellt_am,
         COUNT(DISTINCT v.id) AS vokabel_anzahl
@@ -82,9 +81,7 @@ $alle = $stmt->fetchAll();
 foreach ($alle as &$kat) {
     $kat['id'] = (int) $kat['id'];
     $kat['eltern_id'] = $kat['eltern_id'] !== null ? (int) $kat['eltern_id'] : null;
-    $kat['reihenfolge'] = (int) $kat['reihenfolge'];
-    $kat['media_id'] = $kat['media_id'] !== null ? (int) $kat['media_id'] : null;
-    $kat['aktiv'] = (bool) $kat['aktiv'];
+    $kat['reihenfolge'] = (int) $kat['reihenfolge'];    $kat['aktiv'] = (bool) $kat['aktiv'];
     $kat['vokabel_anzahl'] = (int) $kat['vokabel_anzahl'];
 }
 unset($kat);
@@ -119,3 +116,4 @@ function _baum_aufbauen(array $kategorien): array
 
     return $baum;
 }
+

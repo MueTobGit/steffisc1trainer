@@ -9,7 +9,8 @@
  */
 
 import { esc } from '../hilfs-funktionen.js';
-import { vorlesen, tts_verfuegbar } from '../dienste/sprach-dienst.js';
+const vorlesen = () => {};
+const tts_verfuegbar = () => false;
 import { t } from '../dienste/sprache.js';
 
 /**

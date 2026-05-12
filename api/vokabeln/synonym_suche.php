@@ -54,12 +54,12 @@ foreach ($begriffe as $begriff) {
 $where = implode(' OR ', $bedingungen);
 
 $sql = "
-    SELECT v.id, v.schwedisch, v.deutsch, v.wortart, v.sprachniveau
+    SELECT v.id, v.englisch, v.deutsch, v.wortart, v.sprachniveau
     FROM vokabeln v
     WHERE ({$where})
       AND v.aktiv = 1
       AND v.ist_privat = 0
-    ORDER BY v.wortart, v.schwedisch
+    ORDER BY v.wortart, v.englisch
     LIMIT 100
 ";
 

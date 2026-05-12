@@ -96,9 +96,9 @@ if (!$als_admin) {
 
 // --- Erstellen ---
 $sql = "
-    INSERT INTO lektionen (titel, beschreibung, kategorie_id, reihenfolge, sprachniveau,
-                           ist_privat, besitzer_id, gruppen_id, erstellt_von)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO themenfelder (titel, beschreibung, kategorie_id, reihenfolge, sprachniveau,
+                           ist_privat, besitzer_id, erstellt_von)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ";
 
 $stmt = $pdo->prepare($sql);
@@ -110,13 +110,12 @@ $stmt->execute([
     $sprachniveau,
     $ist_privat ? 1 : 0,
     $besitzer_id,
-    $gruppen_id_neu,
     $benutzer_id,
 ]);
 
 $neue_id = (int) $pdo->lastInsertId();
 
-$stmt = $pdo->prepare('SELECT l.*, b.benutzername AS besitzer_name FROM lektionen l LEFT JOIN benutzer b ON b.id = l.besitzer_id WHERE l.id = ?');
+$stmt = $pdo->prepare('SELECT l.*, b.benutzername AS besitzer_name FROM themenfelder l LEFT JOIN benutzer b ON b.id = l.besitzer_id WHERE l.id = ?');
 $stmt->execute([$neue_id]);
 $lektion = $stmt->fetch();
 
@@ -127,6 +126,6 @@ $lektion['erstellt_von'] = $lektion['erstellt_von'] !== null ? (int) $lektion['e
 $lektion['aktiv']        = (bool) $lektion['aktiv'];
 $lektion['ist_privat']   = (bool) $lektion['ist_privat'];
 $lektion['besitzer_id']  = $lektion['besitzer_id'] !== null ? (int) $lektion['besitzer_id'] : null;
-$lektion['gruppen_id']   = $lektion['gruppen_id'] !== null ? (int) $lektion['gruppen_id'] : null;
+$lektion['gruppen_id']   = null;
 
 json_erfolg($lektion, 'Lektion erfolgreich erstellt.', 201);

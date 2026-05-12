@@ -12,11 +12,11 @@
  *   - wortart: Nomen, Verb, Adjektiv, ...
  *   - kategorie_id: Filter nach Kategorie
  *   - ohne_kategorie: 1 = nur Vokabeln ohne Kategorie
- *   - lektion_id: Filter nach Lektion
+ *   - themenfeld_id: Filter nach themenfeld
  *   - sprachniveau: A1, A2, B1, B2, C1, C2
- *   - suche: Suchbegriff (min. 2 Zeichen, sucht in schwedisch+deutsch)
+ *   - suche: Suchbegriff (min. 2 Zeichen, sucht in englisch+deutsch)
  *   - nur_aktive: 1 (Standard) = nur aktive, 0 = alle
- *   - sortierung: schwedisch|deutsch|wortart|sprachniveau|erstellt_am|kategorie_name|aktiv (Standard: schwedisch)
+ *   - sortierung: englisch|deutsch|wortart|sprachniveau|erstellt_am|kategorie_name|aktiv (Standard: englisch)
  *   - richtung: ASC|DESC (Standard: ASC)
  *   - auch_private: 1 = Nur Admin; zeigt alle privaten Inhalte aller User
  *   - nur_privat: 1 = Nur Admin; zeigt ausschliesslich private Vokabeln
@@ -43,12 +43,12 @@ $benutzer = benutzer_authentifizieren();
 $wortart = get_param('wortart');
 $kategorie_id = get_param_int('kategorie_id', 0);
 $ohne_kategorie = get_param('ohne_kategorie', '0') === '1'; // true = nur Vokabeln ohne Kategorie
-$lektion_id   = get_param_int('lektion_id', 0);
-$ohne_lektion = get_param('ohne_lektion', '0') === '1';
+$themenfeld_id   = get_param_int('themenfeld_id', 0);
+$ohne_themenfeld = get_param('ohne_themenfeld', '0') === '1';
 $sprachniveau = get_param('sprachniveau');
 $suche = get_param('suche');
 $nur_aktive = get_param('nur_aktive', '1') !== '0';
-$sortierung = get_param('sortierung', 'schwedisch');
+$sortierung = get_param('sortierung', 'englisch');
 $richtung = get_param('richtung', 'ASC');
 $auch_private  = get_param('auch_private', '0') === '1' && ist_admin($benutzer);
 $nur_privat    = get_param('nur_privat', '0') === '1'; // auch Non-Admin darf eigene private filtern
@@ -84,11 +84,11 @@ if ($ohne_kategorie) {
     $params[] = $kategorie_id;
 }
 
-if ($lektion_id > 0) {
-    $join .= ' JOIN lektion_vokabeln lv ON lv.vokabel_id = v.id AND lv.lektion_id = ?';
-    array_unshift($params, $lektion_id); // Vorne einfuegen wegen JOIN
-} elseif ($ohne_lektion) {
-    $bedingungen[] = 'v.id NOT IN (SELECT vokabel_id FROM lektion_vokabeln)';
+if ($themenfeld_id > 0) {
+    $join .= ' JOIN themenfeld_vokabeln lv ON lv.vokabel_id = v.id AND lv.themenfeld_id = ?';
+    array_unshift($params, $themenfeld_id); // Vorne einfuegen wegen JOIN
+} elseif ($ohne_themenfeld) {
+    $bedingungen[] = 'v.id NOT IN (SELECT vokabel_id FROM themenfeld_vokabeln)';
 } elseif ($filter_modus === 'faellig') {
     // Nur Vokabeln die in der DS-Richtung faellig sind (konsistent mit Dashboard-Chip).
     // Nur aktive Vokabeln (v.aktiv = 1 bereits in der Hauptquery gesetzt).
@@ -97,16 +97,16 @@ if ($lektion_id > 0) {
         ? 'DATE_ADD(CURDATE(), INTERVAL ' . $faellig_voraus . ' DAY)'
         : 'CURDATE()';
     $join .= ' JOIN (SELECT vokabel_id FROM fortschritt'
-           . " WHERE benutzer_id = ? AND richtung = 'DS'"
+           . " WHERE benutzer_id = ? AND richtung = 'DE'"
            . " AND naechste_wiederholung <= {$faellig_datum}) fp ON fp.vokabel_id = v.id";
     array_unshift($params, $benutzer_id);
 } elseif ($filter_modus === 'neu') {
     // Nur Vokabeln die noch nie gelernt wurden (kein Eintrag in fortschritt),
-    // aus Lektionen die der User explizit gestartet hat (benutzer_lektionen_gestartet).
+    // aus Themenfeldern die der User explizit gestartet hat (benutzer_themenfelder_gestartet).
     // Konsistent mit der Dashboard-Zaehlung in statistik/benutzer.php.
-    $join .= ' JOIN lektion_vokabeln lv_neu ON lv_neu.vokabel_id = v.id'
-           . ' JOIN benutzer_lektionen_gestartet blg_neu'
-           . '   ON blg_neu.lektion_id = lv_neu.lektion_id AND blg_neu.benutzer_id = ?';
+    $join .= ' JOIN themenfeld_vokabeln lv_neu ON lv_neu.vokabel_id = v.id'
+           . ' JOIN benutzer_themenfelder_gestartet blg_neu'
+           . '   ON blg_neu.themenfeld_id = lv_neu.themenfeld_id AND blg_neu.benutzer_id = ?';
     $params[] = $benutzer_id;
     $bedingungen[] = 'v.id NOT IN (SELECT DISTINCT vokabel_id FROM fortschritt WHERE benutzer_id = ?)';
     $params[] = $benutzer_id;
@@ -123,7 +123,7 @@ if ($sprachniveau !== null && $sprachniveau !== '') {
 }
 
 if ($suche !== null && mb_strlen($suche) >= 2) {
-    $bedingungen[] = '(v.schwedisch LIKE ? OR v.deutsch LIKE ?)';
+    $bedingungen[] = '(v.englisch LIKE ? OR v.deutsch LIKE ?)';
     $such_param = '%' . $suche . '%';
     $params[] = $such_param;
     $params[] = $such_param;
@@ -149,7 +149,7 @@ if (!empty($bedingungen)) {
 // --- Sortierung validieren ---
 // Mapping: Parameter-Wert → SQL-Ausdruck
 $sortier_map = [
-    'schwedisch'    => 'v.schwedisch',
+    'englisch'    => 'v.englisch',
     'deutsch'       => 'v.deutsch',
     'wortart'       => 'v.wortart',
     'sprachniveau'  => 'v.sprachniveau',
@@ -158,7 +158,7 @@ $sortier_map = [
     'aktiv'         => 'v.aktiv',
 ];
 if (!isset($sortier_map[$sortierung])) {
-    $sortierung = 'schwedisch';
+    $sortierung = 'englisch';
 }
 $sortier_sql = $sortier_map[$sortierung];
 
@@ -176,21 +176,17 @@ $paginierung = paginierung_berechnen($seite, $pro_seite, $gesamt);
 $sql = "
     SELECT DISTINCT
         v.id,
-        v.schwedisch,
+        v.englisch,
         v.deutsch,
         v.wortart,
-        v.genus,
-        v.verbgruppe,
         v.sprachniveau,
         v.notizen,
         v.kategorie_id,
-        v.media_id,
         v.aktiv,
         v.erstellt_am,
         v.aktualisiert_am,
         v.ist_privat,
         v.besitzer_id,
-        v.gruppen_id,
         k.name AS kategorie_name,
         b.benutzername AS besitzer_name
     FROM vokabeln v
@@ -198,7 +194,7 @@ $sql = "
     {$join}
     LEFT JOIN kategorien k ON k.id = v.kategorie_id
     {$where}
-    ORDER BY v.ist_privat DESC, {$sortier_sql} {$richtung}, v.schwedisch ASC
+    ORDER BY v.ist_privat DESC, {$sortier_sql} {$richtung}, v.englisch ASC
     LIMIT ? OFFSET ?
 ";
 
@@ -212,13 +208,11 @@ $vokabeln = $stmt->fetchAll();
 // Typen casten
 foreach ($vokabeln as &$v) {
     $v['id']          = (int) $v['id'];
-    $v['kategorie_id']= $v['kategorie_id'] !== null ? (int) $v['kategorie_id'] : null;
-    $v['media_id']    = $v['media_id'] !== null ? (int) $v['media_id'] : null;
-    $v['aktiv']       = (bool) $v['aktiv'];
+    $v['kategorie_id']= $v['kategorie_id'] !== null ? (int) $v['kategorie_id'] : null;    $v['aktiv']       = (bool) $v['aktiv'];
     $v['ist_privat']  = (bool) $v['ist_privat'];
-    $v['besitzer_id'] = $v['besitzer_id'] !== null ? (int) $v['besitzer_id'] : null;
-    $v['gruppen_id']  = $v['gruppen_id'] !== null ? (int) $v['gruppen_id'] : null;
-}
+    $v['besitzer_id'] = $v['besitzer_id'] !== null ? (int) $v['besitzer_id'] : null;}
 unset($v);
 
 json_paginiert($vokabeln, $paginierung);
+
+

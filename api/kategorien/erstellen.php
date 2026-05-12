@@ -54,28 +54,15 @@ if (!empty($daten['eltern_id'])) {
     }
 }
 
-// Media pruefen (falls angegeben)
-$media_id = null;
-if (!empty($daten['media_id'])) {
-    $media_id = positive_ganzzahl_validieren($daten['media_id'], 'media_id');
-    id_existiert($media_id, 'medien', 'Medium');
-}
-
 $reihenfolge = isset($daten['reihenfolge']) ? (int) $daten['reihenfolge'] : 0;
 
 // --- Erstellen ---
-$sql = "
-    INSERT INTO kategorien (name, beschreibung, eltern_id, reihenfolge, media_id)
-    VALUES (?, ?, ?, ?, ?)
-";
-
-$stmt = $pdo->prepare($sql);
+$stmt = $pdo->prepare("INSERT INTO kategorien (name, beschreibung, eltern_id, reihenfolge) VALUES (?, ?, ?, ?)");
 $stmt->execute([
     trim($daten['name']),
     !empty($daten['beschreibung']) ? trim($daten['beschreibung']) : null,
     $eltern_id,
     $reihenfolge,
-    $media_id,
 ]);
 
 $neue_id = (int) $pdo->lastInsertId();
@@ -88,7 +75,6 @@ $kategorie = $stmt->fetch();
 $kategorie['id'] = (int) $kategorie['id'];
 $kategorie['eltern_id'] = $kategorie['eltern_id'] !== null ? (int) $kategorie['eltern_id'] : null;
 $kategorie['reihenfolge'] = (int) $kategorie['reihenfolge'];
-$kategorie['media_id'] = $kategorie['media_id'] !== null ? (int) $kategorie['media_id'] : null;
 $kategorie['aktiv'] = (bool) $kategorie['aktiv'];
 
 json_erfolg($kategorie, 'Kategorie erfolgreich erstellt.', 201);

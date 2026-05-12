@@ -81,7 +81,7 @@ foreach ($pro_kategorie as &$k) {
 unset($k);
 
 // --- Formen-Statistik ---
-$stmt = $pdo->query('SELECT COUNT(*) FROM vokabel_formen');
+$stmt = $pdo->query('SELECT 0;
 $formen_gesamt = (int) $stmt->fetchColumn();
 
 $stmt = $pdo->query('SELECT COUNT(*) FROM synonyme');
@@ -95,7 +95,7 @@ $stmt = $pdo->query("
     SELECT COUNT(*) FROM vokabeln v
     WHERE v.aktiv = 1
     AND v.wortart IN ('Nomen', 'Verb', 'Adjektiv')
-    AND NOT EXISTS (SELECT 1 FROM vokabel_formen vf WHERE vf.vokabel_id = v.id)
+    AND NOT EXISTS (SELECT 1 FROM vokabeln WHERE 1=0 /* formen_removed */ vf WHERE vf.vokabel_id = v.id)
 ");
 $ohne_formen = (int) $stmt->fetchColumn();
 

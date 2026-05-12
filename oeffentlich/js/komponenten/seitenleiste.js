@@ -9,14 +9,7 @@ import { seitenleiste_routen, navigieren } from '../router.js';
 import { abmelden } from '../api-client.js';
 import { esc } from '../hilfs-funktionen.js';
 import { t } from '../dienste/sprache.js';
-import { krone_svg_html } from '../dienste/krone-svg.js';
-
 let _overlay = null;
-
-function _krone_badge_html(beste_krone, beste_krone_typ) {
-    if (!beste_krone) return '';
-    return `<span class="krone-badge">${krone_svg_html(beste_krone_typ || 'standard', beste_krone)}</span>`;
-}
 
 /**
  * Seitenleiste rendern
@@ -35,11 +28,9 @@ export function seitenleiste_rendern() {
     const avatarIkon  = avatarUrl
         ? `<img src="${esc(avatarUrl)}" class="seitenleiste__avatar-img" alt="Avatar">`
         : `<span class="material-symbols-outlined">account_circle</span>`;
-    const kroneBadge  = _krone_badge_html(benutzer?.beste_krone, benutzer?.beste_krone_typ);
-
     let html = `
         <div class="seitenleiste__kopf">
-            <span class="seitenleiste__logo">&#x1F1F8;&#x1F1EA;</span>
+            <span class="seitenleiste__logo">&#x1F1EC;&#x1F1E7;</span>
             <div>
                 <div class="seitenleiste__app-name">${t('navigation.app_name')}</div>
             </div>
@@ -85,7 +76,7 @@ export function seitenleiste_rendern() {
     html += `
         <div class="seitenleiste__fuss">
             <button class="seitenleiste__fuss-btn" data-pfad="/profil">
-                <span class="krone-badge-wrapper">${avatarIkon}${kroneBadge}</span>
+                <span class="krone-badge-wrapper">${avatarIkon}</span>
                 <span>${esc(anzeigename)}</span>
             </button>
             <button class="seitenleiste__fuss-btn" id="btn-abmelden">

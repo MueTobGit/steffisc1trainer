@@ -18,12 +18,11 @@ import { ergebnis_anzeige_erstellen } from '../komponenten/ergebnis-anzeige.js';
 import { multiple_choice_erstellen } from '../komponenten/multiple-choice.js';
 import { zuordnung_erstellen } from '../komponenten/zuordnung.js';
 import { wort_sortieren_erstellen } from '../komponenten/wort-sortieren.js';
-import { sprach_dienst_init, vorlesen_stoppen, stt_verfuegbar } from '../dienste/sprach-dienst.js';
-import { letztes_training_melden } from '../dienste/android-benachrichtigungen.js';
 import { t } from '../dienste/sprache.js';
-import { hoer_aufgabe_erstellen } from '../komponenten/hoer-aufgabe.js';
-import { sprech_aufgabe_erstellen } from '../komponenten/sprech-aufgabe.js';
 import { interferenz_pruefen } from '../komponenten/interferenz-dialog.js';
+
+const vorlesen_stoppen = () => {};
+const stt_verfuegbar = () => false;
 
 // ============================================
 // Interner Zustand
@@ -40,8 +39,7 @@ let _einstellungen = {
     lektion_ids: [],
     favoriten: false,
     anzahl: 8,
-    aufgaben_typen: ['multiple_choice', 'zuordnung', 'satz_bauen', 'hoer_mc', 'hoer_satz', 'sprechen_vokabel', 'sprechen_satz', 'genus_block', 'endungs_matching', 'gruppen_quiz', 'partikel_puzzle', 'starkes_verb', 'praep_chunk', 'praep_kategorisierung'],
-    autovorlesen: false,
+    aufgaben_typen: ['multiple_choice', 'zuordnung'],
     loesung_tippen: false,
     faellige_einmischen: true,
 };
@@ -66,7 +64,6 @@ const LS_KEY_GRUPPE = 'vt_schnellueben_letzte_gruppe';
  * Schnellueben-Modul rendern
  */
 export async function rendern(params) {
-    sprach_dienst_init();
 
     const inhalt = document.getElementById('inhalt');
     if (!inhalt) return;
@@ -103,7 +100,6 @@ export async function rendern(params) {
  * Aufraeumen bei Modulwechsel
  */
 export function aufraeumen() {
-    vorlesen_stoppen();
     _ansicht = 'auswahl';
     _sitzung_id = null;
     _aufgaben = [];
@@ -114,8 +110,7 @@ export function aufraeumen() {
         lektion_ids: [],
         favoriten: false,
         anzahl: 8,
-        aufgaben_typen: ['multiple_choice', 'zuordnung', 'satz_bauen', 'hoer_mc', 'hoer_satz', 'sprechen_vokabel', 'sprechen_satz', 'genus_block', 'endungs_matching', 'gruppen_quiz', 'partikel_puzzle', 'starkes_verb', 'praep_chunk', 'praep_kategorisierung'],
-        autovorlesen: false,
+        aufgaben_typen: ['multiple_choice', 'zuordnung'],
         loesung_tippen: false,
         faellige_einmischen: true,
     };
@@ -154,32 +149,6 @@ async function _auswahl_rendern(wrapper) {
                         <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('satz_bauen') ? 'training__chip--aktiv' : ''}" data-typ="satz_bauen">
                             <span class="material-symbols-outlined">reorder</span> ${t('schnellueben.satz_bauen')}
                         </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('hoer_mc') || _einstellungen.aufgaben_typen.includes('hoer_satz') ? 'training__chip--aktiv' : ''}" data-typ="hoerverstaendnis">
-                            <span class="material-symbols-outlined">hearing</span> ${t('schnellueben.hoerverstehen')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('sprechen_vokabel') || _einstellungen.aufgaben_typen.includes('sprechen_satz') ? 'training__chip--aktiv' : ''}" data-typ="sprechen" id="schnellueben-chip-sprechen">
-                            <span class="material-symbols-outlined">mic</span> ${t('schnellueben.sprechen')}
-                        </button>
-                        <div class="training__chip-trenner">${t('schnellueben.grammatik')}</div>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('genus_block') ? 'training__chip--aktiv' : ''}" data-typ="genus_block">
-                            <span class="material-symbols-outlined">sort_by_alpha</span> ${t('schnellueben.genus_block')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('endungs_matching') ? 'training__chip--aktiv' : ''}" data-typ="endungs_matching">
-                            <span class="material-symbols-outlined">match_word</span> ${t('schnellueben.endungen')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('gruppen_quiz') ? 'training__chip--aktiv' : ''}" data-typ="gruppen_quiz">
-                            <span class="material-symbols-outlined">category</span> ${t('schnellueben.verbgruppe')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('partikel_puzzle') ? 'training__chip--aktiv' : ''}" data-typ="partikel_puzzle">
-                            <span class="material-symbols-outlined">join_inner</span> ${t('schnellueben.partikelverb')}
-                        </button>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('starkes_verb') ? 'training__chip--aktiv' : ''}" data-typ="starkes_verb">
-                            <span class="material-symbols-outlined">flash_on</span> ${t('schnellueben.starke_verben')}
-                        </button>
-                        <div class="training__chip-trenner">${t('schnellueben.praepositionen')}</div>
-                        <button type="button" class="training__chip ${_einstellungen.aufgaben_typen.includes('praep_chunk') || _einstellungen.aufgaben_typen.includes('praep_kategorisierung') ? 'training__chip--aktiv' : ''}" data-typ="praepositionen">
-                            <span class="material-symbols-outlined">location_on</span> ${t('schnellueben.praepositionen')}
-                        </button>
                     </div>
                 </div>
 
@@ -192,21 +161,6 @@ async function _auswahl_rendern(wrapper) {
                     <div class="training__slider-labels">
                         <span>5</span><span>8</span><span>10</span><span>12</span><span>15</span><span>20</span>
                     </div>
-                </div>
-
-                <div class="training__option-gruppe training__option-gruppe--toggle">
-                    <label class="training__toggle-label" id="schnellueben-opt-vorlesen">
-                        <span class="training__toggle-wrapper">
-                            <input type="checkbox" class="training__toggle-input" id="schnellueben-autovorlesen"
-                                ${_einstellungen.autovorlesen ? 'checked' : ''}>
-                            <span class="training__toggle-track"></span>
-                        </span>
-                        <span class="training__toggle-text">
-                            <span class="material-symbols-outlined training__toggle-icon">volume_up</span>
-                            ${t('training.vorlesen')}
-                        </span>
-                        <span class="training__toggle-hinweis">${t('schnellueben.vorlesen_hinweis')}</span>
-                    </label>
                 </div>
 
                 <div class="training__option-gruppe training__option-gruppe--toggle">
@@ -261,52 +215,23 @@ async function _auswahl_rendern(wrapper) {
     // Daten parallel laden
     try {
         const benutzer = holen('benutzer');
-        const apiPromises = [
+        const [kat_erg, lek_erg, fav_erg] = await Promise.all([
             apiGet('kategorien/liste.php'),
-            apiGet('lektionen/liste.php', { pro_seite: 100 }),
+            apiGet('themenfelder/liste.php', { pro_seite: 500 }),
             apiGet('favoriten/laden.php'),
-        ];
-        apiPromises.push(apiGet('lektionen/lernpfad.php'));
-
-        const [kat_erg, lek_erg, fav_erg, lp_erg] = await Promise.all(apiPromises);
+        ]);
 
         _kategorien = kat_erg.erfolg ? kat_erg.daten : [];
         _lektionen = lek_erg.erfolg ? (lek_erg.daten?.eintraege || lek_erg.daten || []) : [];
         _favoriten_anzahl = fav_erg.erfolg ? (Array.isArray(fav_erg.daten) ? fav_erg.daten.length : 0) : 0;
-
-        // Lernpfad-Map aufbauen (Freischalt-Status je Lektion)
-        if (lp_erg?.erfolg && Array.isArray(lp_erg.daten?.lektionen)) {
-            _lernpfad_map = new Map(lp_erg.daten.lektionen.map(l => [l.id, l]));
-            _aufgaben_ids = new Set((lp_erg.daten.aufgegebene_lektionen || []).map(l => l.id));
-        } else {
-            _lernpfad_map = null;
-            _aufgaben_ids = new Set();
-        }
+        _lernpfad_map = null;
+        _aufgaben_ids = new Set();
     } catch (e) {
         console.error('Schnellueben Daten laden fehlgeschlagen:', e);
     }
 
     // Lektionen-Auswahl rendern
     _lektionen_auswahl_rendern(wrapper.querySelector('#schnellueben-auswahl'));
-
-    // --- STT-Verfügbarkeit: Sprechen-Chip ggf. deaktivieren + Hinweis ---
-    const sprechenChip = wrapper.querySelector('#schnellueben-chip-sprechen');
-    if (sprechenChip && !stt_verfuegbar()) {
-        sprechenChip.disabled = true;
-        sprechenChip.classList.remove('training__chip--aktiv');
-        sprechenChip.title = t('schnellueben.stt_nicht_verfuegbar');
-        sprechenChip.style.opacity = '0.4';
-        sprechenChip.style.cursor = 'not-allowed';
-
-        // Hinweistext unter den Chips einfügen
-        const chipsContainer = wrapper.querySelector('#schnellueben-aufgaben-chips');
-        if (chipsContainer) {
-            const hinweis = document.createElement('p');
-            hinweis.className = 'schnellueben__stt-hinweis';
-            hinweis.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">info</span> ' + t('schnellueben.stt_hinweis');
-            chipsContainer.after(hinweis);
-        }
-    }
 
     // --- Aufgaben-Chips (Toggle-Verhalten, mind. 1 aktiv) ---
     wrapper.querySelectorAll('#schnellueben-aufgaben-chips .training__chip').forEach(chip => {
@@ -666,7 +591,7 @@ async function _spiel_starten(wrapper) {
     lade_anzeige_rendern(wrapper);
 
     const startPayload = {
-        lektion_ids: _einstellungen.lektion_ids,
+        themenfeld_ids: _einstellungen.lektion_ids,
         favoriten: _einstellungen.favoriten,
         anzahl: _einstellungen.anzahl,
         aufgaben_typen: _einstellungen.aufgaben_typen,
@@ -1447,24 +1372,6 @@ async function _sitzung_beenden(wrapper) {
     }
 
     _zusammenfassung = ergebnis.daten;
-
-    // Statistik im Store aktualisieren
-    const zf = ergebnis.daten.zusammenfassung;
-    const aktuelle_statistik = holen('statistik') || {};
-    setzen('statistik', {
-        ...aktuelle_statistik,
-        xp: zf.xp_gesamt,
-        streak_tage: zf.streak_tage,
-        bronze_sterne: zf.sterne?.bronze || aktuelle_statistik.bronze_sterne,
-        silber_sterne: zf.sterne?.silber || aktuelle_statistik.silber_sterne,
-        gold_sterne: zf.sterne?.gold || aktuelle_statistik.gold_sterne,
-        globales_level: ergebnis.daten.level_aufstieg
-            ? ergebnis.daten.level_aufstieg.nach
-            : (aktuelle_statistik.globales_level || 1),
-    });
-
-    // Letztes Training an Android melden (für Benachrichtigungs-Unterdrückung)
-    letztes_training_melden();
 
     _ansicht = 'zusammenfassung';
     rendern();

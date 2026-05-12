@@ -7,7 +7,7 @@
  * Body:
  *   - vokabel_ids: Array von Vokabel-IDs (min. 2, max. 20)
  *
- * Verknüpft alle angegebenen Vokabeln gegenseitig als schwedische Synonyme.
+ * Verknüpft alle angegebenen Vokabeln gegenseitig als englische Synonyme.
  * Bereits vorhandene Einträge werden übersprungen (keine Duplikate).
  * Nur Admin.
  */
@@ -45,7 +45,7 @@ $pdo = db_verbindung();
 // --- Vokabeln laden und prüfen ---
 $placeholders = implode(',', array_fill(0, count($ids), '?'));
 $stmt = $pdo->prepare("
-    SELECT id, schwedisch
+    SELECT id, englisch
     FROM vokabeln
     WHERE id IN ({$placeholders})
       AND aktiv = 1
@@ -58,10 +58,10 @@ if (count($vokabeln) !== count($ids)) {
     fehler_ungueltige_eingabe('Eine oder mehrere Vokabeln wurden nicht gefunden oder sind privat/inaktiv.');
 }
 
-// Map: id -> schwedisch
+// Map: id -> englisch
 $wort_map = [];
 foreach ($vokabeln as $v) {
-    $wort_map[(int) $v['id']] = $v['schwedisch'];
+    $wort_map[(int) $v['id']] = $v['englisch'];
 }
 
 $pdo->beginTransaction();
@@ -69,10 +69,10 @@ $pdo->beginTransaction();
 try {
     $check = $pdo->prepare("
         SELECT COUNT(*) FROM synonyme
-        WHERE vokabel_id = ? AND synonym = ? AND sprache = 'sv'
+        WHERE vokabel_id = ? AND synonym = ? AND sprache = 'en'
     ");
     $insert = $pdo->prepare("
-        INSERT INTO synonyme (vokabel_id, synonym, sprache) VALUES (?, ?, 'sv')
+        INSERT INTO synonyme (vokabel_id, synonym, sprache) VALUES (?, ?, 'en')
     ");
 
     $neu_erstellt = 0;
@@ -106,3 +106,4 @@ try {
     error_log('Synonyme verknüpfen fehlgeschlagen: ' . $e->getMessage());
     fehler_server('Synonyme konnten nicht verknüpft werden.');
 }
+

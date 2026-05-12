@@ -48,15 +48,15 @@ if (isset($daten['vokabel_id'])) {
     $params[] = $vokabel_id;
 }
 
-if (isset($daten['schwedisch_satz'])) {
-    $schwedisch_satz = trim($daten['schwedisch_satz']);
-    if (!str_contains($schwedisch_satz, '___')) {
+if (isset($daten['englisch_satz'])) {
+    $englisch_satz = trim($daten['englisch_satz']);
+    if (!str_contains($englisch_satz, '___')) {
         fehler_ungueltige_eingabe(
-            'Der schwedische Satz muss einen Platzhalter (___) fuer die Luecke enthalten.'
+            'Der englische Satz muss einen Platzhalter (___) fuer die Luecke enthalten.'
         );
     }
-    $felder[] = 'schwedisch_satz = ?';
-    $params[] = $schwedisch_satz;
+    $felder[] = 'englisch_satz = ?';
+    $params[] = $englisch_satz;
 }
 
 if (isset($daten['deutsch_satz'])) {
@@ -64,25 +64,10 @@ if (isset($daten['deutsch_satz'])) {
     $params[] = trim($daten['deutsch_satz']);
 }
 
-if (isset($daten['benoetigte_form'])) {
-    $felder[] = 'benoetigte_form = ?';
-    $params[] = trim($daten['benoetigte_form']);
-}
-
 if (isset($daten['sprachniveau'])) {
     sprachniveau_validieren($daten['sprachniveau']);
     $felder[] = 'sprachniveau = ?';
     $params[] = $daten['sprachniveau'];
-}
-
-if (array_key_exists('media_id', $daten)) {
-    $media_id = null;
-    if ($daten['media_id'] !== null && $daten['media_id'] !== '') {
-        $media_id = positive_ganzzahl_validieren($daten['media_id'], 'media_id');
-        id_existiert($media_id, 'medien', 'Medium');
-    }
-    $felder[] = 'media_id = ?';
-    $params[] = $media_id;
 }
 
 if (isset($daten['aktiv'])) {
@@ -107,7 +92,6 @@ $aktualisiert = $stmt->fetch();
 
 $aktualisiert['id'] = (int) $aktualisiert['id'];
 $aktualisiert['vokabel_id'] = (int) $aktualisiert['vokabel_id'];
-$aktualisiert['media_id'] = $aktualisiert['media_id'] !== null ? (int) $aktualisiert['media_id'] : null;
 $aktualisiert['erstellt_von'] = $aktualisiert['erstellt_von'] !== null ? (int) $aktualisiert['erstellt_von'] : null;
 $aktualisiert['aktiv'] = (bool) $aktualisiert['aktiv'];
 

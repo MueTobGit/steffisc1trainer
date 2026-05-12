@@ -30,7 +30,7 @@ if ($vokabel_id < 1) {
 }
 
 $richtung = $body['richtung'];
-enum_validieren($richtung, ['DS', 'SD'], 'richtung');
+enum_validieren($richtung, ['DE', 'ED'], 'richtung');
 
 if (empty($body['bestaetigung'])) {
     fehler_ungueltige_eingabe('Bestaetigung ist erforderlich um den Fortschritt zurueckzusetzen.');

@@ -124,11 +124,18 @@ export function rendern() {
                         <span>${t('csv_import.dup_mit_stamm')}</span>
                         <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">${t('csv_import.dup_mit_stamm_hint')}</span>
                     </label>
-                    <button class="btn btn--umrandet" id="btn-duplikate-laden">
-                        <span class="material-symbols-outlined" style="font-size:20px">content_copy</span>
-                        ${t('csv_import.dup_suchen')}
-                    </button>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                        <button class="btn btn--umrandet" id="btn-duplikate-laden">
+                            <span class="material-symbols-outlined" style="font-size:20px">content_copy</span>
+                            ${t('csv_import.dup_suchen')}
+                        </button>
+                        <button class="btn btn--umrandet" id="btn-aehnliche-laden">
+                            <span class="material-symbols-outlined" style="font-size:20px">manage_search</span>
+                            ${t('csv_import.aehnliche_suchen')}
+                        </button>
+                    </div>
                     <div id="duplikate-ergebnis" class="versteckt" style="margin-top:16px"></div>
+                    <div id="aehnliche-ergebnis" class="versteckt" style="margin-top:16px"></div>
                 </div>
             </div>
 
@@ -421,6 +428,7 @@ function _events_registrieren() {
     document.getElementById('btn-analysieren')?.addEventListener('click', _analysieren);
     document.getElementById('btn-importieren')?.addEventListener('click', _importieren);
     document.getElementById('btn-duplikate-laden')?.addEventListener('click', _duplikate_laden);
+    document.getElementById('btn-aehnliche-laden')?.addEventListener('click', _aehnliche_laden);
     document.getElementById('btn-privat-bereinigen-laden')?.addEventListener('click', _privat_bereinigen_laden);
 }
 
@@ -1826,7 +1834,7 @@ function _duplikate_rendern(gruppen, container, mitStamm = false) {
 
 // Sortierbare Tabellen-Darstellung (wird bei Sort-Wechsel und nach Aktionen neu aufgerufen)
 function _duplikate_tabelle_rendern(container) {
-    const sortKey = _dupSort.feld === 'sv' ? 'schwedisch' : 'deutsch';
+    const sortKey = _dupSort.feld === 'sv' ? 'englisch' : 'deutsch';
     const sorted  = [..._dupFlach].sort((a, b) => {
         const cmp = (a[sortKey] || '').localeCompare(b[sortKey] || '', 'de', { sensitivity: 'base' });
         return _dupSort.dir === 'asc' ? cmp : -cmp;
@@ -1842,7 +1850,7 @@ function _duplikate_tabelle_rendern(container) {
         <div class="verwaltung-tabelle-wrapper" style="max-height:480px;overflow-y:auto">
         <table class="verwaltung-tabelle verwaltung-tabelle--kompakt">
             <thead><tr>
-                <th style="cursor:pointer;user-select:none" data-dup-sort="sv">${t('csv_import.th_schwedisch')}${svPfeil}</th>
+                <th style="cursor:pointer;user-select:none" data-dup-sort="sv">${t('csv_import.th_englisch')}${svPfeil}</th>
                 <th style="cursor:pointer;user-select:none" data-dup-sort="de">${t('csv_import.th_deutsch')}${dePfeil}</th>
                 <th>${t('csv_import.th_wortart')}</th>
                 <th>${t('csv_import.dup_merge_mit')}</th>
@@ -1856,11 +1864,11 @@ function _duplikate_tabelle_rendern(container) {
         ).join('');
 
         html += `<tr data-dup-id="${item.id}">
-            <td class="dup-zelle-edit" data-feld="schwedisch" data-id="${item.id}"
+            <td class="dup-zelle-edit" data-feld="englisch" data-id="${item.id}"
                 style="cursor:text" title="${t('csv_import.dup_klick_bearbeiten')}">
-                <span>${esc(item.schwedisch)}</span>
+                <span>${esc(item.englisch)}</span>
                 ${!item.aktiv ? `<span class="tag tag--deaktiviert" style="margin-left:4px;font-size:10px">aus</span>` : ''}
-                ${item._mit_stamm && item._stamm && item._stamm !== item.schwedisch.toLowerCase()
+                ${item._mit_stamm && item._stamm && item._stamm !== (item.englisch || '').toLowerCase()
                     ? `<span style="font-size:11px;padding:1px 5px;border-radius:8px;margin-left:4px;
                                    background:var(--md-sys-color-secondary-container);
                                    color:var(--md-sys-color-on-secondary-container)"
@@ -1887,7 +1895,7 @@ function _duplikate_tabelle_rendern(container) {
             </td>
             <td>
                 <button class="btn-icon btn-icon--gefaehrlich dup-loeschen-btn"
-                        data-id="${item.id}" data-wort="${esc(item.schwedisch)}"
+                        data-id="${item.id}" data-wort="${esc(item.englisch)}"
                         title="${t('csv_import.dup_loeschen_titel')}">
                     <span class="material-symbols-outlined">delete_forever</span>
                 </button>
@@ -2007,9 +2015,9 @@ function _duplikate_tabelle_rendern(container) {
             const loeschId = parseInt(sel?.value, 10);
             if (!loeschId) return;
             if (!confirm(t('csv_import.duplikat_confirm', {
-                behalten:    _dupFlach.find(i => i.id === behId)?.schwedisch  || behId,
+                behalten:    _dupFlach.find(i => i.id === behId)?.englisch  || behId,
                 behalten_id: behId,
-                loeschen:    _dupFlach.find(i => i.id === loeschId)?.schwedisch || loeschId,
+                loeschen:    _dupFlach.find(i => i.id === loeschId)?.englisch || loeschId,
                 loeschen_id: loeschId,
             }))) return;
             btn.disabled = true;
@@ -2020,7 +2028,7 @@ function _duplikate_tabelle_rendern(container) {
                 erfolg(t('csv_import.zusammengefuehrt_erfolg', {
                     formen:    d.formen_uebertragen,
                     saetze:    d.saetze_uebertragen,
-                    lektionen: d.lektionen_uebertragen,
+                    lektionen: d.themenfelder_uebertragen,
                     lernstand: (d.fortschritt_uebertragen || 0) + (d.fortschritt_zusammengefuehrt || 0),
                 }));
                 _dupFlach = _dupFlach.filter(i => i.id !== loeschId);
@@ -2031,4 +2039,205 @@ function _duplikate_tabelle_rendern(container) {
             }
         });
     });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ähnliche Vokabeln — Prefix-Ähnlichkeit (5-Zeichen EN oder DE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function _aehnliche_laden() {
+    const btn       = document.getElementById('btn-aehnliche-laden');
+    const container = document.getElementById('aehnliche-ergebnis');
+    if (!btn || !container) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px">hourglass_empty</span> ${t('allgemein.laden')}`;
+
+    const erg = await apiGet('vokabeln/duplikate.php', { aehnlich: '1' });
+
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px">manage_search</span> ${t('csv_import.aehnliche_suchen')}`;
+
+    container.classList.remove('versteckt');
+
+    if (!erg.erfolg) { apiFehlerAnzeigen(erg); return; }
+
+    _aehnliche_rendern(erg.daten.gruppen, container);
+}
+
+function _aehnliche_rendern(gruppen, container) {
+    if (gruppen.length === 0) {
+        container.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;
+                        color:var(--md-sys-color-on-surface-variant);padding:8px 0">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>${t('csv_import.keine_aehnlichen')}</span>
+            </div>`;
+        return;
+    }
+
+    // Zustand pro Gruppe: Map<vokabelId, 'behalten'|'konsolidieren'|'loeschen'>
+    const gruppenZustand = gruppen.map(g => {
+        const m = new Map();
+        g.vokabeln.forEach((v, i) => m.set(v.id, i === 0 ? 'behalten' : 'konsolidieren'));
+        return m;
+    });
+
+    const renderAlles = () => {
+        let html = `
+            <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">
+                <strong>${gruppen.length}</strong> ${t('csv_import.aehnliche_gruppen_gefunden')}
+            </div>`;
+
+        gruppen.forEach((gruppe, gi) => {
+            const zustand = gruppenZustand[gi];
+            const behId   = [...zustand.entries()].find(([, a]) => a === 'behalten')?.[0];
+            const zumKonsolidieren = [...zustand.entries()].filter(([, a]) => a === 'konsolidieren').map(([id]) => id);
+            const zumLoeschen     = [...zustand.entries()].filter(([, a]) => a === 'loeschen').map(([id]) => id);
+            const kannAusfuehren  = behId !== undefined && (zumKonsolidieren.length + zumLoeschen.length) > 0;
+
+            html += `
+                <div class="aehnl-gruppe" data-gi="${gi}" style="
+                    border:1px solid var(--md-sys-color-outline-variant);
+                    border-radius:8px;padding:12px 16px;margin-bottom:12px">
+                    <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">
+                        <span class="tag">${esc(gruppe.wortart)}</span>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:14px">
+                        <thead>
+                            <tr style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">
+                                <th style="text-align:left;padding:4px 8px 4px 0;font-weight:500">${t('csv_import.th_englisch')}</th>
+                                <th style="text-align:left;padding:4px 8px;font-weight:500">${t('csv_import.th_deutsch')}</th>
+                                <th style="text-align:center;padding:4px 8px;font-weight:500">Stufe</th>
+                                <th style="text-align:left;padding:4px 8px;font-weight:500">${t('csv_import.aehnl_aktion')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            for (const v of gruppe.vokabeln) {
+                const aktion = zustand.get(v.id) || 'konsolidieren';
+                html += `
+                    <tr>
+                        <td style="padding:6px 8px 6px 0">${esc(v.englisch)}</td>
+                        <td style="padding:6px 8px">${esc(v.deutsch)}</td>
+                        <td style="padding:6px 8px;text-align:center">${v.max_stufe}</td>
+                        <td style="padding:6px 8px">
+                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                <button class="btn btn--klein ${aktion === 'behalten' ? 'btn--gefuellt' : 'btn--umrandet'} aehnl-btn"
+                                        data-gi="${gi}" data-id="${v.id}" data-aktion="behalten">
+                                    ${t('csv_import.aehnl_behalten')}
+                                </button>
+                                <button class="btn btn--klein ${aktion === 'konsolidieren' ? 'btn--gefuellt' : 'btn--umrandet'} aehnl-btn"
+                                        data-gi="${gi}" data-id="${v.id}" data-aktion="konsolidieren">
+                                    ${t('csv_import.aehnl_konsolidieren')}
+                                </button>
+                                <button class="btn btn--klein ${aktion === 'loeschen' ? 'btn--gefaehrlich' : 'btn--umrandet'} aehnl-btn"
+                                        data-gi="${gi}" data-id="${v.id}" data-aktion="loeschen">
+                                    ${t('allgemein.loeschen')}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+                        <button class="btn btn--gefuellt btn--klein aehnl-ausfuehren"
+                                data-gi="${gi}" ${!kannAusfuehren ? 'disabled' : ''}>
+                            <span class="material-symbols-outlined" style="font-size:16px">check</span>
+                            ${t('csv_import.aehnl_ausfuehren')}
+                        </button>
+                        <button class="btn btn--text btn--klein aehnl-ignorieren" data-gi="${gi}">
+                            ${t('csv_import.aehnl_ignorieren')}
+                        </button>
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML = html;
+
+        // Aktions-Buttons: Zustand wechseln
+        container.querySelectorAll('.aehnl-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const gi     = parseInt(btn.dataset.gi, 10);
+                const id     = parseInt(btn.dataset.id, 10);
+                const aktion = btn.dataset.aktion;
+                const zust   = gruppenZustand[gi];
+
+                if (aktion === 'behalten') {
+                    for (const [vid, akt] of zust.entries()) {
+                        if (akt === 'behalten') zust.set(vid, 'konsolidieren');
+                    }
+                }
+                zust.set(id, aktion);
+                renderAlles();
+            });
+        });
+
+        // "Ausführen" pro Gruppe
+        container.querySelectorAll('.aehnl-ausfuehren').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const gi      = parseInt(btn.dataset.gi, 10);
+                const zust    = gruppenZustand[gi];
+                const behId   = [...zust.entries()].find(([, a]) => a === 'behalten')?.[0];
+                if (!behId) return;
+
+                const konsIds  = [...zust.entries()].filter(([, a]) => a === 'konsolidieren').map(([id]) => id);
+                const loeschIds = [...zust.entries()].filter(([, a]) => a === 'loeschen').map(([id]) => id);
+
+                btn.disabled = true;
+
+                if (konsIds.length > 0) {
+                    const erg = await apiPost('vokabeln/duplikate.php', { behalten_id: behId, loeschen_ids: konsIds });
+                    if (!erg.erfolg) { btn.disabled = false; apiFehlerAnzeigen(erg); return; }
+                    const d = erg.daten;
+                    erfolg(t('csv_import.aehnl_konsolidiert', {
+                        n: d.zusammengefuehrt_anzahl, saetze: d.saetze_uebertragen, themen: d.themenfelder_uebertragen,
+                    }));
+                }
+
+                for (const lid of loeschIds) {
+                    const erg = await apiDelete(`vokabeln/endgueltig_loeschen.php?id=${lid}`);
+                    if (!erg.erfolg) { btn.disabled = false; apiFehlerAnzeigen(erg); return; }
+                }
+
+                gruppen.splice(gi, 1);
+                gruppenZustand.splice(gi, 1);
+
+                if (gruppen.length === 0) {
+                    container.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:8px;
+                                    color:var(--md-sys-color-on-surface-variant);padding:8px 0">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            <span>${t('csv_import.alle_duplikate_bereinigt')}</span>
+                        </div>`;
+                } else {
+                    renderAlles();
+                }
+            });
+        });
+
+        // "Ignorieren": Gruppe ausblenden
+        container.querySelectorAll('.aehnl-ignorieren').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const gi = parseInt(btn.dataset.gi, 10);
+                gruppen.splice(gi, 1);
+                gruppenZustand.splice(gi, 1);
+                if (gruppen.length === 0) {
+                    container.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:8px;
+                                    color:var(--md-sys-color-on-surface-variant);padding:8px 0">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            <span>${t('csv_import.alle_duplikate_bereinigt')}</span>
+                        </div>`;
+                } else {
+                    renderAlles();
+                }
+            });
+        });
+    };
+
+    renderAlles();
 }

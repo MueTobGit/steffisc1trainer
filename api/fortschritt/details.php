@@ -36,7 +36,7 @@ if ($zustand_filter && in_array($zustand_filter, ['neu', 'lernen', 'wiederholung
     $params[] = $zustand_filter;
 }
 
-if ($richtung_filter && in_array($richtung_filter, ['DS', 'SD'], true)) {
+if ($richtung_filter && in_array($richtung_filter, ['DE', 'ED'], true)) {
     $bedingungen[] = 'f.richtung = ?';
     $params[] = $richtung_filter;
 }
@@ -78,10 +78,9 @@ $stmt = $pdo->prepare("
         f.richtig_gesamt,
         f.falsch_gesamt,
         f.aktualisiert_am,
-        v.schwedisch,
+        v.englisch,
         v.deutsch,
         v.wortart,
-        v.genus,
         v.sprachniveau,
         CASE WHEN bf.vokabel_id IS NOT NULL THEN 1 ELSE 0 END AS ist_favorit
     FROM fortschritt f

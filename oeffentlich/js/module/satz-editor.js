@@ -1,11 +1,7 @@
 /**
  * Satz-Editor — Beispielsätze verwalten
  *
- * Darstellung: Vokabel-Name groß als Gruppe, dahinter Formen-Icons
- * (vorhandene Sätze farbig, fehlende ausgegraut).
- * Klick auf Form → alle Sätze für diese Form aufklappen / zuklappen.
- * Mehrere Sätze pro Form möglich (Badge mit Anzahl).
- * Fehlender Satz → Inline-Formular zum Hinzufügen.
+ * Darstellung: Vokabel-Name als Gruppe, alle Sätze direkt aufklappbar.
  * Filter: Vokabel-Suche, Kategorie, Lektion.
  */
 
@@ -19,44 +15,16 @@ import { bestaetigung_anzeigen } from '../komponenten/bestaetigung-dialog.js';
 import { erfolg, fehler, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 import { t } from '../dienste/sprache.js';
 
-// Formen je Wortart (muss zu konstanten.php passen)
-const WORTART_FORMEN = {
-    Nomen:    ['unbestimmt_singular', 'bestimmt_singular', 'unbestimmt_plural', 'bestimmt_plural'],
-    Verb:     ['infinitiv', 'praesens', 'praeteritum', 'supinum', 'imperativ', 'perfekt_partizip'],
-    Adjektiv: ['grundform', 'komparativ', 'superlativ', 'bestimmte_form', 'neutrum_form'],
-};
-
-// Kurz-Labels für Formen-Icons — as function so t() is evaluated at call time
-function FORM_LABELS() {
-    return {
-        unbestimmt_singular: t('satz_editor.form_unbestimmt_singular'),
-        bestimmt_singular:   t('satz_editor.form_bestimmt_singular'),
-        unbestimmt_plural:   t('satz_editor.form_unbestimmt_plural'),
-        bestimmt_plural:     t('satz_editor.form_bestimmt_plural'),
-        infinitiv:           t('satz_editor.form_infinitiv'),
-        praesens:            t('satz_editor.form_praesens'),
-        praeteritum:         t('satz_editor.form_praeteritum'),
-        supinum:             t('satz_editor.form_supinum'),
-        imperativ:           t('satz_editor.form_imperativ'),
-        perfekt_partizip:    t('satz_editor.form_perfekt_partizip'),
-        grundform:           t('satz_editor.form_grundform'),
-        komparativ:          t('satz_editor.form_komparativ'),
-        superlativ:          t('satz_editor.form_superlativ'),
-        bestimmte_form:      t('satz_editor.form_bestimmte_form'),
-        neutrum_form:        t('satz_editor.form_neutrum_form'),
-    };
-}
-
 let _seite              = 1;
-let _proSeite           = 50;        // Einträge pro Seite
+let _proSeite           = 50;
 let _filterVokabel      = '';
 let _filterKategorie    = '';
 let _filterLektion      = '';
-let _nurPrivate         = false;     // Admin: nur private Sätze anzeigen
-let _filterBesitzerId   = '';        // Admin: private nach Besitzer filtern
-let _benutzerListe      = [];        // Admin: Cache für User-Dropdown
+let _nurPrivate         = false;
+let _filterBesitzerId   = '';
+let _benutzerListe      = [];
 let _kategorien         = [];
-// Aktuell geöffnetes Detail: 'form:{vokabelId}:{form}'
+// Aktuell geöffnete Gruppe (vokabel_id als Zahl)
 let _offen              = null;
 
 export async function rendern() {
@@ -134,13 +102,11 @@ export async function rendern() {
         </div>
     `;
 
-    // "Neuer Satz"-Button → globales Formular
     document.getElementById('btn-satz-neu')?.addEventListener('click', () => {
         _offen = null;
         _globales_formular_anzeigen();
     });
 
-    // Filter
     const suchFeld = document.getElementById('filter-satz-suche');
     suchFeld?.addEventListener('input', entprellen(() => {
         _filterVokabel = suchFeld.value.trim();
@@ -168,7 +134,6 @@ export async function rendern() {
         _laden();
     });
 
-    // Non-Admin: "Meine privaten"-Checkbox
     if (!admin) {
         document.getElementById('filter-satz-eigene-privat')?.addEventListener('change', (e) => {
             _nurPrivate = e.target.checked;
@@ -253,7 +218,7 @@ function _kategorien_optionen(sel, kategorien, prefix = '') {
         opt.value = k.id;
         opt.textContent = prefix + k.name;
         sel.appendChild(opt);
-        if (k.kinder?.length > 0) _kategorien_optionen(sel, k.kinder, prefix + '\u00A0\u00A0\u00A0');
+        if (k.kinder?.length > 0) _kategorien_optionen(sel, k.kinder, prefix + '   ');
     }
 }
 
@@ -294,7 +259,7 @@ async function _laden() {
     if (_filterVokabel && _filterVokabel.length >= 2) params.suche = _filterVokabel;
     if (_filterKategorie) params.kategorie_id = _filterKategorie;
     if (_filterLektion)   params.lektion_id   = _filterLektion;
-    params.sortierung = 'vokabel_schwedisch';
+    params.sortierung = 'vokabel_englisch';
     params.richtung   = 'ASC';
     params.pro_seite  = _proSeite;
     if (_nurPrivate) {
@@ -327,12 +292,12 @@ async function _laden() {
     }
 
     // Sätze nach Vokabel gruppieren
-    const gruppen = new Map(); // vokabel_id → { info, saetze[] }
+    const gruppen = new Map();
     for (const s of saetze) {
         if (!gruppen.has(s.vokabel_id)) {
             gruppen.set(s.vokabel_id, {
                 id:            s.vokabel_id,
-                schwedisch:    s.vokabel_schwedisch,
+                englisch:      s.vokabel_englisch,
                 deutsch:       s.vokabel_deutsch,
                 wortart:       s.vokabel_wortart,
                 ist_privat:    s.ist_privat,
@@ -353,76 +318,12 @@ async function _laden() {
     );
 }
 
-// Helper: <option>-Elemente für ein Formen-Dropdown erzeugen
-function _form_optionen_html(wortart, ausgewaehlt = '') {
-    const labels = FORM_LABELS();
-    const formen = WORTART_FORMEN[wortart] || [];
-    if (formen.length === 0) {
-        return `<option value="${esc(ausgewaehlt)}">${esc(labels[ausgewaehlt] || ausgewaehlt)}</option>`;
-    }
-    return formen.map(f => {
-        const label = labels[f] || f;
-        const sel   = f === ausgewaehlt ? ' selected' : '';
-        return `<option value="${esc(f)}"${sel}>${esc(label)}</option>`;
-    }).join('');
-}
-
 function _liste_rendern(container, gruppen) {
     const admin = ist_admin();
-    const labels = FORM_LABELS();
     let html = '<div class="satz-gruppen">';
 
     for (const gruppe of gruppen.values()) {
-        const formen = WORTART_FORMEN[gruppe.wortart] || [];
-
-        // Für diese Vokabel: welche Formen haben Sätze? Map<form, satz[]>
-        const formMap = new Map();
-        for (const s of gruppe.saetze) {
-            if (!formMap.has(s.benoetigte_form)) formMap.set(s.benoetigte_form, []);
-            formMap.get(s.benoetigte_form).push(s);
-        }
-
-        // Formen-Icons
-        let iconsHtml = '';
-        for (const form of formen) {
-            const saetze  = formMap.get(form) || [];
-            const label   = labels[form] || form;
-            const hatSatz = saetze.length > 0;
-            const aktiv   = _offen === `form:${gruppe.id}:${form}`;
-            const anzahl  = saetze.length;
-            iconsHtml += `
-                <button class="satz-form-icon${hatSatz ? ' satz-form-icon--vorhanden' : ' satz-form-icon--fehlend'}${aktiv ? ' satz-form-icon--aktiv' : ''}"
-                    data-aktion="form-toggle"
-                    data-vokabel-id="${gruppe.id}"
-                    data-form="${esc(form)}"
-                    data-satz-ids="${saetze.map(s => s.id).join(',')}"
-                    title="${esc(form)}"
-                >${esc(label)}${anzahl > 1 ? `<span class="satz-anzahl-badge">${anzahl}</span>` : ''}</button>
-            `;
-        }
-
-        // Sätze ohne bekannte Form (andere benoetigte_form-Werte), zusammengefasst
-        const bekannteForms = new Set(formen);
-        const extraForms    = new Map();
-        for (const s of gruppe.saetze) {
-            if (!bekannteForms.has(s.benoetigte_form)) {
-                if (!extraForms.has(s.benoetigte_form)) extraForms.set(s.benoetigte_form, []);
-                extraForms.get(s.benoetigte_form).push(s);
-            }
-        }
-        for (const [extraForm, extraSaetze] of extraForms) {
-            const aktiv  = _offen === `form:${gruppe.id}:${extraForm}`;
-            const anzahl = extraSaetze.length;
-            iconsHtml += `
-                <button class="satz-form-icon satz-form-icon--vorhanden${aktiv ? ' satz-form-icon--aktiv' : ''}"
-                    data-aktion="form-toggle"
-                    data-vokabel-id="${gruppe.id}"
-                    data-form="${esc(extraForm)}"
-                    data-satz-ids="${extraSaetze.map(s => s.id).join(',')}"
-                    title="${esc(extraForm)}"
-                >${esc(extraForm.slice(0, 5))}${anzahl > 1 ? `<span class="satz-anzahl-badge">${anzahl}</span>` : ''}</button>
-            `;
-        }
+        const aktiv = _offen === gruppe.id;
 
         const privatKlasse = gruppe.ist_privat ? ' satz-gruppe--privat' : '';
         const privatBadge  = gruppe.ist_privat
@@ -436,12 +337,18 @@ function _liste_rendern(container, gruppen) {
             <div class="satz-gruppe${privatKlasse}" data-vokabel-id="${gruppe.id}">
                 <div class="satz-gruppe__kopf">
                     <div class="satz-gruppe__vokabel">
-                        <span class="satz-gruppe__sv">${esc(gruppe.schwedisch)}</span>
+                        <span class="satz-gruppe__sv">${esc(gruppe.englisch || '')}</span>
                         <span class="satz-gruppe__de">${esc(gruppe.deutsch)}</span>
                         <span class="tag tag--${(gruppe.wortart || '').toLowerCase()}" style="margin-left:4px">${esc(gruppe.wortart || '')}</span>
                         ${privatBadge}
                     </div>
-                    <div class="satz-gruppe__formen">${iconsHtml}</div>
+                    <button class="btn btn--text btn--klein satz-gruppe__toggle${aktiv ? ' satz-gruppe__toggle--aktiv' : ''}"
+                        data-aktion="gruppe-toggle"
+                        data-vokabel-id="${gruppe.id}"
+                        title="${aktiv ? t('allgemein.schliessen') : t('allgemein.oeffnen')}">
+                        <span class="satz-anzahl-badge" style="margin-right:4px">${gruppe.saetze.length}</span>
+                        <span class="material-symbols-outlined" style="font-size:20px">${aktiv ? 'expand_less' : 'expand_more'}</span>
+                    </button>
                 </div>
                 <div class="satz-gruppe__detail" id="satz-detail-${gruppe.id}"></div>
             </div>
@@ -451,71 +358,58 @@ function _liste_rendern(container, gruppen) {
     html += '</div>';
     container.innerHTML = html;
 
-    // Events: Formen-Icons
-    container.querySelectorAll('[data-aktion="form-toggle"]').forEach(btn => {
+    container.querySelectorAll('[data-aktion="gruppe-toggle"]').forEach(btn => {
         btn.addEventListener('click', () => {
-            const vokabelId  = parseInt(btn.dataset.vokabelId, 10);
-            const form       = btn.dataset.form;
-            const schluessel = `form:${vokabelId}:${form}`;
-
-            if (_offen === schluessel) {
-                // Zuklappen
+            const vokabelId = parseInt(btn.dataset.vokabelId, 10);
+            if (_offen === vokabelId) {
                 _offen = null;
-                _detail_leeren(vokabelId);
+                document.getElementById(`satz-detail-${vokabelId}`).innerHTML = '';
+                btn.classList.remove('satz-gruppe__toggle--aktiv');
+                btn.querySelector('.material-symbols-outlined').textContent = 'expand_more';
+                btn.title = t('allgemein.oeffnen');
             } else {
-                _offen = schluessel;
+                if (_offen !== null) {
+                    const altDetail = document.getElementById(`satz-detail-${_offen}`);
+                    if (altDetail) altDetail.innerHTML = '';
+                    const altBtn = container.querySelector(`[data-aktion="gruppe-toggle"][data-vokabel-id="${_offen}"]`);
+                    if (altBtn) {
+                        altBtn.classList.remove('satz-gruppe__toggle--aktiv');
+                        altBtn.querySelector('.material-symbols-outlined').textContent = 'expand_more';
+                        altBtn.title = t('allgemein.oeffnen');
+                    }
+                }
+                _offen = vokabelId;
+                btn.classList.add('satz-gruppe__toggle--aktiv');
+                btn.querySelector('.material-symbols-outlined').textContent = 'expand_less';
+                btn.title = t('allgemein.schliessen');
                 const gruppe = gruppen.get(vokabelId);
-                const saetze = (gruppe?.saetze || []).filter(s => s.benoetigte_form === form);
-                _detail_form_anzeigen(vokabelId, form, saetze, gruppe, admin);
+                _detail_anzeigen(vokabelId, gruppe.saetze, gruppe, admin);
             }
-
-            // Aktiv-Klassen aktualisieren
-            container.querySelectorAll('[data-aktion="form-toggle"]').forEach(b => {
-                const bKey = `form:${b.dataset.vokabelId}:${b.dataset.form}`;
-                b.classList.toggle('satz-form-icon--aktiv', bKey === _offen);
-            });
         });
     });
 
-    // Wenn _offen gesetzt und eine passende Gruppe da ist → automatisch öffnen
-    if (_offen) {
-        const teile = _offen.split(':');
-        if (teile[0] === 'form' && teile.length >= 3) {
-            const vokabelId = parseInt(teile[1], 10);
-            const form      = teile.slice(2).join(':');
-            const gruppe    = gruppen.get(vokabelId);
-            if (gruppe) {
-                const saetze = gruppe.saetze.filter(s => s.benoetigte_form === form);
-                _detail_form_anzeigen(vokabelId, form, saetze, gruppe, admin);
-            }
+    // Automatisch öffnen wenn _offen bereits gesetzt
+    if (_offen !== null) {
+        const gruppe = gruppen.get(_offen);
+        if (gruppe) {
+            _detail_anzeigen(_offen, gruppe.saetze, gruppe, admin);
+        } else {
+            _offen = null;
         }
     }
 }
 
-function _detail_leeren(vokabelId) {
-    const el = document.getElementById(`satz-detail-${vokabelId}`);
-    if (el) el.innerHTML = '';
-}
-
-// Zeigt alle Sätze einer Form + "Weiteren hinzufügen"-Button
-function _detail_form_anzeigen(vokabelId, form, saetze, gruppe, admin) {
+function _detail_anzeigen(vokabelId, saetze, gruppe, admin) {
     const container = document.getElementById(`satz-detail-${vokabelId}`);
     if (!container) return;
 
-    if (saetze.length === 0) {
-        // Noch kein Satz → direkt Neuformular anzeigen
-        _detail_neu_anzeigen(vokabelId, form, gruppe);
-        return;
-    }
-
-    // Alle Sätze dieser Form rendern
     let innerHtml = '<div class="satz-detail-gruppe">';
     for (const satz of saetze) {
         innerHtml += _satz_detail_html(satz, admin);
     }
     innerHtml += `
         <div class="satz-detail__hinzufuegen">
-            <button class="btn btn--text btn--klein" data-aktion="form-satz-hinzufuegen">
+            <button class="btn btn--text btn--klein" data-aktion="satz-hinzufuegen">
                 <span class="material-symbols-outlined" style="font-size:16px">add</span>
                 ${t('satz_editor.weiteren_satz_hinzufuegen')}
             </button>
@@ -523,34 +417,26 @@ function _detail_form_anzeigen(vokabelId, form, saetze, gruppe, admin) {
     </div>`;
     container.innerHTML = innerHtml;
 
-    // Events für jeden Satz
     for (const satz of saetze) {
         _satz_detail_events(container, satz, vokabelId, admin);
     }
 
-    // "Weiteren Satz hinzufügen"
-    container.querySelector('[data-aktion="form-satz-hinzufuegen"]')?.addEventListener('click', (e) => {
+    container.querySelector('[data-aktion="satz-hinzufuegen"]')?.addEventListener('click', (e) => {
         e.currentTarget.closest('.satz-detail__hinzufuegen').style.display = 'none';
-        _detail_neu_anzeigen_append(vokabelId, form, container);
+        _neu_satz_formular_anzeigen(vokabelId, container);
     });
 }
 
-// Hängt ein Neuformular für einen weiteren Satz ans Detail an
-function _detail_neu_anzeigen_append(vokabelId, form, detailContainer) {
+function _neu_satz_formular_anzeigen(vokabelId, detailContainer) {
     detailContainer.querySelector('.satz-detail--append')?.remove();
 
     const div = document.createElement('div');
     div.className = 'satz-detail satz-detail--neu satz-detail--append';
-    const labels = FORM_LABELS();
-    const formLabel = labels[form] || form;
     div.innerHTML = `
-        <p class="satz-detail__hinweis">
-            ${t('satz_editor.weiteren_satz_fuer', {form: `<strong>${esc(formLabel)}</strong>`})}
-        </p>
         <div class="satz-inline-formular">
             <div class="formular-gruppe">
-                <label class="formular-label">${t('satz_editor.label_schwedischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
-                <input class="eingabe" type="text" id="app-sv" placeholder="Jag har en ___.">
+                <label class="formular-label">${t('satz_editor.label_englischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
+                <input class="eingabe" type="text" id="app-en" placeholder="I have a ___.">
             </div>
             <div class="formular-gruppe">
                 <label class="formular-label">${t('satz_editor.label_deutscher_satz')}</label>
@@ -585,31 +471,28 @@ function _detail_neu_anzeigen_append(vokabelId, form, detailContainer) {
     });
 
     div.querySelector('[data-aktion="app-speichern"]')?.addEventListener('click', async () => {
-        const sv  = div.querySelector('#app-sv')?.value?.trim();
+        const en  = div.querySelector('#app-en')?.value?.trim();
         const de  = div.querySelector('#app-de')?.value?.trim();
         const niv = div.querySelector('#app-niv')?.value;
 
-        if (!sv || !de) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
-        if (!sv.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
+        if (!en || !de) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
+        if (!en.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
 
         const erg = await apiPost('saetze/erstellen.php', {
-            vokabel_id:      vokabelId,
-            schwedisch_satz: sv,
-            deutsch_satz:    de,
-            benoetigte_form: form,
-            sprachniveau:    niv,
+            vokabel_id:    vokabelId,
+            englisch_satz: en,
+            deutsch_satz:  de,
+            sprachniveau:  niv,
         });
 
         if (erg.erfolg) {
             erfolg(t('satz_editor.satz_erstellt'));
-            _offen = `form:${vokabelId}:${form}`;
             _laden();
         } else apiFehlerAnzeigen(erg);
     });
 }
 
 function _satz_detail_html(satz, admin) {
-    const labels = FORM_LABELS();
     const aktuellerBenutzer = holen('benutzer');
     const istEigenSatz = !admin && satz.ist_privat && aktuellerBenutzer &&
                          parseInt(satz.besitzer_id, 10) === parseInt(aktuellerBenutzer.id, 10);
@@ -619,12 +502,11 @@ function _satz_detail_html(satz, admin) {
     return `
         <div class="satz-detail${satz.ist_privat ? ' satz-detail--privat' : ''}" data-satz-id="${satz.id}">
             <div class="satz-detail__saetze">
-                <div class="satz-detail__sv">${esc(satz.schwedisch_satz)}</div>
+                <div class="satz-detail__sv">${esc(satz.englisch_satz)}</div>
                 <div class="satz-detail__de">${esc(satz.deutsch_satz)}</div>
             </div>
             <div class="satz-detail__meta">
                 <span class="tag tag--${(satz.sprachniveau || 'a1').toLowerCase()}">${esc(satz.sprachniveau)}</span>
-                <span class="satz-detail__form">${t('satz_editor.form_label')}: <strong>${esc(labels[satz.benoetigte_form] || satz.benoetigte_form)}</strong></span>
                 ${satz.ist_privat ? `<span class="satz-privat-badge">
                     <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">lock</span>
                     ${t('satz_editor.privat')}
@@ -666,18 +548,15 @@ function _satz_detail_events(container, satz, vokabelId, admin) {
 
     if (admin || istEigenSatz) {
         container.querySelector(`[data-aktion="satz-loeschen"][data-id="${satz.id}"]`)?.addEventListener('click', async () => {
-            const labels = FORM_LABELS();
-            const formLabel = labels[satz.benoetigte_form] || satz.benoetigte_form;
             const ok = await bestaetigung_anzeigen(
                 t('satz_editor.satz_loeschen_titel'),
-                t('satz_editor.satz_loeschen_text', {form: formLabel, vokabel: satz.vokabel_schwedisch}),
+                t('satz_editor.satz_loeschen_text_einfach', {vokabel: satz.vokabel_englisch || ''}),
                 t('allgemein.loeschen'), t('allgemein.abbrechen'), true
             );
             if (ok) {
                 const erg = await apiDelete(`saetze/loeschen.php?id=${satz.id}`);
                 if (erg.erfolg) {
                     erfolg(t('satz_editor.satz_geloescht'));
-                    _offen = null;
                     _laden();
                 } else apiFehlerAnzeigen(erg);
             }
@@ -686,13 +565,12 @@ function _satz_detail_events(container, satz, vokabelId, admin) {
 }
 
 function _bearbeiten_formular_rendern(formDiv, satz, vokabelId) {
-    const wortart = satz.vokabel_wortart || '';
     formDiv.innerHTML = `
         <div class="satz-inline-formular">
             <div class="formular-gruppe">
-                <label class="formular-label">${t('satz_editor.label_schwedischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
-                <input class="eingabe" type="text" id="bearb-sv-${satz.id}"
-                    value="${esc(satz.schwedisch_satz)}" placeholder="Jag har en ___.">
+                <label class="formular-label">${t('satz_editor.label_englischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
+                <input class="eingabe" type="text" id="bearb-en-${satz.id}"
+                    value="${esc(satz.englisch_satz)}" placeholder="I have a ___.">
             </div>
             <div class="formular-gruppe">
                 <label class="formular-label">${t('satz_editor.label_deutscher_satz')}</label>
@@ -700,12 +578,6 @@ function _bearbeiten_formular_rendern(formDiv, satz, vokabelId) {
                     value="${esc(satz.deutsch_satz)}" placeholder="Ich habe einen Hund.">
             </div>
             <div class="editor-formular__reihe">
-                <div class="formular-gruppe">
-                    <label class="formular-label">${t('satz_editor.label_benoetigte_form')}</label>
-                    <select class="eingabe" id="bearb-form-${satz.id}">
-                        ${_form_optionen_html(wortart, satz.benoetigte_form)}
-                    </select>
-                </div>
                 <div class="formular-gruppe">
                     <label class="formular-label">${t('satz_editor.label_niveau')}</label>
                     <select class="eingabe" id="bearb-niveau-${satz.id}">
@@ -727,105 +599,22 @@ function _bearbeiten_formular_rendern(formDiv, satz, vokabelId) {
     });
 
     formDiv.querySelector('[data-aktion="bearb-speichern"]')?.addEventListener('click', async () => {
-        const sv   = document.getElementById(`bearb-sv-${satz.id}`)?.value?.trim();
-        const de   = document.getElementById(`bearb-de-${satz.id}`)?.value?.trim();
-        const form = document.getElementById(`bearb-form-${satz.id}`)?.value;
-        const niv  = document.getElementById(`bearb-niveau-${satz.id}`)?.value;
+        const en  = document.getElementById(`bearb-en-${satz.id}`)?.value?.trim();
+        const de  = document.getElementById(`bearb-de-${satz.id}`)?.value?.trim();
+        const niv = document.getElementById(`bearb-niveau-${satz.id}`)?.value;
 
-        if (!sv || !de || !form) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
-        if (!sv.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
+        if (!en || !de) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
+        if (!en.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
 
         const erg = await apiPut(`saetze/aktualisieren.php?id=${satz.id}`, {
-            vokabel_id:      vokabelId,
-            schwedisch_satz: sv,
-            deutsch_satz:    de,
-            benoetigte_form: form,
-            sprachniveau:    niv,
+            vokabel_id:    vokabelId,
+            englisch_satz: en,
+            deutsch_satz:  de,
+            sprachniveau:  niv,
         });
 
-        if (erg.erfolg) { erfolg(t('satz_editor.satz_aktualisiert')); _offen = null; _laden(); }
+        if (erg.erfolg) { erfolg(t('satz_editor.satz_aktualisiert')); _laden(); }
         else apiFehlerAnzeigen(erg);
-    });
-}
-
-function _detail_neu_anzeigen(vokabelId, form, gruppe) {
-    const container = document.getElementById(`satz-detail-${vokabelId}`);
-    if (!container) return;
-
-    const wortart   = gruppe?.wortart || '';
-    const labels    = FORM_LABELS();
-    const formLabel = labels[form] || form;
-
-    container.innerHTML = `
-        <div class="satz-detail satz-detail--neu">
-            <p class="satz-detail__hinweis">
-                ${t('satz_editor.kein_satz_vorhanden', {form: `<strong>${esc(formLabel)}</strong>`})}
-            </p>
-            <div class="satz-inline-formular">
-                <div class="formular-gruppe">
-                    <label class="formular-label">${t('satz_editor.label_schwedischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
-                    <input class="eingabe" type="text" id="neu-sv"
-                        placeholder="Jag har en ___.">
-                </div>
-                <div class="formular-gruppe">
-                    <label class="formular-label">${t('satz_editor.label_deutscher_satz')}</label>
-                    <input class="eingabe" type="text" id="neu-de"
-                        placeholder="Ich habe einen Hund.">
-                </div>
-                <div class="editor-formular__reihe">
-                    <div class="formular-gruppe">
-                        <label class="formular-label">${t('satz_editor.label_benoetigte_form')}</label>
-                        <select class="eingabe" id="neu-form">
-                            ${_form_optionen_html(wortart, form)}
-                        </select>
-                    </div>
-                    <div class="formular-gruppe">
-                        <label class="formular-label">${t('satz_editor.label_niveau')}</label>
-                        <select class="eingabe" id="neu-niveau">
-                            ${['A1','A2','B1','B2','C1','C2'].map(n =>
-                                `<option value="${n}">` + n + '</option>'
-                            ).join('')}
-                        </select>
-                    </div>
-                </div>
-                <div class="editor-formular__aktionen">
-                    <button class="btn btn--text btn--klein" id="btn-neu-abbrechen">${t('allgemein.abbrechen')}</button>
-                    <button class="btn btn--gefuellt btn--klein" id="btn-neu-speichern">${t('allgemein.speichern')}</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('btn-neu-abbrechen')?.addEventListener('click', () => {
-        _offen = null;
-        _detail_leeren(vokabelId);
-        document.querySelectorAll('[data-aktion="form-toggle"]').forEach(b => {
-            b.classList.remove('satz-form-icon--aktiv');
-        });
-    });
-
-    document.getElementById('btn-neu-speichern')?.addEventListener('click', async () => {
-        const sv          = document.getElementById('neu-sv')?.value?.trim();
-        const de          = document.getElementById('neu-de')?.value?.trim();
-        const selectedForm = document.getElementById('neu-form')?.value || form;
-        const niv         = document.getElementById('neu-niveau')?.value;
-
-        if (!sv || !de) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
-        if (!sv.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
-
-        const erg = await apiPost('saetze/erstellen.php', {
-            vokabel_id:      vokabelId,
-            schwedisch_satz: sv,
-            deutsch_satz:    de,
-            benoetigte_form: selectedForm,
-            sprachniveau:    niv,
-        });
-
-        if (erg.erfolg) {
-            erfolg(t('satz_editor.satz_erstellt'));
-            _offen = null;
-            _laden();
-        } else apiFehlerAnzeigen(erg);
     });
 }
 
@@ -833,7 +622,6 @@ async function _globales_formular_anzeigen() {
     const container = document.getElementById('satz-global-formular');
     if (!container) return;
 
-    // Toggle: wenn schon sichtbar → schließen
     if (container.innerHTML.trim()) {
         container.innerHTML = '';
         return;
@@ -846,24 +634,17 @@ async function _globales_formular_anzeigen() {
                 <label class="formular-label">${t('satz_editor.label_vokabel')}</label>
                 <input class="eingabe" type="text" id="gneu-vokabel-suche" placeholder="${t('satz_editor.vokabel_suchen_kurz')}">
                 <input type="hidden" id="gneu-vokabel-id">
-                <input type="hidden" id="gneu-vokabel-wortart">
                 <div id="gneu-vokabel-ergebnisse" class="suche-ergebnisse"></div>
             </div>
             <div class="formular-gruppe">
-                <label class="formular-label">${t('satz_editor.label_schwedischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
-                <input class="eingabe" type="text" id="gneu-sv" placeholder="Jag har en ___.">
+                <label class="formular-label">${t('satz_editor.label_englischer_satz')} <small>(${t('satz_editor.mit_luecke')})</small></label>
+                <input class="eingabe" type="text" id="gneu-en" placeholder="I have a ___.">
             </div>
             <div class="formular-gruppe">
                 <label class="formular-label">${t('satz_editor.label_deutscher_satz')}</label>
                 <input class="eingabe" type="text" id="gneu-de" placeholder="Ich habe einen Hund.">
             </div>
             <div class="editor-formular__reihe">
-                <div class="formular-gruppe">
-                    <label class="formular-label">${t('satz_editor.label_benoetigte_form')}</label>
-                    <div id="gneu-form-wrapper">
-                        <input class="eingabe" type="text" id="gneu-form" placeholder="${t('satz_editor.form_placeholder')}">
-                    </div>
-                </div>
                 <div class="formular-gruppe">
                     <label class="formular-label">${t('satz_editor.label_niveau')}</label>
                     <select class="eingabe" id="gneu-niveau">
@@ -878,7 +659,6 @@ async function _globales_formular_anzeigen() {
         </div>
     `;
 
-    // Vokabel-Suche
     document.getElementById('gneu-vokabel-suche')?.addEventListener('input', entprellen(async () => {
         const q   = document.getElementById('gneu-vokabel-suche').value.trim();
         const res = document.getElementById('gneu-vokabel-ergebnisse');
@@ -888,24 +668,15 @@ async function _globales_formular_anzeigen() {
         const erg = await apiGet('vokabeln/suchen.php', { q });
         if (erg.erfolg && erg.daten.length > 0) {
             res.innerHTML = erg.daten.map(v =>
-                `<div class="suche-ergebnis" data-vid="${v.id}" data-wortart="${esc(v.wortart)}">
-                    <strong>${esc(v.schwedisch)}</strong> — ${esc(v.deutsch)} (${esc(v.wortart)})
+                `<div class="suche-ergebnis" data-vid="${v.id}">
+                    <strong>${esc(v.englisch || v.schwedisch || '')}</strong> — ${esc(v.deutsch)} (${esc(v.wortart)})
                 </div>`
             ).join('');
             res.querySelectorAll('.suche-ergebnis').forEach(el => {
                 el.addEventListener('click', () => {
-                    document.getElementById('gneu-vokabel-id').value      = el.dataset.vid;
-                    document.getElementById('gneu-vokabel-wortart').value = el.dataset.wortart;
-                    document.getElementById('gneu-vokabel-suche').value   = el.textContent.trim();
+                    document.getElementById('gneu-vokabel-id').value    = el.dataset.vid;
+                    document.getElementById('gneu-vokabel-suche').value = el.textContent.trim();
                     res.innerHTML = '';
-                    // Formen-Dropdown aufbauen sobald Wortart bekannt
-                    const wrapper = document.getElementById('gneu-form-wrapper');
-                    const formen  = WORTART_FORMEN[el.dataset.wortart] || [];
-                    if (wrapper && formen.length > 0) {
-                        wrapper.innerHTML = `<select class="eingabe" id="gneu-form">
-                            ${_form_optionen_html(el.dataset.wortart)}
-                        </select>`;
-                    }
                 });
             });
         } else if (erg.erfolg) {
@@ -919,20 +690,18 @@ async function _globales_formular_anzeigen() {
 
     document.getElementById('gneu-speichern')?.addEventListener('click', async () => {
         const vokId = document.getElementById('gneu-vokabel-id')?.value;
-        const sv    = document.getElementById('gneu-sv')?.value?.trim();
+        const en    = document.getElementById('gneu-en')?.value?.trim();
         const de    = document.getElementById('gneu-de')?.value?.trim();
-        const form  = document.getElementById('gneu-form')?.value?.trim();
         const niv   = document.getElementById('gneu-niveau')?.value;
 
-        if (!vokId || !sv || !de || !form) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
-        if (!sv.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
+        if (!vokId || !en || !de) { fehler(t('satz_editor.pflichtfelder_fehler')); return; }
+        if (!en.includes('___')) { fehler(t('satz_editor.luecke_fehler')); return; }
 
         const erg = await apiPost('saetze/erstellen.php', {
-            vokabel_id:      parseInt(vokId, 10),
-            schwedisch_satz: sv,
-            deutsch_satz:    de,
-            benoetigte_form: form,
-            sprachniveau:    niv,
+            vokabel_id:    parseInt(vokId, 10),
+            englisch_satz: en,
+            deutsch_satz:  de,
+            sprachniveau:  niv,
         });
 
         if (erg.erfolg) {

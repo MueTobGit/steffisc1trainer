@@ -11,12 +11,9 @@ import { router_init, navigieren, aktuelle_route } from './router.js';
 import { seitenleiste_rendern } from './komponenten/seitenleiste.js';
 import { kopfzeile_rendern, kopfzeile_titel_setzen, thema_laden } from './komponenten/kopfzeile.js';
 import { schriftgroesse_laden, schriftgroesse_anwenden } from './module/profil.js';
-import { unten_leiste_rendern } from './komponenten/unten-leiste.js';
 import { entprellen } from './hilfs-funktionen.js';
 import { sprache_init, sprache_anwenden, t } from './dienste/sprache.js';
-import { benachrichtigungen_init, einmalige_benachrichtigungen_setzen, benachrichtigungen_sync } from './dienste/android-benachrichtigungen.js';
 import { apiGet } from './api-client.js';
-import { neue_belohnungen_pruefen, stil_einfuegen as belohnung_stil } from './komponenten/neue-belohnung-overlay.js';
 
 // Aktuell geladenes Modul
 let _aktivesModul = null;
@@ -81,9 +78,6 @@ async function app_starten() {
     if (window.Android) {
         document.body.classList.add('android-app');
         console.log('[App] Android-WebView erkannt, Version:', window.Android.getVersion?.() || '?');
-
-        // Benachrichtigungs-Dienst initialisieren
-        benachrichtigungen_init();
     }
 
     // 1. Thema + Schriftgröße + Sprache laden (vor allem anderen, um Flash zu vermeiden)
@@ -116,17 +110,6 @@ async function app_starten() {
         _benutzer_war_gesetzt = true;
         _app_anzeigen();
 
-        // Android: Benachrichtigungsdaten mit nativem AlarmManager synchronisieren
-        // Einmalige Benachrichtigungen auch bei Token-Restart laden (nicht nur bei frischem Login),
-        // damit Admin-Einträge auch ohne erneutes Einloggen zugestellt werden.
-        if (window.Android) {
-            benachrichtigungen_sync();
-            _einmalige_benachrichtigungen_laden();
-        }
-
-        // Neue Gruppen-Belohnungen pruefen (nach kurzem Delay, damit UI steht)
-        belohnung_stil();
-        setTimeout(() => neue_belohnungen_pruefen(), 1500);
     } else {
         // Nicht eingeloggt → Anmeldung zeigen
         _anmeldung_anzeigen();
@@ -146,15 +129,6 @@ async function app_starten() {
                 // (Hash stand bereits auf /dashboard und hat sich nicht geaendert)
                 window.dispatchEvent(new Event('hashchange'));
 
-                // Einmalige Benachrichtigungen aus DB laden und planen (nur Android)
-                if (window.Android) {
-                    _einmalige_benachrichtigungen_laden();
-                    benachrichtigungen_sync();
-                }
-
-                // Neue Gruppen-Belohnungen pruefen
-                belohnung_stil();
-                setTimeout(() => neue_belohnungen_pruefen(), 2000);
             }
             // Ab jetzt gilt Benutzer als gesetzt — weitere setzen('benutzer', ...)
             // Aufrufe (z.B. Profil-Toggles) lösen keinen Route-Reload mehr aus
@@ -269,7 +243,6 @@ function _app_anzeigen() {
     // Navigation rendern (einmalig oder bei Auth-Wechsel)
     seitenleiste_rendern();
     kopfzeile_rendern();
-    unten_leiste_rendern();
 
     // i18n: statische data-i18n Elemente übersetzen
     sprache_anwenden();
@@ -323,32 +296,6 @@ function _lade_bildschirm_ausblenden() {
     }
 }
 
-/**
- * Einmalige Benachrichtigungen aus der DB laden und an den Android-Bridge übergeben.
- * Wird nach erfolgreichem Login aufgerufen.
- */
-async function _einmalige_benachrichtigungen_laden() {
-    try {
-        const res = await apiGet('benachrichtigungen/einmalig.php');
-        if (!res.erfolg) return;
-
-        const liste = (res.daten || [])
-            .filter(e => e.aktiv)
-            .map(e => ({
-                id:        e.schluessel,
-                titel:     e.titel,
-                text:      e.text,
-                // parameter_1 = datetime-local String → in Unix-ms umwandeln
-                timestamp: e.parameter_1 ? new Date(e.parameter_1).getTime() : null,
-            }));
-
-        if (liste.length > 0) {
-            einmalige_benachrichtigungen_setzen(liste);
-        }
-    } catch (_) {
-        // Lautlos fehlschlagen
-    }
-}
 
 // ---- Globale Funktion fuer Android-Bridge ----
 // Ermoeglicht der nativen App, nach einem Magic-Link- oder Custom-Scheme-Login

@@ -13,25 +13,16 @@
 import { apiGet, apiPost, apiDelete, passwort_aendern } from '../api-client.js';
 import { OEFFENTLICH_PFAD_BASIS } from '../konfiguration.js';
 import { holen, setzen, abonnieren } from '../zustand.js';
-import { esc, zahlFormatieren, datumFormatieren, levelLabel } from '../hilfs-funktionen.js';
+import { esc, zahlFormatieren, datumFormatieren } from '../hilfs-funktionen.js';
 import { lade_anzeige_rendern, lade_anzeige_entfernen } from '../komponenten/lade-anzeige.js';
 import { leer_zustand_rendern } from '../komponenten/leer-zustand.js';
 import { erfolg, fehler as fehlerMsg, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 import { thema_anwenden } from '../komponenten/kopfzeile.js';
-import { aktuelle_sprache, sprache_wechseln, t } from '../dienste/sprache.js';
-import { krone_svg_html } from '../dienste/krone-svg.js';
+import { t } from '../dienste/sprache.js';
 
 // ============================================
 // Konstanten
 // ============================================
-
-const LEVEL_FORMEN = {
-    1: ['Unbestimmt Singular', 'Infinitiv', 'Pr\u00e4sens', 'Grundform'],
-    2: ['Bestimmt Singular', 'Supinum', 'Neutrum-Form'],
-    3: ['Pr\u00e4teritum', 'Unbestimmt Plural', 'Bestimmt Plural', 'Komparativ'],
-    4: ['Imperativ', 'Superlativ', 'Bestimmte Form', 'Perfekt-Partizip'],
-    5: [],
-};
 
 function _thema_optionen() {
     return [
@@ -131,79 +122,20 @@ function _seite_rendern() {
     const mitgliedSeit = datumFormatieren(b.erstellt_am);
     const rolleLabel_  = b.rolle === 'admin' ? t('profil.rolle_admin') : t('profil.rolle_benutzer');
 
-    // Kronen-Daten aus globalem Zustand (kommt von token_pruefen.php)
-    const benutzerZustand = holen('benutzer') || {};
-    const besteKrone      = benutzerZustand.beste_krone      || null;
-    const besteKroneTyp   = benutzerZustand.beste_krone_typ  || 'standard';
-    const kronenAnzahl    = benutzerZustand.krone_anzahl     || 0;
-    const kroneBadge      = besteKrone
-        ? `<span class="krone-badge">${krone_svg_html(besteKroneTyp, besteKrone)}</span>`
-        : '';
-    const kronenStatsHtml = kronenAnzahl > 0
-        ? `<div class="profil__kronen-info">
-               <span class="material-symbols-outlined">military_tech</span>
-               ${t('profil.kronen_anzahl', { anzahl: kronenAnzahl })}
-           </div>`
-        : '';
-
     // Einstellungen-Daten
     const aktuellesThema   = holen('thema') || 'system';
-    const level            = s?.globales_level || 1;
 
-    let alleFomen = [];
-    for (let i = 1; i <= level; i++) {
-        alleFomen = alleFomen.concat(LEVEL_FORMEN[i] || []);
-    }
-    const naechstesLevel = level < 5 ? level + 1 : null;
-    const naechsteFormen = naechstesLevel ? LEVEL_FORMEN[naechstesLevel] || [] : [];
-
-    // Neue-Vokabeln-Optionen vorberechnen
-    const basisNeueVokabeln = (holen('konfiguration') || {}).neue_vokabeln_pro_tag || 10;
-    const aktuellerFaktor = b.neue_vokabeln_faktor || 100;
-    const faktorOptionen = [
-        { faktor: 50,  label: t('profil.tempo_entspannt'),     icon: 'self_improvement' },
-        { faktor: 100, label: t('profil.tempo_normal'),        icon: 'school' },
-        { faktor: 200, label: t('profil.tempo_intensiv'),      icon: 'local_fire_department' },
-        { faktor: 300, label: t('profil.tempo_intensiv_plus'), icon: 'rocket_launch' },
-    ];
-    let neueVokabelnButtons = '';
-    for (const opt of faktorOptionen) {
-        const total = Math.max(1, Math.round(basisNeueVokabeln * opt.faktor / 100));
-        const aktiv = aktuellerFaktor === opt.faktor;
-        neueVokabelnButtons += `
-            <label style="flex:1;min-width:80px;cursor:pointer">
-                <input type="radio" name="neue_vokabeln" value="${opt.faktor}"
-                    style="display:none" ${aktiv ? 'checked' : ''}>
-                <div class="schrift-option ${aktiv ? 'schrift-option--aktiv' : ''}"
-                    data-faktor="${opt.faktor}"
-                    style="border:2px solid ${aktiv ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'};
-                        border-radius:8px;padding:10px 6px;text-align:center;transition:border-color 0.2s">
-                    <span class="material-symbols-outlined" style="font-size:20px;display:block;margin-bottom:2px">${opt.icon}</span>
-                    <div style="font-size:14px;font-weight:600;margin-bottom:1px">${t('profil.pro_tag', {anzahl: total})}</div>
-                    <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant)">${esc(opt.label)}</div>
-                </div>
-            </label>
-        `;
-    }
-    const aktuellesTotal = Math.max(1, Math.round(basisNeueVokabeln * aktuellerFaktor / 100));
+    // Neue Vokabeln pro Tag (0 = unbegrenzt)
+    const aktuelleNeueVokabeln = b.neue_vokabeln_pro_tag ?? 10;
 
     _wrapper.innerHTML = `
         <!-- ===== Profil-Info ===== -->
         <section class="profil__info-karte">
             <div class="karte" style="padding:24px">
                 <div class="profil__kopf">
-                    <span class="krone-badge-wrapper">
-                        <div class="profil__avatar profil__avatar--klickbar" id="profil-avatar-kreis" role="button"
-                             tabindex="0" title="${t('profil.avatar_aendern')}">
-                            ${b.avatar_url
-                                ? `<img src="${esc(b.avatar_url)}" class="profil__avatar-img" alt="Avatar">`
-                                : `<span class="profil__avatar-initial">${esc(initiale)}</span>`}
-                            <div class="profil__avatar-overlay">
-                                <span class="material-symbols-outlined">photo_camera</span>
-                            </div>
-                        </div>
-                        ${kroneBadge}
-                    </span>
+                    <div class="profil__avatar">
+                        <span class="profil__avatar-initial">${esc(initiale)}</span>
+                    </div>
                     <div class="profil__meta">
                         <h2 class="profil__name">${esc(name)}</h2>
                         <span class="profil__benutzername">@${esc(b.benutzername)}</span>
@@ -212,11 +144,6 @@ function _seite_rendern() {
                             <span class="tag tag--${b.rolle}">${esc(rolleLabel_)}</span>
                             <span class="profil__mitglied-seit">${t('profil.mitglied_seit', {datum: mitgliedSeit})}</span>
                         </div>
-                        ${kronenStatsHtml}
-                        ${b.avatar_url ? `<button class="profil__avatar-entfernen-btn" id="btn-avatar-entfernen">
-                            <span class="material-symbols-outlined">delete</span>
-                            ${t('profil.avatar_entfernen')}
-                        </button>` : ''}
                     </div>
                 </div>
                 <button class="btn btn--umrandet" id="btn-profil-bearbeiten" style="margin-top:16px">
@@ -312,37 +239,6 @@ function _seite_rendern() {
             </div>
         </section>
 
-        <!-- ===== App-Sprache ===== -->
-        <section>
-            <div class="karte" style="padding:16px">
-                <div class="karte__titel" style="padding:0 0 8px">
-                    <span class="material-symbols-outlined" style="vertical-align:middle;margin-right:6px;font-size:20px">translate</span>
-                    ${t('profil.sprache')}
-                </div>
-                <p style="color:var(--md-sys-color-on-surface-variant);font-size:0.875rem;margin:0 0 12px">
-                    ${t('profil.sprache_beschreibung')}
-                </p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    ${[
-                        { wert: 'de', label: 'Deutsch', flag: '🇩🇪' },
-                        { wert: 'sv', label: 'Svenska', flag: '🇸🇪' },
-                    ].map(opt => `
-                        <label style="flex:1;min-width:120px;cursor:pointer">
-                            <input type="radio" name="sprache" value="${opt.wert}"
-                                style="display:none"
-                                ${aktuelle_sprache() === opt.wert ? 'checked' : ''}>
-                            <div class="schrift-option ${aktuelle_sprache() === opt.wert ? 'schrift-option--aktiv' : ''}"
-                                style="border:2px solid ${aktuelle_sprache() === opt.wert ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'};
-                                    border-radius:8px;padding:12px;text-align:center;transition:border-color 0.2s">
-                                <div style="font-size:24px;margin-bottom:4px">${opt.flag}</div>
-                                <div style="font-size:14px;font-weight:500">${opt.label}</div>
-                            </div>
-                        </label>
-                    `).join('')}
-                </div>
-            </div>
-        </section>
-
         <!-- ===== Schriftgrösse ===== -->
         <section>
             <div class="karte" style="padding:16px">
@@ -379,10 +275,30 @@ function _seite_rendern() {
                     ${t('profil.neue_vokabeln_titel')}
                 </div>
                 <p style="color:var(--md-sys-color-on-surface-variant);font-size:0.875rem;margin:0 0 12px" id="neue-vokabeln-text">
-                    ${t('profil.neue_vokabeln_text', {anzahl: aktuellesTotal})}
+                    ${t('profil.neue_vokabeln_aktuell', { anzahl: aktuelleNeueVokabeln === 0 ? '∞' : aktuelleNeueVokabeln })}
                 </p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                    ${neueVokabelnButtons}
+                <div style="display:flex;gap:8px;flex-wrap:wrap" id="neue-vokabeln-kacheln">
+                    ${[
+                        { wert: 5,  icon: 'self_improvement',      label: '5/Tag',  beschreibung: t('profil.neue_vokabeln_entspannt') },
+                        { wert: 10, icon: 'school',                label: '10/Tag', beschreibung: t('profil.neue_vokabeln_normal') },
+                        { wert: 20, icon: 'local_fire_department', label: '20/Tag', beschreibung: t('profil.neue_vokabeln_intensiv') },
+                        { wert: 30, icon: 'rocket_launch',         label: '30/Tag', beschreibung: t('profil.neue_vokabeln_intensiv_plus') },
+                        { wert: 0,  icon: 'all_inclusive',         label: '∞',      beschreibung: t('profil.neue_vokabeln_unbegrenzt') },
+                    ].map(opt => `
+                        <label style="flex:1;min-width:80px;cursor:pointer">
+                            <input type="radio" name="neue_vokabeln" value="${opt.wert}"
+                                style="display:none"
+                                ${aktuelleNeueVokabeln === opt.wert ? 'checked' : ''}>
+                            <div class="schrift-option ${aktuelleNeueVokabeln === opt.wert ? 'schrift-option--aktiv' : ''} neue-vokabeln-kachel"
+                                data-wert="${opt.wert}"
+                                style="border:2px solid ${aktuelleNeueVokabeln === opt.wert ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'};
+                                    border-radius:8px;padding:10px 6px;text-align:center;transition:border-color 0.2s">
+                                <span class="material-symbols-outlined" style="font-size:20px;display:block;margin-bottom:2px">${opt.icon}</span>
+                                <div style="font-size:14px;font-weight:600;margin-bottom:1px">${opt.label}</div>
+                                <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant)">${opt.beschreibung}</div>
+                            </div>
+                        </label>
+                    `).join('')}
                 </div>
             </div>
         </section>
@@ -424,129 +340,6 @@ function _seite_rendern() {
 function _events_registrieren() {
     const formBereich = _wrapper.querySelector('#profil-formular-bereich');
 
-    // ── Avatar Picker ──────────────────────────────────────────────────────
-    const avatarKreis = _wrapper.querySelector('#profil-avatar-kreis');
-
-    const AVATAR_PRESETS = [
-        { dateiname: 'astrid.png',   name: 'Astrid'   },
-        { dateiname: 'bjorn.png',    name: 'Björn'    },
-        { dateiname: 'fredrica.png', name: 'Fredrica' },
-        { dateiname: 'freya.png',    name: 'Freya'    },
-        { dateiname: 'gunnar.png',   name: 'Gunnar'   },
-        { dateiname: 'hilda.png',    name: 'Hilda'    },
-        { dateiname: 'ivar.png',     name: 'Ivar'     },
-        { dateiname: 'leif.png',     name: 'Leif'     },
-        { dateiname: 'ragnar.png',   name: 'Ragnar'   },
-        { dateiname: 'sigrid.png',   name: 'Sigrid'   },
-    ];
-
-    function _picker_oeffnen() {
-        let dialog = document.getElementById('avatar-picker-dialog');
-        if (!dialog) {
-            dialog = document.createElement('dialog');
-            dialog.id = 'avatar-picker-dialog';
-            dialog.className = 'avatar-picker';
-            document.body.appendChild(dialog);
-        }
-
-        const benutzer = holen('benutzer');
-        const aktuelleUrl = benutzer?.avatar_url || '';
-        const bildBasis = OEFFENTLICH_PFAD_BASIS + '/bilder/avatare/';
-
-        dialog.innerHTML = `
-            <div class="avatar-picker__kopf">
-                <h3 class="avatar-picker__titel">${t('profil.avatar_waehlen')}</h3>
-                <button class="btn-icon" id="avatar-picker-schliessen">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="avatar-picker__raster">
-                ${AVATAR_PRESETS.map(av => {
-                    const url = bildBasis + av.dateiname;
-                    const aktiv = aktuelleUrl.includes('bilder/avatare/' + av.dateiname)
-                        ? ' avatar-picker__option--aktiv' : '';
-                    return `<button class="avatar-picker__option${aktiv}" data-dateiname="${esc(av.dateiname)}" title="${esc(av.name)}">
-                        <img src="${esc(url)}" alt="${esc(av.name)}" class="avatar-picker__bild" loading="lazy">
-                        <span class="avatar-picker__name">${esc(av.name)}</span>
-                    </button>`;
-                }).join('')}
-            </div>
-        `;
-
-        dialog.querySelector('#avatar-picker-schliessen').addEventListener('click', () => dialog.close());
-        dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
-        dialog.querySelectorAll('.avatar-picker__option').forEach(btn => {
-            btn.addEventListener('click', () => _preset_waehlen(btn.dataset.dateiname, dialog));
-        });
-
-        dialog.showModal();
-    }
-
-    async function _preset_waehlen(dateiname, dialog) {
-        avatarKreis?.classList.add('profil__avatar--laden');
-        const erg = await apiPost('profil/avatar_waehlen.php', { dateiname });
-        avatarKreis?.classList.remove('profil__avatar--laden');
-
-        if (erg.erfolg) {
-            const url = erg.daten.avatar_url;
-            let img = avatarKreis?.querySelector('.profil__avatar-img');
-            if (!img) {
-                avatarKreis?.querySelector('.profil__avatar-initial')?.remove();
-                img = document.createElement('img');
-                img.className = 'profil__avatar-img';
-                img.alt = 'Avatar';
-                avatarKreis?.insertBefore(img, avatarKreis.querySelector('.profil__avatar-overlay'));
-            }
-            img.src = url;
-            const benutzer = holen('benutzer');
-            setzen('benutzer', { ...benutzer, avatar_url: url, media_id: erg.daten.media_id });
-            dialog.close();
-            erfolg(t('profil.avatar_gespeichert'));
-            import('../komponenten/unten-leiste.js').then(m => m.unten_leiste_rendern());
-            import('../komponenten/seitenleiste.js').then(m => m.seitenleiste_rendern());
-            if (!_wrapper.querySelector('#btn-avatar-entfernen')) {
-                rendern(); // Entfernen-Button einblenden
-            }
-        } else {
-            apiFehlerAnzeigen(erg);
-        }
-    }
-
-    if (avatarKreis) {
-        avatarKreis.addEventListener('click', _picker_oeffnen);
-        avatarKreis.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); _picker_oeffnen(); }
-        });
-    }
-
-    // ── Avatar Entfernen ───────────────────────────────────────────────────
-    const btnEntfernen = _wrapper.querySelector('#btn-avatar-entfernen');
-    if (btnEntfernen) {
-        btnEntfernen.addEventListener('click', async () => {
-            if (!confirm(t('profil.avatar_entfernen_confirm'))) return;
-            const erg = await apiDelete('profil/avatar_loeschen.php');
-            if (erg.erfolg) {
-                const benutzer = holen('benutzer');
-                setzen('benutzer', { ...benutzer, avatar_url: null, media_id: null });
-                erfolg(t('profil.avatar_entfernt'));
-                import('../komponenten/unten-leiste.js').then(m => m.unten_leiste_rendern());
-                import('../komponenten/seitenleiste.js').then(m => m.seitenleiste_rendern());
-                // Profil-Header neu rendern
-                const img = avatarKreis?.querySelector('.profil__avatar-img');
-                if (img) {
-                    img.remove();
-                    const initial = document.createElement('span');
-                    initial.className = 'profil__avatar-initial';
-                    initial.textContent = benutzer.vorname?.[0] || benutzer.benutzername?.[0] || '?';
-                    avatarKreis?.insertBefore(initial, avatarKreis.querySelector('.profil__avatar-overlay'));
-                }
-                btnEntfernen.remove();
-            } else {
-                apiFehlerAnzeigen(erg);
-            }
-        });
-    }
-
     _wrapper.querySelector('#btn-profil-bearbeiten').addEventListener('click', () => {
         formBereich.classList.toggle('versteckt');
     });
@@ -571,26 +364,6 @@ function _events_registrieren() {
             setzen('thema', neuesThema);
             thema_anwenden(neuesThema);
             localStorage.setItem('vt_thema', neuesThema);
-        });
-    });
-
-    // Sprache-Radio
-    _wrapper.querySelectorAll('input[name="sprache"]').forEach(radio => {
-        radio.addEventListener('change', async () => {
-            await sprache_wechseln(radio.value);
-            // Serverseitig speichern (fire-and-forget)
-            apiPost('profil/aktualisieren.php', { sprache: radio.value }).catch(() => {});
-            // Optisch: alle Boxen aktualisieren
-            _wrapper.querySelectorAll('input[name="sprache"]').forEach(r => {
-                const box = r.nextElementSibling;
-                if (box) {
-                    const aktiv = r.value === radio.value;
-                    box.style.borderColor = aktiv
-                        ? 'var(--md-sys-color-primary)'
-                        : 'var(--md-sys-color-outline-variant)';
-                    box.classList.toggle('schrift-option--aktiv', aktiv);
-                }
-            });
         });
     });
 
@@ -660,36 +433,25 @@ function _events_registrieren() {
         if (radio) radio.checked = true;
     });
 
-    // Neue Vokabeln pro Tag (Faktor)
-    _wrapper.querySelectorAll('input[name="neue_vokabeln"]').forEach(radio => {
-        radio.addEventListener('change', async () => {
-            const faktor = parseInt(radio.value, 10);
-            const basisWert = (holen('konfiguration') || {}).neue_vokabeln_pro_tag || 10;
-            const total = Math.max(1, Math.round(basisWert * faktor / 100));
-
-            // Optik aktualisieren
-            _wrapper.querySelectorAll('input[name="neue_vokabeln"]').forEach(r => {
-                const box = r.nextElementSibling;
-                if (box) {
-                    const aktiv = r.value === radio.value;
-                    box.style.borderColor = aktiv
-                        ? 'var(--md-sys-color-primary)'
-                        : 'var(--md-sys-color-outline-variant)';
-                    box.classList.toggle('schrift-option--aktiv', aktiv);
-                }
+    // Neue Vokabeln pro Tag — Kacheln
+    _wrapper.querySelectorAll('.neue-vokabeln-kachel').forEach(kachel => {
+        kachel.addEventListener('click', async () => {
+            const wert = parseInt(kachel.dataset.wert, 10);
+            // Alle Kacheln zurücksetzen, aktive hervorheben
+            _wrapper.querySelectorAll('.neue-vokabeln-kachel').forEach(k => {
+                const aktiv = k === kachel;
+                k.classList.toggle('schrift-option--aktiv', aktiv);
+                k.style.borderColor = aktiv ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)';
+                const radio = k.closest('label')?.querySelector('input[type="radio"]');
+                if (radio) radio.checked = aktiv;
             });
-
-            // Text aktualisieren
-            const textEl = _wrapper.querySelector('#neue-vokabeln-text');
-            if (textEl) {
-                textEl.innerHTML = t('profil.neue_vokabeln_text', {anzahl: total});
-            }
-
-            // Speichern
-            const erg = await apiPost('profil/aktualisieren.php', { neue_vokabeln_faktor: faktor });
+            // Beschreibungstext aktualisieren
+            const beschr = _wrapper.querySelector('#neue-vokabeln-text');
+            if (beschr) beschr.innerHTML = t('profil.neue_vokabeln_aktuell', { anzahl: wert === 0 ? '∞' : wert });
+            const erg = await apiPost('profil/aktualisieren.php', { neue_vokabeln_pro_tag: wert });
             if (erg.erfolg) {
-                erfolg(t('profil.neue_vokabeln_erfolg', {anzahl: total}));
-                if (_profil?.benutzer) _profil.benutzer.neue_vokabeln_faktor = faktor;
+                erfolg(t('profil.neue_vokabeln_erfolg', { anzahl: wert === 0 ? '∞' : wert }));
+                if (_profil?.benutzer) _profil.benutzer.neue_vokabeln_pro_tag = wert;
             } else {
                 apiFehlerAnzeigen(erg);
             }

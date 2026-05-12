@@ -23,18 +23,18 @@ methode_erzwingen('POST');
 
 // Body lesen
 $daten = json_body_lesen();
-pflichtfelder_pruefen($daten, ['benutzername', 'passwort', 'email']);
+pflichtfelder_pruefen($daten, ['benutzername', 'passwort']);
 
 $benutzername = trim($daten['benutzername']);
 $passwort = $daten['passwort'];
-$email = trim($daten['email']);
+$email = trim($daten['email'] ?? '');
 $vorname = trim($daten['vorname'] ?? '');
 $nachname = trim($daten['nachname'] ?? '');
 
 // Validierung
 benutzername_validieren($benutzername);
 passwort_validieren($passwort);
-email_validieren($email);
+if ($email !== '') email_validieren($email);
 
 if ($vorname !== '') laenge_validieren($vorname, 'vorname', 1, 64);
 if ($nachname !== '') laenge_validieren($nachname, 'nachname', 1, 64);
@@ -48,10 +48,12 @@ if ($stmt->fetch()) {
     fehler_doppelter_eintrag('Dieser Benutzername ist bereits vergeben.');
 }
 
-$stmt = $pdo->prepare("SELECT id FROM benutzer WHERE email = ?");
-$stmt->execute([$email]);
-if ($stmt->fetch()) {
-    fehler_doppelter_eintrag('Diese E-Mail-Adresse ist bereits registriert.');
+if ($email !== '') {
+    $stmt = $pdo->prepare("SELECT id FROM benutzer WHERE email = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        fehler_doppelter_eintrag('Diese E-Mail-Adresse ist bereits registriert.');
+    }
 }
 
 // Passwort hashen (vor der Transaktion, da bcrypt etwas Zeit braucht)
@@ -130,6 +132,5 @@ json_erfolg([
         'email' => $email,
         'spitzname' => null,
         'rolle' => 'benutzer',
-        'media_id' => null,
     ]
 ], 'Registrierung erfolgreich.', 201);

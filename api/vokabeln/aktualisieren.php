@@ -7,10 +7,10 @@
  * Vokabel aktualisieren.
  * Admin:          beliebige Vokabel, alle Felder inkl. aktiv/kategorie_id.
  * Normaler User:  nur eigene private Vokabeln; aktiv/kategorie_id werden ignoriert.
- * UNIQUE-Check bei schwedisch/wortart-Aenderung.
+ * UNIQUE-Check bei englisch/wortart-Aenderung.
  *
  * Body: Gleiche Felder wie erstellen, alle optional.
- *   Zusaetzlich fuer Non-Admin: lektion_id (eigene private Lektion zuordnen, 0 = keine)
+ *   Zusaetzlich fuer Non-Admin: themenfeld_id (eigene private themenfeld zuordnen, 0 = keine)
  */
 
 declare(strict_types=1);
@@ -51,13 +51,13 @@ $pdo = db_verbindung();
 $felder = [];
 $params = [];
 
-// Schwedisch
-$neues_schwedisch = $vokabel['schwedisch'];
-if (isset($daten['schwedisch'])) {
-    laenge_validieren($daten['schwedisch'], 'schwedisch', 1, 128);
-    $neues_schwedisch = trim($daten['schwedisch']);
-    $felder[] = 'schwedisch = ?';
-    $params[] = $neues_schwedisch;
+// englisch
+$neues_englisch = $vokabel['englisch'];
+if (isset($daten['englisch'])) {
+    laenge_validieren($daten['englisch'], 'englisch', 1, 128);
+    $neues_englisch = trim($daten['englisch']);
+    $felder[] = 'englisch = ?';
+    $params[] = $neues_englisch;
 }
 
 // Deutsch
@@ -76,38 +76,22 @@ if (isset($daten['wortart'])) {
     $params[] = $neue_wortart;
 }
 
-// Bei Aenderung von schwedisch oder wortart: UNIQUE pruefen
-if ($neues_schwedisch !== $vokabel['schwedisch'] || $neue_wortart !== $vokabel['wortart']) {
+// Bei Aenderung von englisch oder wortart: UNIQUE pruefen
+if ($neues_englisch !== $vokabel['englisch'] || $neue_wortart !== $vokabel['wortart']) {
     if ($als_admin) {
         // Admin: pruefen gegen oeffentliche aktive Vokabeln
-        $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND id != ? AND aktiv = 1 AND ist_privat = 0');
-        $stmt->execute([$neues_schwedisch, $neue_wortart, $id]);
+        $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE englisch = ? AND wortart = ? AND id != ? AND aktiv = 1 AND ist_privat = 0');
+        $stmt->execute([$neues_englisch, $neue_wortart, $id]);
     } else {
         // Non-Admin: pruefen gegen eigene private Vokabeln
-        $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND id != ? AND ist_privat = 1 AND besitzer_id = ?');
-        $stmt->execute([$neues_schwedisch, $neue_wortart, $id, $benutzer_id]);
+        $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE englisch = ? AND wortart = ? AND id != ? AND ist_privat = 1 AND besitzer_id = ?');
+        $stmt->execute([$neues_englisch, $neue_wortart, $id, $benutzer_id]);
     }
     if ($stmt->fetchColumn()) {
         fehler_doppelter_eintrag(
-            "Eine Vokabel '{$neues_schwedisch}' mit Wortart '{$neue_wortart}' existiert bereits."
+            "Eine Vokabel '{$neues_englisch}' mit Wortart '{$neue_wortart}' existiert bereits."
         );
     }
-}
-
-// Genus
-if (array_key_exists('genus', $daten)) {
-    $genus = $daten['genus'];
-    genus_validieren($genus, $neue_wortart);
-    $felder[] = 'genus = ?';
-    $params[] = $neue_wortart === 'Nomen' ? $genus : null;
-}
-
-// Verbgruppe
-if (array_key_exists('verbgruppe', $daten)) {
-    $verbgruppe = $daten['verbgruppe'];
-    verbgruppe_validieren($verbgruppe, $neue_wortart);
-    $felder[] = 'verbgruppe = ?';
-    $params[] = $neue_wortart === 'Verb' ? $verbgruppe : null;
 }
 
 // Sprachniveau
@@ -134,26 +118,15 @@ if ($als_admin && array_key_exists('kategorie_id', $daten)) {
     $params[] = $kategorie_id;
 }
 
-// Media
-if (array_key_exists('media_id', $daten)) {
-    $media_id = null;
-    if ($daten['media_id'] !== null && $daten['media_id'] !== '') {
-        $media_id = positive_ganzzahl_validieren($daten['media_id'], 'media_id');
-        id_existiert($media_id, 'medien', 'Medium');
-    }
-    $felder[] = 'media_id = ?';
-    $params[] = $media_id;
-}
-
 // Aktiv (nur Admin)
 if ($als_admin && isset($daten['aktiv'])) {
     $felder[] = 'aktiv = ?';
     $params[] = $daten['aktiv'] ? 1 : 0;
 }
 
-// Nichts zu aktualisieren (lektion_id wird separat behandelt)?
-// Fuer Non-Admins mit nur lektion_id-Aenderung kann $felder leer sein — das ist ok.
-if (empty($felder) && !(!$als_admin && array_key_exists('lektion_id', $daten))) {
+// Nichts zu aktualisieren (themenfeld_id wird separat behandelt)?
+// Fuer Non-Admins mit nur themenfeld_id-Aenderung kann $felder leer sein — das ist ok.
+if (empty($felder) && !(!$als_admin && array_key_exists('themenfeld_id', $daten))) {
     fehler_ungueltige_eingabe('Keine Felder zum Aktualisieren angegeben.');
 }
 
@@ -167,35 +140,35 @@ if (!empty($felder)) {
         $stmt->execute($params);
     } catch (PDOException $e) {
         if ($e->getCode() === '23000') {
-            fehler_doppelter_eintrag('Diese Vokabel (schwedisch + wortart) existiert bereits.');
+            fehler_doppelter_eintrag('Diese Vokabel (englisch + wortart) existiert bereits.');
         }
         error_log('Vokabel aktualisieren fehlgeschlagen: ' . $e->getMessage());
         fehler_server('Vokabel konnte nicht aktualisiert werden.');
     }
 }
 
-// --- Lektion-Zuordnung (nur Non-Admin) ---
-if (!$als_admin && array_key_exists('lektion_id', $daten)) {
+// --- themenfeld-Zuordnung (nur Non-Admin) ---
+if (!$als_admin && array_key_exists('themenfeld_id', $daten)) {
     $pdo_lekt = db_verbindung();
-    $lektion_id_neu = (int) $daten['lektion_id'];
+    $themenfeld_id_neu = (int) $daten['themenfeld_id'];
 
-    // Vokabel aus allen eigenen privaten Lektionen entfernen
+    // Vokabel aus allen eigenen privaten Themenfeldern entfernen
     $pdo_lekt->prepare(
-        'DELETE lv FROM lektion_vokabeln lv
-         JOIN lektionen l ON l.id = lv.lektion_id
-         WHERE lv.vokabel_id = ? AND l.besitzer_id = ? AND l.ist_privat = 1'
+        'DELETE tv FROM themenfeld_vokabeln tv
+         JOIN themenfelder t ON t.id = tv.themenfeld_id
+         WHERE tv.vokabel_id = ? AND t.besitzer_id = ? AND t.ist_privat = 1'
     )->execute([$id, $benutzer_id]);
 
-    // Neue Zuordnung einfuegen (falls lektion_id > 0)
-    if ($lektion_id_neu > 0) {
+    // Neue Zuordnung einfuegen (falls themenfeld_id > 0)
+    if ($themenfeld_id_neu > 0) {
         $stmt_lek = $pdo_lekt->prepare(
-            'SELECT id FROM lektionen WHERE id = ? AND ist_privat = 1 AND besitzer_id = ? AND aktiv = 1'
+            'SELECT id FROM themenfelder WHERE id = ? AND ist_privat = 1 AND besitzer_id = ? AND aktiv = 1'
         );
-        $stmt_lek->execute([$lektion_id_neu, $benutzer_id]);
+        $stmt_lek->execute([$themenfeld_id_neu, $benutzer_id]);
         if ($stmt_lek->fetchColumn()) {
             $pdo_lekt->prepare(
-                'INSERT IGNORE INTO lektion_vokabeln (lektion_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)'
-            )->execute([$lektion_id_neu, $id]);
+                'INSERT IGNORE INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)'
+            )->execute([$themenfeld_id_neu, $id]);
         }
     }
 }
@@ -207,7 +180,6 @@ $aktualisiert = $stmt->fetch();
 
 $aktualisiert['id'] = (int) $aktualisiert['id'];
 $aktualisiert['kategorie_id'] = $aktualisiert['kategorie_id'] !== null ? (int) $aktualisiert['kategorie_id'] : null;
-$aktualisiert['media_id'] = $aktualisiert['media_id'] !== null ? (int) $aktualisiert['media_id'] : null;
 $aktualisiert['erstellt_von'] = $aktualisiert['erstellt_von'] !== null ? (int) $aktualisiert['erstellt_von'] : null;
 $aktualisiert['aktiv'] = (bool) $aktualisiert['aktiv'];
 

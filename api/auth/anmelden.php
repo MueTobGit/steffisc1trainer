@@ -90,6 +90,5 @@ json_erfolg([
         'email' => $benutzer['email'],
         'spitzname' => $benutzer['spitzname'],
         'rolle' => $benutzer['rolle'],
-        'media_id' => $benutzer['media_id'] ? (int) $benutzer['media_id'] : null,
     ]
 ], 'Erfolgreich angemeldet.');

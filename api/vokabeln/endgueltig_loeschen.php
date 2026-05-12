@@ -5,7 +5,7 @@
  * DELETE /api/vokabeln/endgueltig_loeschen.php?id=X
  *
  * Löscht eine (bereits deaktivierte) Vokabel vollständig aus der Datenbank,
- * inklusive Formen, Sätze, Lektion-Zuordnungen und Fortschrittsdaten.
+ * inklusive Formen, Sätze, themenfeld-Zuordnungen und Fortschrittsdaten.
  * Nur Admin.
  */
 
@@ -29,7 +29,7 @@ if ($id < 1) {
 $pdo = db_verbindung();
 
 // Vokabel prüfen (darf aktiv ODER inaktiv sein)
-$stmt = $pdo->prepare('SELECT id, schwedisch, wortart FROM vokabeln WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, englisch, wortart FROM vokabeln WHERE id = ?');
 $stmt->execute([$id]);
 $vokabel = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -42,8 +42,7 @@ $pdo->beginTransaction();
 try {
     // Abhängige Daten löschen (ON DELETE CASCADE macht das teils automatisch,
     // aber explizit für Klarheit und falls Constraints fehlen)
-    $pdo->prepare('DELETE FROM lektion_vokabeln WHERE vokabel_id = ?')->execute([$id]);
-    $pdo->prepare('DELETE FROM vokabel_formen WHERE vokabel_id = ?')->execute([$id]);
+    $pdo->prepare('DELETE FROM themenfeld_vokabeln WHERE vokabel_id = ?')->execute([$id]);
     $pdo->prepare('DELETE FROM saetze WHERE vokabel_id = ?')->execute([$id]);
 
     // Lernfortschritt löschen (falls Tabelle existiert)
@@ -69,8 +68,8 @@ try {
 
     json_erfolg([
         'id'        => $id,
-        'schwedisch' => $vokabel['schwedisch'],
-    ], "Vokabel \u{201E}{$vokabel['schwedisch']}\u{201C} endgültig gelöscht.");
+        'englisch' => $vokabel['englisch'],
+    ], "Vokabel \u{201E}{$vokabel['englisch']}\u{201C} endgültig gelöscht.");
 
 } catch (Exception $e) {
     $pdo->rollBack();

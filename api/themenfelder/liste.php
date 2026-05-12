@@ -63,7 +63,7 @@ if ($nur_privat) {
 $where = 'WHERE ' . implode(' AND ', $bedingungen);
 
 // --- Gesamtanzahl ---
-$count_sql = "SELECT COUNT(*) FROM lektionen l LEFT JOIN benutzer b ON b.id = l.besitzer_id {$where}";
+$count_sql = "SELECT COUNT(*) FROM themenfelder l LEFT JOIN benutzer b ON b.id = l.besitzer_id {$where}";
 $stmt = $pdo->prepare($count_sql);
 $stmt->execute($params);
 $gesamt = (int) $stmt->fetchColumn();
@@ -83,13 +83,12 @@ $sql = "
         l.erstellt_am,
         l.ist_privat,
         l.besitzer_id,
-        l.gruppen_id,
         k.name AS kategorie_name,
         b.benutzername AS besitzer_name,
         COUNT(DISTINCT lv.vokabel_id) AS vokabel_anzahl
-    FROM lektionen l
+    FROM themenfelder l
     LEFT JOIN kategorien k ON k.id = l.kategorie_id
-    LEFT JOIN lektion_vokabeln lv ON lv.lektion_id = l.id
+    LEFT JOIN themenfeld_vokabeln lv ON lv.themenfeld_id = l.id
     LEFT JOIN benutzer b ON b.id = l.besitzer_id
     {$where}
     GROUP BY l.id
@@ -105,23 +104,23 @@ $stmt->execute($params);
 $lektionen = $stmt->fetchAll();
 
 // --- Fortschritt pro Lektion laden (Stufe 4+, DS-Richtung) ---
-$lektion_ids_geladen = array_map(fn($l) => (int) $l['id'], $lektionen);
+$themenfeld_ids_geladen = array_map(fn($l) => (int) $l['id'], $lektionen);
 $fortschritt_map = []; // lektion_id => ['stufe4_count' => int]
 $gekonnt_schwelle = (int) konfig_wert('gekonnt_schwelle', '4');
 
-if (!empty($lektion_ids_geladen)) {
-    $ph = implode(',', array_fill(0, count($lektion_ids_geladen), '?'));
+if (!empty($themenfeld_ids_geladen)) {
+    $ph = implode(',', array_fill(0, count($themenfeld_ids_geladen), '?'));
     $stmt_fort = $pdo->prepare("
-        SELECT lv.lektion_id,
-               COUNT(DISTINCT CASE WHEN f.stufe >= {$gekonnt_schwelle} AND f.richtung = 'DS' THEN f.vokabel_id END) AS stufe4_count
-        FROM lektion_vokabeln lv
+        SELECT lv.themenfeld_id,
+               COUNT(DISTINCT CASE WHEN f.stufe >= {$gekonnt_schwelle} AND f.richtung = 'DE' THEN f.vokabel_id END) AS stufe4_count
+        FROM themenfeld_vokabeln lv
         LEFT JOIN fortschritt f ON f.vokabel_id = lv.vokabel_id AND f.benutzer_id = ?
-        WHERE lv.lektion_id IN ({$ph})
-        GROUP BY lv.lektion_id
+        WHERE lv.themenfeld_id IN ({$ph})
+        GROUP BY lv.themenfeld_id
     ");
-    $stmt_fort->execute(array_merge([$benutzer_id], $lektion_ids_geladen));
+    $stmt_fort->execute(array_merge([$benutzer_id], $themenfeld_ids_geladen));
     foreach ($stmt_fort->fetchAll() as $row) {
-        $fortschritt_map[(int) $row['lektion_id']] = (int) $row['stufe4_count'];
+        $fortschritt_map[(int) $row['themenfeld_id']] = (int) $row['stufe4_count'];
     }
 }
 
@@ -133,7 +132,7 @@ foreach ($lektionen as &$l) {
     $l['vokabel_anzahl'] = (int) $l['vokabel_anzahl'];
     $l['ist_privat']   = (bool) $l['ist_privat'];
     $l['besitzer_id']  = $l['besitzer_id'] !== null ? (int) $l['besitzer_id'] : null;
-    $l['gruppen_id']   = $l['gruppen_id'] !== null ? (int) $l['gruppen_id'] : null;
+    $l['gruppen_id']   = null;
 
     // Fortschritt: Anteil Stufe 4+ (0.0 – 1.0)
     $vok_anz = $l['vokabel_anzahl'];

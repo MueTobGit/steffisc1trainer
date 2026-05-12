@@ -46,9 +46,7 @@ function benutzer_authentifizieren(bool $pflicht = true): ?array
             b.email,
             b.spitzname,
             b.rolle,
-            b.aktiv,
-            b.media_id,
-            b.sprache
+            b.aktiv
         FROM api_tokens t
         JOIN benutzer b ON b.id = t.benutzer_id
         WHERE t.token = ?
@@ -106,7 +104,6 @@ function benutzer_authentifizieren(bool $pflicht = true): ?array
     $ergebnis['token_id'] = $token_id;
     $ergebnis['id'] = (int) $ergebnis['id'];
     $ergebnis['aktiv'] = (bool) $ergebnis['aktiv'];
-    $ergebnis['media_id'] = $ergebnis['media_id'] ? (int) $ergebnis['media_id'] : null;
 
     return $ergebnis;
 }

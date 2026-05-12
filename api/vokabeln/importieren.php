@@ -13,8 +13,8 @@
  * Body (JSON):
  *   - csv_inhalt: String (CSV-Inhalt)
  *   - duplikat_modus: 'ueberspringen'|'ueberschreiben'|'zusammenfuehren' (Standard: zusammenfuehren)
- *   - duplikat_entscheidungen: {"{schwedisch}|{wortart}": "behalten"|"ueberschreiben"|"zusammenfuehren"} (optional)
- *   - synonyme_erstellen: [{csv_schwedisch, csv_wortart, db_id}] (optional)
+ *   - duplikat_entscheidungen: {"{englisch}|{wortart}": "behalten"|"ueberschreiben"|"zusammenfuehren"} (optional)
+ *   - synonyme_erstellen: [{csv_englisch, csv_wortart, db_id}] (optional)
  *   - privat_wiederherstellen: true/false (optional, Standard: false)
  *       Disaster-Recovery-Modus: Liest ist_privat und besitzer_id (numerisch) aus CSV.
  *       Rueckwaertskompatibel: falls besitzer_id fehlt, wird besitzer (Benutzername) aufgeloest.
@@ -114,11 +114,11 @@ $ergebnis = [
 ];
 
 // Gruppierung: V-Zeilen mit zugehoerigen F/S-Zeilen
-// F/S-Zeilen werden per schwedisch-Spalte der richtigen V-Zeile zugeordnet,
+// F/S-Zeilen werden per englisch-Spalte der richtigen V-Zeile zugeordnet,
 // so dass auch unsortierte CSVs (z.B. aus Excel) korrekt importiert werden.
 $gruppen = [];
 $aktuelle_gruppe_idx = -1;
-$schwedisch_zu_idx = []; // schwedisch → letzter Gruppen-Index (fuer F/S-Zuordnung)
+$englisch_zu_idx = []; // englisch → letzter Gruppen-Index (fuer F/S-Zuordnung)
 
 foreach ($zeilen as $zeilen_nr => $zeile) {
     $felder = str_getcsv($zeile, ';');
@@ -138,17 +138,17 @@ foreach ($zeilen as $zeilen_nr => $zeile) {
             'zeile'  => $zeilen_nr + 2,
         ];
         $aktuelle_gruppe_idx = count($gruppen) - 1;
-        // Index merken fuer spaetere F/S-Zuordnung per schwedisch
-        $sv = mb_strtolower(trim($zeile_daten['schwedisch'] ?? ''));
+        // Index merken fuer spaetere F/S-Zuordnung per englisch
+        $sv = mb_strtolower(trim($zeile_daten['englisch'] ?? ''));
         if ($sv !== '') {
-            $schwedisch_zu_idx[$sv] = $aktuelle_gruppe_idx;
+            $englisch_zu_idx[$sv] = $aktuelle_gruppe_idx;
         }
     } elseif ($typ === 'F' || $typ === 'S') {
-        // Ziel-Gruppe bestimmen: primaer per schwedisch-Spalte, Fallback = letzte V-Zeile
+        // Ziel-Gruppe bestimmen: primaer per englisch-Spalte, Fallback = letzte V-Zeile
         $ziel_idx = $aktuelle_gruppe_idx;
-        $fs_sv = mb_strtolower(trim($zeile_daten['schwedisch'] ?? ''));
-        if ($fs_sv !== '' && isset($schwedisch_zu_idx[$fs_sv])) {
-            $ziel_idx = $schwedisch_zu_idx[$fs_sv];
+        $fs_sv = mb_strtolower(trim($zeile_daten['englisch'] ?? ''));
+        if ($fs_sv !== '' && isset($englisch_zu_idx[$fs_sv])) {
+            $ziel_idx = $englisch_zu_idx[$fs_sv];
         }
 
         if ($ziel_idx >= 0) {
@@ -174,7 +174,7 @@ if (empty($gruppen)) {
 // --- Jede Gruppe verarbeiten ---
 $pdo->beginTransaction();
 
-$neue_vokabel_ids = []; // "schwedisch|wortart" => id
+$neue_vokabel_ids = []; // "englisch|wortart" => id
 
 try {
     foreach ($gruppen as $gruppe) {
@@ -182,12 +182,12 @@ try {
         $zeile = $gruppe['zeile'];
 
         // Pflichtfelder der V-Zeile
-        $schwedisch = $v['schwedisch'] ?? '';
+        $englisch = $v['englisch'] ?? '';
         $deutsch    = $v['deutsch'] ?? '';
         $wortart    = $v['wortart'] ?? '';
 
-        if ($schwedisch === '' || $deutsch === '' || $wortart === '') {
-            $ergebnis['fehler'][] = "Zeile {$zeile}: schwedisch='{$schwedisch}', deutsch='{$deutsch}', wortart='{$wortart}' — Pflichtfeld(er) fehlt/fehlen.";
+        if ($englisch === '' || $deutsch === '' || $wortart === '') {
+            $ergebnis['fehler'][] = "Zeile {$zeile}: englisch='{$englisch}', deutsch='{$deutsch}', wortart='{$wortart}' — Pflichtfeld(er) fehlt/fehlen.";
             continue;
         }
 
@@ -204,7 +204,7 @@ try {
         $verbgruppe  = !empty($v['verbgruppe']) ? $v['verbgruppe'] : null;
         $sprachniveau = !empty($v['sprachniveau']) ? strtoupper($v['sprachniveau']) : 'A1';
         $kategorie_name = $v['kategorie'] ?? '';
-        $lektion_name   = $v['lektion'] ?? '';
+        $lektion_name   = $v['themenfeld'] ?? '';
 
         // Sprachniveau validieren
         if (!in_array($sprachniveau, ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'], true)) {
@@ -231,7 +231,7 @@ try {
                 if ($stmt_b->fetchColumn() !== false) {
                     $csv_besitzer_id = $bid;
                 } else {
-                    $ergebnis['fehler'][] = "Zeile {$zeile}: Besitzer-ID '{$bid}' nicht gefunden — Vokabel '{$schwedisch}' wird oeffentlich importiert.";
+                    $ergebnis['fehler'][] = "Zeile {$zeile}: Besitzer-ID '{$bid}' nicht gefunden — Vokabel '{$englisch}' wird oeffentlich importiert.";
                     $csv_ist_privat = false;
                 }
             } else {
@@ -244,7 +244,7 @@ try {
                     if ($besitzer_id_raw !== false) {
                         $csv_besitzer_id = (int) $besitzer_id_raw;
                     } else {
-                        $ergebnis['fehler'][] = "Zeile {$zeile}: Besitzer '{$besitzer_name}' nicht gefunden — Vokabel '{$schwedisch}' wird oeffentlich importiert.";
+                        $ergebnis['fehler'][] = "Zeile {$zeile}: Besitzer '{$besitzer_name}' nicht gefunden — Vokabel '{$englisch}' wird oeffentlich importiert.";
                         $csv_ist_privat = false;
                     }
                 }
@@ -255,11 +255,11 @@ try {
         // Bei privatem Wiederherstellen: Duplikat-Check auf Basis Besitzer (gleicher User, gleiche Vokabel)
         // Bei oeffentlichem Import: nur oeffentliche Vokabeln pruefen
         if ($csv_ist_privat && $csv_besitzer_id !== null) {
-            $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND ist_privat = 1 AND besitzer_id = ? LIMIT 1');
-            $stmt->execute([$schwedisch, $wortart, $csv_besitzer_id]);
+            $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE englisch = ? AND wortart = ? AND ist_privat = 1 AND besitzer_id = ? LIMIT 1');
+            $stmt->execute([$englisch, $wortart, $csv_besitzer_id]);
         } else {
-            $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1');
-            $stmt->execute([$schwedisch, $wortart]);
+            $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE englisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1');
+            $stmt->execute([$englisch, $wortart]);
         }
         $bestehende_id_raw = $stmt->fetchColumn();
         $ist_duplikat = ($bestehende_id_raw !== false);
@@ -273,7 +273,7 @@ try {
             $bestehende_id = (int) $bestehende_id_raw;
 
             // Per-Vokabel-Entscheidung hat Vorrang
-            $schluessel = $schwedisch . '|' . $wortart;
+            $schluessel = $englisch . '|' . $wortart;
             $entscheidung = $duplikat_entscheidungen[$schluessel] ?? null;
 
             if ($entscheidung === 'behalten') {
@@ -301,21 +301,14 @@ try {
                 case 'ueberschreiben':
                     $pdo->prepare("
                         UPDATE vokabeln SET
-                            deutsch = ?, genus = ?, verbgruppe = ?,
-                            sprachniveau = ?, kategorie_id = ?, aktiv = 1
+                            deutsch = ?, sprachniveau = ?, kategorie_id = ?, aktiv = 1
                         WHERE id = ?
                     ")->execute([
                         $deutsch,
-                        $wortart === 'Nomen' ? $genus : null,
-                        $wortart === 'Verb' ? $verbgruppe : null,
                         $sprachniveau,
                         $kategorie_id,
                         $bestehende_id,
                     ]);
-
-                    // Bei ueberschreiben: alte Formen komplett loeschen
-                    $pdo->prepare('DELETE FROM vokabel_formen WHERE vokabel_id = ?')
-                        ->execute([$bestehende_id]);
 
                     $vokabel_id = $bestehende_id;
                     $ergebnis['aktualisiert']++;
@@ -366,23 +359,21 @@ try {
             // Neue Vokabel erstellen
             // Normalfall: Admin-Import → oeffentlich (ist_privat=0, besitzer_id=NULL)
             // Disaster-Recovery: ist_privat=1, besitzer_id=aufgeloeste ID
-            // 'behalten': eigenstaendige neue Vokabel trotz gleichem schwedisch/wortart
+            // 'behalten': eigenstaendige neue Vokabel trotz gleichem englisch/wortart
             $insert_ist_privat  = $csv_ist_privat ? 1 : 0;
             $insert_besitzer_id = $csv_ist_privat ? $csv_besitzer_id : null;
 
             $pdo->prepare("
                 INSERT INTO vokabeln
-                    (schwedisch, deutsch, wortart, genus, verbgruppe, sprachniveau,
+                    (englisch, deutsch, wortart, sprachniveau,
                      kategorie_id, ist_privat, besitzer_id, erstellt_von)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ")->execute([
-                $schwedisch,
+                $englisch,
                 $deutsch,
                 $wortart,
-                $wortart === 'Nomen' ? $genus : null,
-                $wortart === 'Verb' ? $verbgruppe : null,
                 $sprachniveau,
-                $csv_ist_privat ? null : $kategorie_id, // private Vokabeln haben keine oeffentliche Kategorie
+                $csv_ist_privat ? null : $kategorie_id,
                 $insert_ist_privat,
                 $insert_besitzer_id,
                 $benutzer['id'],
@@ -390,46 +381,7 @@ try {
             $vokabel_id = (int) $pdo->lastInsertId();
             $ergebnis['erstellt']++;
 
-            $neue_vokabel_ids[$schwedisch . '|' . $wortart] = $vokabel_id;
-        }
-
-        // --- Formen verarbeiten ---
-        if ($vokabel_id !== null) {
-            foreach ($gruppe['formen'] as $form_daten) {
-                $form_bez  = $form_daten['form_bezeichnung'] ?? '';
-                $form_wert = $form_daten['form_wert'] ?? '';
-
-                if ($form_bez === '' || $form_wert === '') {
-                    continue;
-                }
-
-                // Bei zusammenfuehren + Duplikat: nur einfuegen wenn nicht vorhanden
-                if ($ist_duplikat && $effektiver_modus === 'zusammenfuehren') {
-                    $stmt = $pdo->prepare(
-                        'SELECT COUNT(*) FROM vokabel_formen WHERE vokabel_id = ? AND form_bezeichnung = ?'
-                    );
-                    $stmt->execute([$vokabel_id, $form_bez]);
-                    if ((int) $stmt->fetchColumn() > 0) {
-                        continue;
-                    }
-                }
-                // Bei ueberschreiben: Formen wurden oben komplett geloescht → einfach INSERT
-                // Bei neu: einfach INSERT
-
-                try {
-                    $pdo->prepare("
-                        INSERT INTO vokabel_formen (vokabel_id, form_bezeichnung, form_wert, reihenfolge)
-                        VALUES (?, ?, ?, 0)
-                    ")->execute([$vokabel_id, $form_bez, $form_wert]);
-                    $ergebnis['formen_erstellt']++;
-                } catch (PDOException $e) {
-                    if (str_contains($e->getMessage(), 'Duplicate') || $e->getCode() === '23000') {
-                        // UNIQUE-Constraint → ignorieren
-                    } else {
-                        throw $e;
-                    }
-                }
-            }
+            $neue_vokabel_ids[$englisch . '|' . $wortart] = $vokabel_id;
         }
 
         // --- Saetze verarbeiten ---
@@ -445,7 +397,7 @@ try {
 
                 // Duplikat-Check
                 $stmt = $pdo->prepare(
-                    'SELECT COUNT(*) FROM saetze WHERE vokabel_id = ? AND schwedisch_satz = ?'
+                    'SELECT COUNT(*) FROM saetze WHERE vokabel_id = ? AND englisch_satz = ?'
                 );
                 $stmt->execute([$vokabel_id, $satz_sv]);
                 if ((int) $stmt->fetchColumn() > 0) {
@@ -453,7 +405,7 @@ try {
                 }
 
                 $pdo->prepare("
-                    INSERT INTO saetze (vokabel_id, schwedisch_satz, deutsch_satz, benoetigte_form,
+                    INSERT INTO saetze (vokabel_id, englisch_satz, deutsch_satz, benoetigte_form,
                                         sprachniveau, erstellt_von)
                     VALUES (?, ?, ?, ?, ?, ?)
                 ")->execute([
@@ -468,15 +420,15 @@ try {
             }
         }
 
-        // --- Lektion zuordnen ---
+        // --- themenfeld zuordnen ---
         if ($lektion_name !== '' && $vokabel_id !== null) {
-            $lektion_id = _lektion_aufloesen($pdo, $lektion_name, $kategorie_id, $benutzer['id']);
-            if ($lektion_id !== null) {
+            $themenfeld_id = _lektion_aufloesen($pdo, $lektion_name, $kategorie_id, $benutzer['id']);
+            if ($themenfeld_id !== null) {
                 try {
                     $pdo->prepare("
-                        INSERT INTO lektion_vokabeln (lektion_id, vokabel_id, reihenfolge)
+                        INSERT INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge)
                         VALUES (?, ?, 0)
-                    ")->execute([$lektion_id, $vokabel_id]);
+                    ")->execute([$themenfeld_id, $vokabel_id]);
                 } catch (PDOException $e) {
                     if (!str_contains($e->getMessage(), 'Duplicate') && $e->getCode() !== '23000') {
                         throw $e;
@@ -489,38 +441,38 @@ try {
     // --- Synonyme verknuepfen ---
     if (!empty($synonyme_erstellen)) {
         $syn_check  = $pdo->prepare(
-            "SELECT COUNT(*) FROM synonyme WHERE vokabel_id = ? AND synonym = ? AND sprache = 'sv'"
+            "SELECT COUNT(*) FROM synonyme WHERE vokabel_id = ? AND synonym = ? AND sprache = 'en'"
         );
         $syn_insert = $pdo->prepare(
-            "INSERT INTO synonyme (vokabel_id, synonym, sprache) VALUES (?, ?, 'sv')"
+            "INSERT INTO synonyme (vokabel_id, synonym, sprache) VALUES (?, ?, 'en')"
         );
 
         foreach ($synonyme_erstellen as $syn_paar) {
-            $csv_schwedisch = $syn_paar['csv_schwedisch'] ?? '';
+            $csv_englisch = $syn_paar['csv_englisch'] ?? '';
             $csv_wortart    = ucfirst(mb_strtolower($syn_paar['csv_wortart'] ?? ''));
             $db_id          = isset($syn_paar['db_id']) ? (int) $syn_paar['db_id'] : 0;
 
-            if ($csv_schwedisch === '' || $db_id < 1) continue;
+            if ($csv_englisch === '' || $db_id < 1) continue;
 
-            $schluessel  = $csv_schwedisch . '|' . $csv_wortart;
+            $schluessel  = $csv_englisch . '|' . $csv_wortart;
             $neue_vok_id = $neue_vokabel_ids[$schluessel] ?? null;
 
             if ($neue_vok_id === null) {
-                $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE schwedisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1');
-                $stmt->execute([$csv_schwedisch, $csv_wortart]);
+                $stmt = $pdo->prepare('SELECT id FROM vokabeln WHERE englisch = ? AND wortart = ? AND ist_privat = 0 LIMIT 1');
+                $stmt->execute([$csv_englisch, $csv_wortart]);
                 $neue_vok_id = $stmt->fetchColumn();
                 $neue_vok_id = ($neue_vok_id !== false) ? (int) $neue_vok_id : null;
                 if ($neue_vok_id === null) continue;
             }
 
-            // Schwedischen Text der bestehenden DB-Vokabel holen
-            $stmt = $pdo->prepare('SELECT schwedisch FROM vokabeln WHERE id = ? LIMIT 1');
+            // englischen Text der bestehenden DB-Vokabel holen
+            $stmt = $pdo->prepare('SELECT englisch FROM vokabeln WHERE id = ? LIMIT 1');
             $stmt->execute([$db_id]);
-            $db_schwedisch = $stmt->fetchColumn();
-            if ($db_schwedisch === false) continue;
+            $db_englisch = $stmt->fetchColumn();
+            if ($db_englisch === false) continue;
 
             // Bidirektional in synonyme-Tabelle eintragen (gleiche Logik wie synonyme_verknuepfen.php)
-            foreach ([[$neue_vok_id, $db_schwedisch], [$db_id, $csv_schwedisch]] as [$vid, $syn_text]) {
+            foreach ([[$neue_vok_id, $db_englisch], [$db_id, $csv_englisch]] as [$vid, $syn_text]) {
                 $syn_check->execute([$vid, $syn_text]);
                 if ((int) $syn_check->fetchColumn() === 0) {
                     $syn_insert->execute([$vid, $syn_text]);
@@ -568,7 +520,7 @@ function _kategorie_aufloesen(PDO $pdo, string $name): int
 
 function _lektion_aufloesen(PDO $pdo, string $titel, ?int $kategorie_id, int $erstellt_von): ?int
 {
-    $sql    = 'SELECT id FROM lektionen WHERE titel = ? AND aktiv = 1';
+    $sql    = 'SELECT id FROM themenfelder WHERE titel = ? AND aktiv = 1';
     $params = [$titel];
 
     if ($kategorie_id !== null) {
@@ -585,7 +537,8 @@ function _lektion_aufloesen(PDO $pdo, string $titel, ?int $kategorie_id, int $er
         return (int) $id;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO lektionen (titel, kategorie_id, erstellt_von) VALUES (?, ?, ?)');
+    $stmt = $pdo->prepare('INSERT INTO themenfelder (titel, kategorie_id, erstellt_von) VALUES (?, ?, ?)');
     $stmt->execute([$titel, $kategorie_id, $erstellt_von]);
     return (int) $pdo->lastInsertId();
 }
+

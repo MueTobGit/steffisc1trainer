@@ -9,7 +9,7 @@
  * Normaler User: nur eigene private Vokabeln.
  *
  * Body:
- *   - synonyme: Array von {synonym, sprache} (sprache: 'sv' oder 'de')
+ *   - synonyme: Array von {synonym, sprache} (sprache: 'en' oder 'de')
  */
 
 declare(strict_types=1);
@@ -55,7 +55,7 @@ foreach ($daten['synonyme'] as $syn) {
     }
 
     $sprache = $syn['sprache'] ?? 'de';
-    if (!in_array($sprache, ['sv', 'de'], true)) {
+    if (!in_array($sprache, ['en', 'de'], true)) {
         $sprache = 'de';
     }
 
@@ -104,3 +104,4 @@ try {
     error_log('Synonyme speichern fehlgeschlagen: ' . $e->getMessage());
     fehler_server('Synonyme konnten nicht gespeichert werden.');
 }
+

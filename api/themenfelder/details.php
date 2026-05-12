@@ -32,7 +32,7 @@ $stmt = $pdo->prepare("
     SELECT
         l.*,
         k.name AS kategorie_name
-    FROM lektionen l
+    FROM themenfelder l
     LEFT JOIN kategorien k ON k.id = l.kategorie_id
     WHERE l.id = ?
 ");
@@ -53,20 +53,18 @@ $lektion['aktiv'] = (bool) $lektion['aktiv'];
 $stmt = $pdo->prepare("
     SELECT
         v.id,
-        v.schwedisch,
+        v.englisch,
         v.deutsch,
         v.wortart,
-        v.genus,
-        v.verbgruppe,
         v.sprachniveau,
         lv.reihenfolge,
         COUNT(DISTINCT s.id) AS satz_anzahl
-    FROM lektion_vokabeln lv
+    FROM themenfeld_vokabeln lv
     JOIN vokabeln v ON v.id = lv.vokabel_id
     LEFT JOIN saetze s ON s.vokabel_id = v.id AND s.aktiv = 1
-    WHERE lv.lektion_id = ? AND v.aktiv = 1
+    WHERE lv.themenfeld_id = ? AND v.aktiv = 1
     GROUP BY v.id, lv.reihenfolge
-    ORDER BY lv.reihenfolge ASC, v.schwedisch ASC
+    ORDER BY lv.reihenfolge ASC, v.englisch ASC
 ");
 $stmt->execute([$id]);
 $vokabeln = $stmt->fetchAll();
@@ -78,42 +76,6 @@ foreach ($vokabeln as &$v) {
 }
 unset($v);
 
-// --- Optional: Formen batch-laden (fuer Lernmodus) ---
-$mit_formen = get_param('mit_formen', '0') === '1';
-
-if ($mit_formen && !empty($vokabeln)) {
-    $vokabel_ids = array_column($vokabeln, 'id');
-    $placeholders = implode(',', array_fill(0, count($vokabel_ids), '?'));
-
-    $stmt = $pdo->prepare("
-        SELECT vokabel_id, form_bezeichnung, form_wert, reihenfolge
-        FROM vokabel_formen
-        WHERE vokabel_id IN ({$placeholders})
-        ORDER BY reihenfolge ASC, id ASC
-    ");
-    $stmt->execute($vokabel_ids);
-    $alle_formen = $stmt->fetchAll();
-
-    // Nach vokabel_id gruppieren
-    $formen_map = [];
-    foreach ($alle_formen as $f) {
-        $vid = (int) $f['vokabel_id'];
-        if (!isset($formen_map[$vid])) {
-            $formen_map[$vid] = [];
-        }
-        $formen_map[$vid][] = [
-            'form_bezeichnung' => $f['form_bezeichnung'],
-            'form_wert'        => $f['form_wert'],
-            'reihenfolge'      => (int) $f['reihenfolge'],
-        ];
-    }
-
-    // Formen an Vokabeln anhaengen
-    foreach ($vokabeln as &$v) {
-        $v['formen'] = $formen_map[$v['id']] ?? [];
-    }
-    unset($v);
-}
 
 $lektion['vokabeln'] = $vokabeln;
 $lektion['vokabel_anzahl'] = count($vokabeln);

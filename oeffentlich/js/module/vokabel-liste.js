@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vokabel-Liste — Paginierte Tabelle mit Filtern
  *
  * Filter: Suche, Wortart, Kategorie (alphabetisch), Lektion (alphabetisch), Niveau.
@@ -43,7 +43,7 @@ let _privatLimit = null;        // { anzahl, limit } für User-Anzeige
 let _sortierung = null;
 // Erlaubte Spalten-Keys → API-Parameter-Wert
 const _SORTIER_SPALTEN = {
-    schwedisch:    'schwedisch',
+    englisch: 'englisch',
     deutsch:       'deutsch',
     wortart:       'wortart',
     sprachniveau:  'sprachniveau',
@@ -117,7 +117,8 @@ export async function rendern() {
     // URL-Parameter auswerten (überspringen wenn Zustand wiederhergestellt)
     if (!_von_editor) {
     const urlParams = _hash_params();
-    if (urlParams.lektion_id)   _filter.lektion_id   = urlParams.lektion_id;
+    if (urlParams.themenfeld_id) _filter.lektion_id = urlParams.themenfeld_id;
+    else if (urlParams.lektion_id) _filter.lektion_id = urlParams.lektion_id;
     if (urlParams.kategorie_id) _filter.kategorie_id = urlParams.kategorie_id;
     // Sonder-Filter vom Dashboard (faellig / neu / favorit)
     if (urlParams.filter && ['faellig', 'neu', 'favorit'].includes(urlParams.filter)) {
@@ -126,9 +127,9 @@ export async function rendern() {
         // Kein filter-Param → Modus zuruecksetzen (direkter Navigationsaufruf)
         _filterModus = '';
     }
-    // Herkunfts-Route: 'lernpfad' → Zurück geht zum Dashboard, 'fortschritt' → Zurück zum Lernfortschritt
-    if (urlParams.von === 'lernpfad') {
-        _vonRoute = 'lernpfad';
+    // Herkunfts-Route: 'lernpfad'/'dashboard' → Zurück zum Dashboard, 'fortschritt' → Zurück zum Lernfortschritt
+    if (urlParams.von === 'lernpfad' || urlParams.von === 'dashboard') {
+        _vonRoute = 'dashboard';
     } else if (urlParams.von === 'fortschritt') {
         _vonRoute = 'fortschritt';
     } else {
@@ -140,7 +141,7 @@ export async function rendern() {
     // Lektions-Info laden wenn lektion_id gesetzt
     _lektionInfo = null;
     if (_filter.lektion_id) {
-        const lektErg = await apiGet(`lektionen/details.php?id=${_filter.lektion_id}`);
+        const lektErg = await apiGet(`themenfelder/details.php?id=${_filter.lektion_id}`);
         if (lektErg.erfolg) _lektionInfo = lektErg.daten;
     }
 
@@ -194,6 +195,19 @@ export async function rendern() {
                 </button>
                 `}
             </div>
+
+            <!-- Favoriten-Chip (nur in der normalen Ansicht ohne Sonder-Filter) -->
+            ${!_filterModus && !_lektionInfo ? `
+                <div style="display:flex;gap:8px;padding:4px 0 8px;flex-wrap:wrap">
+                    <button class="btn btn--klein ${_filterModus === '' ? 'btn--gefuellt' : 'btn--umrandet'}" id="chip-alle-vokabeln">
+                        ${t('vokabel_liste.alle_vokabeln')}
+                    </button>
+                    <button class="btn btn--klein btn--umrandet" id="chip-nur-favoriten" style="display:flex;align-items:center;gap:4px">
+                        <span class="material-symbols-outlined" style="font-size:16px;color:var(--md-sys-color-secondary)">star</span>
+                        ${t('vokabel_liste.nur_favoriten')}
+                    </button>
+                </div>
+            ` : ''}
 
             <!-- Filterleiste — ausgeblendet wenn Sonder-Filter, aus Lernpfad oder Lernfortschritt -->
             <div class="filter-leiste" id="filter-leiste" ${(_filterModus || _vonRoute === 'lernpfad' || _vonRoute === 'fortschritt') ? 'style="display:none"' : ''}>
@@ -286,12 +300,39 @@ export async function rendern() {
 
     // Events registrieren
     document.getElementById('btn-zurueck-lektionen')?.addEventListener('click', () => navigieren(
-        _vonRoute === 'lernpfad' ? '/dashboard' : '/lektionen'
+        _vonRoute === 'dashboard' ? '/dashboard' : '/lektionen'
     ));
     document.getElementById('btn-zurueck-dashboard')?.addEventListener('click', () => navigieren(
         _vonRoute === 'fortschritt' ? '/fortschritt' : '/dashboard'
     ));
     document.getElementById('btn-vokabel-neu')?.addEventListener('click', () => navigieren('/vokabeln/neu'));
+
+    document.getElementById('chip-nur-favoriten')?.addEventListener('click', () => {
+        _filterModus = 'favorit';
+        _seite = 1;
+        _laden();
+        // Chips und Filter ausblenden, Header neu rendern
+        document.getElementById('filter-leiste')?.style.setProperty('display', 'none');
+        document.querySelector('[id="chip-alle-vokabeln"]')?.closest('div')?.style.setProperty('display', 'none');
+        const kopf = container.querySelector('.verwaltung__kopf');
+        if (kopf) kopf.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;flex:1">
+                <button class="btn-icon" id="btn-zurueck-vokabeln-favorit" title="${t('vokabel_liste.alle_vokabeln')}">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div>
+                    <h2 class="verwaltung__titel" style="margin:0">${t('vokabel_liste.favoriten_titel')}</h2>
+                    <small style="color:var(--md-sys-color-on-surface-variant)">${t('vokabel_liste.favoriten_info')}</small>
+                </div>
+            </div>`;
+        document.getElementById('btn-zurueck-vokabeln-favorit')?.addEventListener('click', () => {
+            _filterModus = '';
+            _seite = 1;
+            rendern();
+        });
+    });
+    document.getElementById('chip-alle-vokabeln')?.addEventListener('click', () => {});
+
     document.getElementById('btn-training-faellig')?.addEventListener('click', () => navigieren('/training?filter=faellig'));
 
     // Private Vokabeln-Limit für normale User laden und anzeigen
@@ -536,9 +577,9 @@ async function _laden() {
         params.kategorie_id = _filter.kategorie_id;
     }
     if (_filter.lektion_id === 'ohne') {
-        params.ohne_lektion = 1;
+        params.ohne_themenfeld = 1;
     } else if (_filter.lektion_id) {
-        params.lektion_id = _filter.lektion_id;
+        params.themenfeld_id = _filter.lektion_id;
     }
     if (_filter.sprachniveau)                     params.sprachniveau = _filter.sprachniveau;
     if (_filter.suche && _filter.suche.length >= 2) params.suche      = _filter.suche;
@@ -561,7 +602,7 @@ async function _laden() {
         params.sortierung = _sortierung.spalte;
         params.richtung   = _sortierung.richtung;
     } else {
-        params.sortierung = 'schwedisch';
+        params.sortierung = 'englisch';
         params.richtung   = 'ASC';
     }
 
@@ -614,7 +655,7 @@ function _tabelle_rendern(container, vokabeln) {
 
     // Spalten-Definition: key, Label, CSS-Klasse (optional), mobil-versteckt
     const spalten = [
-        { key: 'schwedisch',   label: t('vokabel_liste.spalte_schwedisch'),   klasse: 'verwaltung-tabelle__schwedisch' },
+        { key: 'englisch',   label: t('vokabel_liste.spalte_schwedisch'),   klasse: 'verwaltung-tabelle__englisch' },
         { key: 'deutsch',      label: t('vokabel_liste.spalte_deutsch') },
         { key: 'wortart',      label: t('vokabel_liste.spalte_wortart') },
         { key: null,           label: t('vokabel_liste.spalte_genus'),  mobil: true },
@@ -688,7 +729,7 @@ function _tabelle_rendern(container, vokabeln) {
                 // Admin: Hard-Delete für private Vokabeln
                 aktionenHtml = `
                     <button class="btn-icon btn-icon--gefaehrlich" data-aktion="loeschen"
-                        data-id="${v.id}" data-schwedisch="${esc(v.schwedisch)}"
+                        data-id="${v.id}" data-englisch="${esc(v.englisch)}"
                         data-ist-privat="1" title="${t('allgemein.loeschen')}">
                         <span class="material-symbols-outlined">delete</span>
                     </button>`;
@@ -699,7 +740,7 @@ function _tabelle_rendern(container, vokabeln) {
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
                     <button class="btn-icon btn-icon--gefaehrlich" data-aktion="endgueltig-loeschen"
-                        data-id="${v.id}" data-schwedisch="${esc(v.schwedisch)}"
+                        data-id="${v.id}" data-englisch="${esc(v.englisch)}"
                         title="${t('vokabel_liste.endgueltig_titel')}">
                         <span class="material-symbols-outlined">delete_forever</span>
                     </button>`;
@@ -709,7 +750,7 @@ function _tabelle_rendern(container, vokabeln) {
                         <span class="material-symbols-outlined">edit</span>
                     </button>
                     <button class="btn-icon btn-icon--gefaehrlich" data-aktion="loeschen"
-                        data-id="${v.id}" data-schwedisch="${esc(v.schwedisch)}"
+                        data-id="${v.id}" data-englisch="${esc(v.englisch)}"
                         title="${t('vokabel_liste.ausblenden_button')}">
                         <span class="material-symbols-outlined">visibility_off</span>
                     </button>`;
@@ -718,7 +759,7 @@ function _tabelle_rendern(container, vokabeln) {
             // Normaler User: eigene private Vokabeln können gelöscht werden
             aktionenHtml = `
                 <button class="btn-icon btn-icon--gefaehrlich" data-aktion="loeschen"
-                    data-id="${v.id}" data-schwedisch="${esc(v.schwedisch)}"
+                    data-id="${v.id}" data-englisch="${esc(v.englisch)}"
                     data-ist-privat="1" title="${t('vokabel_liste.meine_loeschen_titel')}">
                     <span class="material-symbols-outlined">delete</span>
                 </button>`;
@@ -738,9 +779,9 @@ function _tabelle_rendern(container, vokabeln) {
                 data-id="${v.id}" data-aktiv="${v.aktiv ? '1' : '0'}"
                 data-ist-privat="${istPrivat ? '1' : '0'}"
                 data-ist-eigen="${istEigen ? '1' : '0'}">
-                <td class="verwaltung-tabelle__schwedisch">
+                <td class="verwaltung-tabelle__englisch">
                     ${istPrivat ? '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;color:var(--md-sys-color-primary);margin-right:4px">lock</span>' : ''}
-                    <strong>${esc(v.schwedisch)}</strong>
+                    <strong>${esc(v.englisch)}</strong>
                     ${istDeaktiviert ? `<span class="tag tag--deaktiviert" style="margin-left:6px">${t('vokabel_liste.ausgeblendet_tag')}</span>` : ''}
                 </td>
                 <td>${esc(v.deutsch)}</td>
@@ -818,19 +859,19 @@ function _tabelle_rendern(container, vokabeln) {
             if (istPrivat) {
                 const bestaetigt = await bestaetigung_anzeigen(
                     t('vokabel_liste.loeschen_titel'),
-                    t('vokabel_liste.loeschen_text', {wort: btn.dataset.schwedisch}),
+                    t('vokabel_liste.loeschen_text', {wort: btn.dataset.englisch}),
                     t('allgemein.loeschen'), t('allgemein.abbrechen'), true
                 );
                 if (bestaetigt) {
                     const erg = await apiDelete(`vokabeln/loeschen.php?id=${btn.dataset.id}`);
-                    if (erg.erfolg) { erfolg(t('vokabel_liste.geloescht', {wort: btn.dataset.schwedisch})); _laden(); }
+                    if (erg.erfolg) { erfolg(t('vokabel_liste.geloescht', {wort: btn.dataset.englisch})); _laden(); }
                     else apiFehlerAnzeigen(erg);
                 }
             } else {
                 // Admin: Soft-Delete
                 const bestaetigt = await bestaetigung_anzeigen(
                     t('vokabel_liste.ausblenden_titel'),
-                    t('vokabel_liste.ausblenden_text', {wort: btn.dataset.schwedisch}),
+                    t('vokabel_liste.ausblenden_text', {wort: btn.dataset.englisch}),
                     t('vokabel_liste.ausblenden_button'), t('allgemein.abbrechen'), true
                 );
                 if (bestaetigt) {
@@ -858,12 +899,12 @@ function _tabelle_rendern(container, vokabeln) {
             e.stopPropagation();
             const bestaetigt = await bestaetigung_anzeigen(
                 t('vokabel_liste.endgueltig_titel'),
-                t('vokabel_liste.endgueltig_text', {wort: btn.dataset.schwedisch}),
+                t('vokabel_liste.endgueltig_text', {wort: btn.dataset.englisch}),
                 t('vokabel_liste.endgueltig_button'), t('allgemein.abbrechen'), true
             );
             if (bestaetigt) {
                 const erg = await apiDelete(`vokabeln/endgueltig_loeschen.php?id=${btn.dataset.id}`);
-                if (erg.erfolg) { erfolg(t('vokabel_liste.endgueltig_erfolg', {wort: btn.dataset.schwedisch})); _laden(); }
+                if (erg.erfolg) { erfolg(t('vokabel_liste.endgueltig_erfolg', {wort: btn.dataset.englisch})); _laden(); }
                 else apiFehlerAnzeigen(erg);
             }
         });

@@ -14,13 +14,11 @@
  */
 
 import { esc } from '../hilfs-funktionen.js';
-import {
-    vorlesen,
-    erkennung_starten,
-    aussprache_bewerten,
-    tts_verfuegbar,
-    stt_verfuegbar
-} from '../dienste/sprach-dienst.js';
+const vorlesen = () => {};
+const erkennung_starten = () => {};
+const aussprache_bewerten = () => null;
+const tts_verfuegbar = () => false;
+const stt_verfuegbar = () => false;
 import { t } from '../dienste/sprache.js';
 
 // ============================================
@@ -107,15 +105,10 @@ export function vokabel_karte_erstellen(vokabel, optionen = {}) {
     const fav_icon = ist_favorit ? 'star' : 'star_border';
     const fav_klasse = ist_favorit ? 'vk-karte__favorit--aktiv' : '';
 
-    // --- Schwedisch-Bereich ---
-    // Genus-Präfix: (en) oder (ett) vor dem Wort, nur bei Nomen
-    const genus_praefix = (vokabel.wortart === 'Nomen' && vokabel.genus)
-        ? `<span class="vk-karte__genus">(${esc(vokabel.genus)})</span> `
-        : '';
-
+    // --- Englisch-Bereich ---
     const sv_html = sv_verdeckt
         ? `<span class="vk-karte__verdeckt-text" data-aktion="aufdecken">${t('vokabel_karte.aufdecken')}</span>`
-        : `<span class="vk-karte__schwedisch">${genus_praefix}${esc(vokabel.schwedisch)}</span>`;
+        : `<span class="vk-karte__schwedisch">${esc(vokabel.englisch || vokabel.schwedisch || '')}</span>`;
 
     // --- Deutsch-Bereich ---
     const de_html = de_verdeckt

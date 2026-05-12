@@ -4,7 +4,7 @@
  * Seitentitel, Hamburger-Menu (Mobil), Streak-Anzeige, Dark-Mode-Toggle.
  */
 
-import { holen, abonnieren, setzen } from '../zustand.js';
+import { holen, setzen } from '../zustand.js';
 import { seitenleiste_oeffnen } from './seitenleiste.js';
 import { esc } from '../hilfs-funktionen.js';
 import { t } from '../dienste/sprache.js';
@@ -16,9 +16,6 @@ export function kopfzeile_rendern() {
     const container = document.getElementById('kopfzeile');
     if (!container) return;
 
-    const statistik = holen('statistik');
-    const streakTage = statistik?.streak_tage || 0;
-
     container.innerHTML = `
         <button class="kopfzeile__menue-btn" id="btn-menue" aria-label="${t('kopfzeile.menue_oeffnen')}">
             <span class="material-symbols-outlined">menu</span>
@@ -27,11 +24,6 @@ export function kopfzeile_rendern() {
         <h1 class="kopfzeile__titel" id="kopfzeile-titel">${t('kopfzeile.dashboard')}</h1>
 
         <div class="kopfzeile__aktionen">
-            <div class="kopfzeile__streak" title="${t('kopfzeile.streak_title', {tage: streakTage})}">
-                <span class="material-symbols-outlined" style="font-size:20px;color:${streakTage > 0 ? 'var(--vt-farbe-streak)' : 'var(--md-sys-color-on-surface-variant)'}">local_fire_department</span>
-                <span style="font-size:14px;font-weight:500">${streakTage}</span>
-            </div>
-
             <button class="kopfzeile__icon-btn" id="btn-thema-wechseln" aria-label="${t('kopfzeile.thema_umschalten')}" title="${t('kopfzeile.thema_umschalten')}">
                 <span class="material-symbols-outlined" id="thema-icon">dark_mode</span>
             </button>
@@ -133,11 +125,3 @@ export function thema_laden() {
     _thema_anwenden(gespeichert);
 }
 
-// Streak aktualisieren wenn sich Statistik aendert
-abonnieren('statistik', () => {
-    // Streak in Kopfzeile aktualisieren
-    const container = document.getElementById('kopfzeile');
-    if (container) {
-        kopfzeile_rendern();
-    }
-});

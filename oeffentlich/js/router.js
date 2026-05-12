@@ -10,28 +10,21 @@ import { holen, setzen, ist_eingeloggt, ist_admin } from './zustand.js';
 // ---- Routen-Definition ----
 const ROUTEN = {
     '/dashboard':       { modul: 'dashboard',       titel: 'Dashboard',          titel_key: 'navigation.dashboard',     icon: 'home',           auth: true },
-    '/lernmodus':       { modul: 'lernmodus',       titel: 'Lernmodus',         titel_key: 'navigation.lernmodus',     icon: 'school',         auth: true },
     '/training':        { modul: 'training',        titel: 'Training',          titel_key: 'navigation.training',      icon: 'fitness_center', auth: true },
     '/schnellueben':    { modul: 'schnellueben',    titel: 'Schnell üben',      titel_key: 'navigation.schnellueben',  icon: 'bolt',           auth: true },
-    '/praepositionen':  { modul: 'praepositionen',  titel: 'Präpositionen',     titel_key: 'navigation.praepositionen', icon: 'swap_horiz',      auth: true },
+    '/lernmodus':       { modul: 'lernmodus',       titel: 'Lernmodus',         titel_key: 'navigation.lernmodus',     icon: 'school',         auth: true },
     '/vokabeln':        { modul: 'vokabel-liste',   titel: 'Vokabeln',         titel_key: 'navigation.vokabeln',      icon: 'dictionary',     auth: true },
     '/vokabeln/neu':    { modul: 'vokabel-editor',  titel: 'Vokabel erstellen', titel_key: 'navigation.vokabel_neu',   icon: 'add_circle',     auth: true },
     '/vokabeln/:id':    { modul: 'vokabel-editor',  titel: 'Vokabel bearbeiten',titel_key: 'navigation.vokabel_edit',  icon: 'edit',           auth: true },
-    '/saetze':          { modul: 'satz-editor',     titel: 'Sätze',            titel_key: 'navigation.saetze',        icon: 'text_ad',   auth: true },
-    '/grammatik':       { modul: 'grammatik',       titel: 'Grammatik',        titel_key: 'navigation.grammatik',     icon: 'assignment_globe',      auth: true },
+    '/saetze':          { modul: 'satz-editor',     titel: 'Sätze',            titel_key: 'navigation.saetze',        icon: 'text_ad',        auth: true },
     '/kategorien':      { modul: 'kategorie-liste', titel: 'Kategorien',       titel_key: 'navigation.kategorien',    icon: 'folder',         auth: true, admin: true },
-    '/lektionen':       { modul: 'lektion-liste',   titel: 'Lektionen',        titel_key: 'navigation.lektionen',     icon: 'note_stack',      auth: true },
+    '/lektionen':       { modul: 'lektion-liste',   titel: 'Themenfelder',     titel_key: 'navigation.lektionen',     icon: 'note_stack',     auth: true },
     '/fortschritt':     { modul: 'fortschritt',     titel: 'Lernfortschritt',  titel_key: 'navigation.fortschritt',   icon: 'trending_up',    auth: true },
     '/profil':          { modul: 'profil',          titel: 'Profil',           titel_key: 'navigation.profil',        icon: 'person',         auth: true },
-    '/gruppen':         { modul: 'gruppen',         titel: 'Gruppen',          titel_key: 'navigation.gruppen',       icon: 'group',          auth: true },
-    '/ligen':           { modul: 'ligen',           titel: 'Liga',             titel_key: 'navigation.ligen',         icon: 'emoji_events',   auth: true },
-    '/belohnungen':     { modul: 'belohnungen',     titel: 'Belohnungen',      titel_key: 'navigation.belohnungen',   icon: 'military_tech',  auth: true },
     '/einstellungen':   { modul: 'einstellungen',   titel: 'Einstellungen',    titel_key: 'navigation.einstellungen', icon: 'settings',       auth: true },
-    '/admin':                    { modul: 'admin-panel',            titel: 'Admin',                    titel_key: 'navigation.admin',      icon: 'admin_panel_settings', auth: true, admin: true },
-    '/admin/import':             { modul: 'csv-import',             titel: 'CSV-Import',               titel_key: 'navigation.csv_import', icon: 'upload_file',          auth: true, admin: true },
-    '/admin/praepositionen':     { modul: 'praepositionen-verwaltung', titel: 'Präpositionen-Verwaltung', titel_key: 'navigation.praepositionen_verwaltung', icon: 'swap_horiz', auth: true, admin: true },
-    '/admin/benachrichtigungen': { modul: 'admin-benachrichtigungen', titel: 'App-Benachrichtigungen', titel_key: 'navigation.app_benachrichtigungen', icon: 'notifications_active', auth: true, admin: true },
-    '/impressum':                { modul: 'impressum',               titel: 'Impressum',               titel_key: 'navigation.impressum',  icon: 'gavel',                auth: false },
+    '/admin':           { modul: 'admin-panel',     titel: 'Admin',            titel_key: 'navigation.admin',         icon: 'admin_panel_settings', auth: true, admin: true },
+    '/admin/import':    { modul: 'csv-import',      titel: 'CSV-Import',       titel_key: 'navigation.csv_import',    icon: 'upload_file',    auth: true, admin: true },
+    '/impressum':       { modul: 'impressum',       titel: 'Impressum',        titel_key: 'navigation.impressum',     icon: 'gavel',          auth: false },
 };
 
 // Standard-Route nach Login
@@ -236,19 +229,12 @@ export function seitenleiste_routen() {
             { pfad: '/dashboard', ...ROUTEN['/dashboard'] },
             { pfad: '/training', ...ROUTEN['/training'] },
             { pfad: '/schnellueben', ...ROUTEN['/schnellueben'] },
-            { pfad: '/praepositionen', ...ROUTEN['/praepositionen'] },
             { pfad: '/lernmodus', ...ROUTEN['/lernmodus'] },
-            { pfad: '/grammatik', ...ROUTEN['/grammatik'] },
-        ],
-        gemeinschaft: [
-            { pfad: '/ligen', ...ROUTEN['/ligen'] },
-            { pfad: '/belohnungen', ...ROUTEN['/belohnungen'] },
-            { pfad: '/gruppen', ...ROUTEN['/gruppen'] },
         ],
         inhalte: [
             { pfad: '/vokabeln', ...ROUTEN['/vokabeln'] },
             { pfad: '/saetze', ...ROUTEN['/saetze'] },
-            { pfad: '/kategorien', ...ROUTEN['/kategorien'] },  // admin: true → in seitenleiste.js gefiltert
+            { pfad: '/kategorien', ...ROUTEN['/kategorien'] },
             { pfad: '/lektionen', ...ROUTEN['/lektionen'] },
         ],
         persoenlich: [
@@ -256,10 +242,8 @@ export function seitenleiste_routen() {
             { pfad: '/profil', ...ROUTEN['/profil'] },
         ],
         admin: [
-            { pfad: '/admin',                    ...ROUTEN['/admin'] },
-            { pfad: '/admin/import',             ...ROUTEN['/admin/import'] },
-            { pfad: '/admin/praepositionen',     ...ROUTEN['/admin/praepositionen'] },
-            { pfad: '/admin/benachrichtigungen', ...ROUTEN['/admin/benachrichtigungen'] },
+            { pfad: '/admin',        ...ROUTEN['/admin'] },
+            { pfad: '/admin/import', ...ROUTEN['/admin/import'] },
         ],
     };
 }

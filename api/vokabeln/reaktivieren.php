@@ -33,7 +33,7 @@ if ($id < 1) {
 $pdo = db_verbindung();
 
 // Vokabel prüfen — muss existieren (egal ob aktiv oder inaktiv)
-$stmt = $pdo->prepare('SELECT id, schwedisch, aktiv FROM vokabeln WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, englisch, aktiv FROM vokabeln WHERE id = ?');
 $stmt->execute([$id]);
 $vokabel = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -45,8 +45,8 @@ if ((int) $vokabel['aktiv'] === 1) {
     // Bereits aktiv — kein Fehler, einfach Erfolg zurückgeben
     json_erfolg([
         'id'        => $id,
-        'schwedisch' => $vokabel['schwedisch'],
-    ], "Vokabel „{$vokabel['schwedisch']}\" ist bereits aktiv.");
+        'englisch' => $vokabel['englisch'],
+    ], "Vokabel „{$vokabel['englisch']}\" ist bereits aktiv.");
 }
 
 // Reaktivieren
@@ -55,5 +55,5 @@ $stmt->execute([$id]);
 
 json_erfolg([
     'id'        => $id,
-    'schwedisch' => $vokabel['schwedisch'],
-], "Vokabel „{$vokabel['schwedisch']}\" wieder eingeblendet.");
+    'englisch' => $vokabel['englisch'],
+], "Vokabel „{$vokabel['englisch']}\" wieder eingeblendet.");

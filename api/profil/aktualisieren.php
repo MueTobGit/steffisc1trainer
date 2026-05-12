@@ -4,7 +4,7 @@
  *
  * POST /api/profil/aktualisieren.php
  *
- * Eigenes Profil bearbeiten (vorname, nachname, email, spitzname, neue_vokabeln_faktor).
+ * Eigenes Profil bearbeiten (vorname, nachname, email, spitzname, neue_vokabeln_pro_tag).
  */
 
 declare(strict_types=1);
@@ -81,42 +81,23 @@ if (isset($daten['spitzname'])) {
     $werte[] = $spitzname ?: null;
 }
 
-// App-Sprache (de oder sv)
-if (isset($daten['sprache'])) {
-    $sprache = trim($daten['sprache']);
-    if (!in_array($sprache, ['de', 'sv'], true)) {
-        fehler_ungueltige_eingabe('Sprache muss "de" oder "sv" sein.');
+// Neue Vokabeln pro Tag (0 = unbegrenzt)
+if (isset($daten['neue_vokabeln_pro_tag'])) {
+    $nvpt = (int) $daten['neue_vokabeln_pro_tag'];
+    if ($nvpt < 0 || $nvpt > 1000) {
+        fehler_ungueltige_eingabe('neue_vokabeln_pro_tag muss zwischen 0 und 1000 liegen (0 = unbegrenzt).');
     }
-    $felder[] = 'sprache = ?';
-    $werte[]  = $sprache;
+    $felder[] = 'neue_vokabeln_pro_tag = ?';
+    $werte[]  = $nvpt;
 }
 
-// Neue-Vokabeln-Faktor (50=Entspannt, 100=Normal, 200=Intensiv, 300=Intensiv+)
-$neue_vokabeln_faktor_gesetzt = false;
-if (isset($daten['neue_vokabeln_faktor'])) {
-    $faktor = (int) $daten['neue_vokabeln_faktor'];
-    if (!in_array($faktor, [50, 100, 200, 300], true)) {
-        fehler_ungueltige_eingabe('Neue-Vokabeln-Faktor muss 50, 100, 200 oder 300 sein.');
-    }
-    try {
-        $stmt_nv = $pdo->prepare("UPDATE benutzer SET neue_vokabeln_faktor = ? WHERE id = ?");
-        $stmt_nv->execute([$faktor, $benutzer_id]);
-        $neue_vokabeln_faktor_gesetzt = true;
-    } catch (\Throwable $e) {
-        // Spalte existiert noch nicht — ignorieren
-    }
-}
-
-if (empty($felder) && !$neue_vokabeln_faktor_gesetzt) {
+if (empty($felder)) {
     fehler_ungueltige_eingabe('Keine Felder zum Aktualisieren angegeben.');
 }
 
-// --- Update Basis-Felder ---
-if (!empty($felder)) {
-    $werte_basis   = array_merge($werte, [$benutzer_id]);
-    $sql_basis     = "UPDATE benutzer SET " . implode(', ', $felder) . " WHERE id = ?";
-    $stmt          = $pdo->prepare($sql_basis);
-    $stmt->execute($werte_basis);
-}
+// --- Update ---
+$werte[] = $benutzer_id;
+$sql = "UPDATE benutzer SET " . implode(', ', $felder) . " WHERE id = ?";
+$pdo->prepare($sql)->execute($werte);
 
 json_erfolg([], 'Profil erfolgreich aktualisiert.');

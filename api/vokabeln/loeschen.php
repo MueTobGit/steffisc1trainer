@@ -46,9 +46,9 @@ if ($ist_privat) {
     $pdo->prepare('DELETE FROM vokabeln WHERE id = ?')->execute([$id]);
     json_erfolg([
         'id'         => $id,
-        'schwedisch' => $vokabel['schwedisch'],
+        'englisch' => $vokabel['englisch'],
         'geloescht'  => true,
-    ], "Vokabel \u{201E}{$vokabel['schwedisch']}\u{201C} gelöscht.");
+    ], "Vokabel \u{201E}{$vokabel['englisch']}\u{201C} gelöscht.");
 } else {
     // Oeffentliche Vokabel → Soft-Delete (nur Admin kommt hier hin)
     if (!(bool) $vokabel['aktiv']) {
@@ -57,6 +57,6 @@ if ($ist_privat) {
     $pdo->prepare('UPDATE vokabeln SET aktiv = 0 WHERE id = ?')->execute([$id]);
     json_erfolg([
         'id'         => $id,
-        'schwedisch' => $vokabel['schwedisch'],
-    ], "Vokabel \u{201E}{$vokabel['schwedisch']}\u{201C} deaktiviert.");
+        'englisch' => $vokabel['englisch'],
+    ], "Vokabel \u{201E}{$vokabel['englisch']}\u{201C} deaktiviert.");
 }

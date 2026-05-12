@@ -13,7 +13,7 @@
 
 import { apiGet, apiPost, apiPaginiert, apiDelete } from '../api-client.js';
 import { holen } from '../zustand.js';
-import { esc, zahlFormatieren, relativZeit, entprellen, levelLabel } from '../hilfs-funktionen.js';
+import { esc, zahlFormatieren, relativZeit, entprellen } from '../hilfs-funktionen.js';
 import { navigieren } from '../router.js';
 import { t } from '../dienste/sprache.js';
 import { lade_anzeige_rendern, lade_anzeige_entfernen } from '../komponenten/lade-anzeige.js';
@@ -21,7 +21,8 @@ import { leer_zustand_rendern } from '../komponenten/leer-zustand.js';
 import { paginierung_rendern } from '../komponenten/paginierung.js';
 import { bestaetigung_anzeigen } from '../komponenten/bestaetigung-dialog.js';
 import { erfolg, fehler as fehlerMsg, apiFehlerAnzeigen } from '../benachrichtigungen.js';
-import { krone_svg_html, KRONE_TYPEN } from '../dienste/krone-svg.js';
+const krone_svg_html = () => '';
+const KRONE_TYPEN = [];
 
 // ============================================
 // Hilfsfunktionen
@@ -56,12 +57,6 @@ let _aktiver_tab  = 'benutzer';
 let _benutzer_seite = 1;
 let _benutzer_suche = '';
 
-// Belohnungen-Tab
-let _bel_seite = 1;
-let _bel_typ   = '';
-
-// Ligen-Tab
-let _liga_seite = 1;
 
 // ============================================
 // Modul-Exports
@@ -86,21 +81,9 @@ export async function rendern() {
                 <span class="material-symbols-outlined">people</span>
                 <span>${t('admin.tab_benutzer')}</span>
             </button>
-            <button class="admin-panel__tab" data-tab="belohnungen" title="${t('admin.tab_belohnungen')}">
-                <span class="material-symbols-outlined">emoji_events</span>
-                <span>${t('admin.tab_belohnungen')}</span>
-            </button>
-            <button class="admin-panel__tab" data-tab="ligen" title="${t('admin.tab_ligen')}">
-                <span class="material-symbols-outlined">leaderboard</span>
-                <span>${t('admin.tab_ligen')}</span>
-            </button>
             <button class="admin-panel__tab" data-tab="konfiguration" title="${t('admin.tab_konfiguration')}">
                 <span class="material-symbols-outlined">tune</span>
                 <span>${t('admin.tab_konfiguration')}</span>
-            </button>
-            <button class="admin-panel__tab" data-tab="level-system" title="${t('admin.tab_level_system')}">
-                <span class="material-symbols-outlined">military_tech</span>
-                <span>${t('admin.tab_level_system')}</span>
             </button>
             <button class="admin-panel__tab" data-tab="wartung" title="${t('admin.tab_wartung')}">
                 <span class="material-symbols-outlined">build</span>
@@ -143,9 +126,6 @@ export function aufraeumen() {
     _aktiver_tab    = 'benutzer';
     _benutzer_seite = 1;
     _benutzer_suche = '';
-    _bel_seite      = 1;
-    _bel_typ        = '';
-    _liga_seite     = 1;
     _i18nd_module    = [];
     _i18nd_modul     = '';
     _i18nd_daten     = null;
@@ -164,10 +144,7 @@ function _tab_rendern() {
 
     switch (_aktiver_tab) {
         case 'benutzer':      _benutzer_tab(inhalt); break;
-        case 'belohnungen':   _belohnungen_tab(inhalt); break;
-        case 'ligen':         _ligen_tab(inhalt); break;
         case 'konfiguration': _konfiguration_tab(inhalt); break;
-        case 'level-system':  _level_system_tab(inhalt); break;
         case 'wartung':       _wartung_tab(inhalt); break;
         case 'sql':           _sql_tab(inhalt); break;
         case 'rechtliches':   _rechtliches_tab(inhalt); break;
@@ -255,8 +232,6 @@ function _benutzer_tabelle_rendern(container, eintraege) {
                     <tr>
                         <th>${t('admin.tab_benutzer')}</th>
                         <th>${t('admin.th_rolle')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_xp_level')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_streak')}</th>
                         <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_letzter_login')}</th>
                         <th>${t('admin.th_status')}</th>
                         <th>${t('admin.th_aktionen')}</th>
@@ -279,8 +254,6 @@ function _benutzer_tabelle_rendern(container, eintraege) {
                     ${e.email ? `<br><small style="color:var(--md-sys-color-on-surface-variant)">${esc(e.email)}</small>` : ''}
                 </td>
                 <td><span class="tag tag--${e.rolle}">${esc(e.rolle === 'admin' ? t('admin.rolle_admin') : t('admin.rolle_benutzer'))}</span></td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${zahlFormatieren(e.xp)} XP / Lv ${e.globales_level}</td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${e.streak_tage}\uD83D\uDD25</td>
                 <td class="verwaltung-tabelle__mobil-versteckt">${login}</td>
                 <td><span class="tag ${statusKlasse}">${statusText}</span></td>
                 <td style="white-space:nowrap">
@@ -376,37 +349,6 @@ function _benutzer_erstellen_formular(container) {
                 </select>
             </div>
 
-            <div style="grid-column:1/-1">
-                <hr style="border:none;border-top:1px solid var(--md-sys-color-outline-variant);margin:8px 0">
-                <p style="margin:0 0 8px;font-weight:500;font-size:14px">${t('admin.statistik_optional')}</p>
-            </div>
-
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_xp')}</label>
-                <input class="eingabe" id="bnu-xp" type="number" min="0" value="0">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_streak_tage')}</label>
-                <input class="eingabe" id="bnu-streak" type="number" min="0" value="0">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_level')}</label>
-                <select class="eingabe" id="bnu-level">
-                    ${[1,2,3,4,5].map(l => `<option value="${l}" ${l===1?'selected':''}>${l} \u2014 ${levelLabel(l)}</option>`).join('')}
-                </select>
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_bronze_sterne')}</label>
-                <input class="eingabe" id="bnu-bronze" type="number" min="0" value="0">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_silber_sterne')}</label>
-                <input class="eingabe" id="bnu-silber" type="number" min="0" value="0">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_gold_sterne')}</label>
-                <input class="eingabe" id="bnu-gold" type="number" min="0" value="0">
-            </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
             <button class="btn btn--text" id="bnu-abbrechen">${t('allgemein.abbrechen')}</button>
@@ -431,12 +373,6 @@ function _benutzer_erstellen_formular(container) {
             vorname:        div.querySelector('#bnu-vorname').value.trim(),
             nachname:       div.querySelector('#bnu-nachname').value.trim(),
             spitzname:      div.querySelector('#bnu-spitzname').value.trim(),
-            xp:             parseInt(div.querySelector('#bnu-xp').value) || 0,
-            streak_tage:    parseInt(div.querySelector('#bnu-streak').value) || 0,
-            globales_level: parseInt(div.querySelector('#bnu-level').value),
-            bronze_sterne:  parseInt(div.querySelector('#bnu-bronze').value) || 0,
-            silber_sterne:  parseInt(div.querySelector('#bnu-silber').value) || 0,
-            gold_sterne:    parseInt(div.querySelector('#bnu-gold').value) || 0,
         };
 
         if (!body.benutzername) { fehlerMsg(t('admin.benutzername_pflicht')); return; }
@@ -468,7 +404,7 @@ async function _benutzer_bearbeiten_dialog(container, benutzer) {
     if (!zeile) return;
 
     zeile.innerHTML = `
-        <td colspan="7" style="padding:16px">
+        <td colspan="5" style="padding:16px">
             <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr">
                 <div style="grid-column:1/-1">
                     <strong>${t('admin.bearbeite', {name: esc(b.benutzername)})}</strong>
@@ -505,37 +441,6 @@ async function _benutzer_bearbeiten_dialog(container, benutzer) {
                     </select>
                 </div>
 
-                <div style="grid-column:1/-1;margin-top:4px">
-                    <hr style="border:none;border-top:1px solid var(--md-sys-color-outline-variant)">
-                    <p style="margin:4px 0;font-weight:500;font-size:13px">${t('admin.statistik')}</p>
-                </div>
-
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_xp')}</label>
-                    <input class="eingabe" id="bedit-xp-${b.id}" type="number" min="0" value="${b.xp}">
-                </div>
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_streak_tage')}</label>
-                    <input class="eingabe" id="bedit-streak-${b.id}" type="number" min="0" value="${b.streak_tage}">
-                </div>
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_level_kurz')}</label>
-                    <select class="eingabe" id="bedit-level-${b.id}">
-                        ${[1,2,3,4,5].map(l => `<option value="${l}" ${b.globales_level === l ? 'selected' : ''}>${l} \u2014 ${levelLabel(l)}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_bronze_sterne')}</label>
-                    <input class="eingabe" id="bedit-bronze-${b.id}" type="number" min="0" value="${b.bronze_sterne}">
-                </div>
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_silber_sterne')}</label>
-                    <input class="eingabe" id="bedit-silber-${b.id}" type="number" min="0" value="${b.silber_sterne}">
-                </div>
-                <div class="formular-gruppe" style="margin:0">
-                    <label class="formular-label" style="font-size:11px">${t('admin.label_gold_sterne')}</label>
-                    <input class="eingabe" id="bedit-gold-${b.id}" type="number" min="0" value="${b.gold_sterne}">
-                </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
                 <button class="btn btn--text btn--klein" id="bedit-abbrechen-${b.id}">${t('allgemein.abbrechen')}</button>
@@ -553,20 +458,14 @@ async function _benutzer_bearbeiten_dialog(container, benutzer) {
 
         const bodyRolle = { benutzer_id: b.id };
         if (!istSelbst) bodyRolle.rolle = w(`bedit-rolle-${b.id}`).value;
-        bodyRolle.aktiv          = w(`bedit-aktiv-${b.id}`).value === '1';
-        bodyRolle.globales_level = parseInt(w(`bedit-level-${b.id}`).value);
+        bodyRolle.aktiv = w(`bedit-aktiv-${b.id}`).value === '1';
 
         const bodyStats = {
-            benutzer_id:   b.id,
-            email:         w(`bedit-email-${b.id}`).value.trim(),
-            vorname:       w(`bedit-vorname-${b.id}`).value.trim(),
-            nachname:      w(`bedit-nachname-${b.id}`).value.trim(),
-            spitzname:     w(`bedit-spitzname-${b.id}`).value.trim(),
-            xp:            parseInt(w(`bedit-xp-${b.id}`).value) || 0,
-            streak_tage:   parseInt(w(`bedit-streak-${b.id}`).value) || 0,
-            bronze_sterne: parseInt(w(`bedit-bronze-${b.id}`).value) || 0,
-            silber_sterne: parseInt(w(`bedit-silber-${b.id}`).value) || 0,
-            gold_sterne:   parseInt(w(`bedit-gold-${b.id}`).value) || 0,
+            benutzer_id: b.id,
+            email:       w(`bedit-email-${b.id}`).value.trim(),
+            vorname:     w(`bedit-vorname-${b.id}`).value.trim(),
+            nachname:    w(`bedit-nachname-${b.id}`).value.trim(),
+            spitzname:   w(`bedit-spitzname-${b.id}`).value.trim(),
         };
 
         const [r1, r2] = await Promise.all([
@@ -597,7 +496,7 @@ function _benutzer_passwort_dialog(container, benutzer) {
     const tr = document.createElement('tr');
     tr.id    = pwZeileId;
     const td = document.createElement('td');
-    td.colSpan = 7;
+    td.colSpan = 5;
     td.style.cssText = 'padding:0';
 
     td.innerHTML = `
@@ -662,491 +561,8 @@ async function _benutzer_loeschen(id, name, container) {
     }
 }
 
-// ============================================================
-// Tab 2: Belohnungen
-// ============================================================
-
-const _BEL_TYPEN = ['abzeichen', 'meilenstein', 'titel', 'echt'];
-function _BEL_TYP_LABEL() {
-    return { abzeichen: t('admin.typ_abzeichen'), meilenstein: t('admin.typ_meilenstein'), titel: t('admin.typ_titel'), echt: t('admin.typ_echt') };
-}
-
-function _belohnungen_tab(container) {
-    container.innerHTML = `
-        <div class="filter-leiste" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <select class="eingabe" id="admin-bel-typ-filter" style="max-width:220px">
-                <option value="">${t('admin.alle_typen')}</option>
-                ${_BEL_TYPEN.map(typ => `<option value="${typ}" ${_bel_typ === typ ? 'selected' : ''}>${_BEL_TYP_LABEL()[typ]}</option>`).join('')}
-            </select>
-            <button class="btn btn--gefuellt btn--klein" id="btn-bel-neu">
-                <span class="material-symbols-outlined">add</span> ${t('admin.neue_belohnung')}
-            </button>
-        </div>
-        <div id="admin-bel-liste"></div>
-        <div id="admin-bel-paginierung" style="margin-top:16px"></div>
-    `;
-
-    container.querySelector('#admin-bel-typ-filter').addEventListener('change', e => {
-        _bel_typ   = e.target.value;
-        _bel_seite = 1;
-        _belohnungen_laden(container);
-    });
-
-    container.querySelector('#btn-bel-neu').addEventListener('click', () => {
-        _belohnung_formular_anzeigen(container, null);
-    });
-
-    _belohnungen_laden(container);
-}
-
-async function _belohnungen_laden(container) {
-    const liste        = container.querySelector('#admin-bel-liste');
-    const pagContainer = container.querySelector('#admin-bel-paginierung');
-
-    lade_anzeige_rendern(liste);
-    pagContainer.innerHTML = '';
-
-    const params = { seite: _bel_seite };
-    if (_bel_typ) params.typ = _bel_typ;
-
-    const ergebnis = await apiPaginiert('admin/belohnungen_liste.php', _bel_seite, params);
-    lade_anzeige_entfernen(liste);
-
-    if (!ergebnis.erfolg) {
-        leer_zustand_rendern(liste, 'error', t('allgemein.fehler'), t('admin.fehler_belohnungen_laden'));
-        return;
-    }
-
-    const eintraege   = ergebnis.daten?.eintraege || [];
-    const paginierung = ergebnis.daten?.paginierung;
-
-    if (eintraege.length === 0) {
-        leer_zustand_rendern(liste, 'emoji_events', t('admin.keine_belohnungen'), t('admin.keine_belohnungen_text'));
-        return;
-    }
-
-    let html = `
-        <div class="verwaltung-tabelle-wrapper">
-            <table class="verwaltung-tabelle">
-                <thead>
-                    <tr>
-                        <th>${t('admin.th_titel_code')}</th>
-                        <th>${t('admin.th_typ')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.label_xp')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_reihenfolge')}</th>
-                        <th>${t('admin.th_status')}</th>
-                        <th>${t('admin.th_aktionen')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    for (const b of eintraege) {
-        const statusKlasse = b.aktiv ? 'tag--erfolg' : 'tag--fehler';
-        const statusText   = b.aktiv ? t('admin.status_aktiv') : t('admin.status_inaktiv');
-        const belLabels = _BEL_TYP_LABEL();
-        html += `
-            <tr>
-                <td>
-                    <strong>${esc(b.titel)}</strong>
-                    <br><small style="color:var(--md-sys-color-on-surface-variant)">${esc(b.code)}</small>
-                    ${b.gruppen_name ? `<br><small>${t('admin.gruppe_label', {name: esc(b.gruppen_name)})}</small>` : ''}
-                </td>
-                <td><span class="tag tag--${b.typ === 'echt' ? 'neutral' : b.typ}">${esc(belLabels[b.typ] || b.typ)}</span></td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${zahlFormatieren(b.xp_wert)}</td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${b.reihenfolge}</td>
-                <td><span class="tag ${statusKlasse}">${statusText}</span></td>
-                <td>
-                    <button class="btn-icon" data-bel-edit="${b.id}" title="${t('allgemein.bearbeiten')}">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
-                    <button class="btn-icon" data-bel-del="${b.id}" title="${t('allgemein.loeschen')}" style="color:var(--md-sys-color-error)">
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }
-
-    html += '</tbody></table></div>';
-    liste.innerHTML = html;
-
-    liste.querySelectorAll('[data-bel-edit]').forEach(btn => {
-        const id = parseInt(btn.dataset.belEdit);
-        btn.addEventListener('click', () => _belohnung_formular_anzeigen(container, eintraege.find(b => b.id === id)));
-    });
-
-    liste.querySelectorAll('[data-bel-del]').forEach(btn => {
-        const id = parseInt(btn.dataset.belDel);
-        btn.addEventListener('click', () => _belohnung_loeschen(id, container));
-    });
-
-    if (paginierung && paginierung.gesamt_seiten > 1) {
-        paginierung_rendern(pagContainer, paginierung, s => {
-            _bel_seite = s;
-            _belohnungen_laden(container);
-        });
-    }
-}
-
-function _belohnung_formular_anzeigen(container, belohnung) {
-    const ist_neu = !belohnung;
-    const formId  = 'admin-bel-formular';
-
-    const alt = container.querySelector('#' + formId);
-    if (alt) alt.remove();
-
-    const div = document.createElement('div');
-    div.id    = formId;
-    div.className = 'karte';
-    div.style.cssText = 'padding:20px;margin-bottom:16px';
-
-    const belLabels = _BEL_TYP_LABEL();
-    div.innerHTML = `
-        <h3 style="margin:0 0 16px">${ist_neu ? t('admin.neue_belohnung') : t('admin.belohnung_bearbeiten')}</h3>
-        <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
-            ${ist_neu ? `
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_code')} *</label>
-                <input class="eingabe" id="belf-code" type="text" placeholder="${t('admin.code_placeholder')}" value="">
-                <small style="color:var(--md-sys-color-on-surface-variant)">${t('admin.code_hinweis')}</small>
-            </div>
-            ` : `<div style="margin:0"><label class="formular-label">${t('admin.label_code')}</label><div style="padding:8px;color:var(--md-sys-color-on-surface-variant)">${esc(belohnung.code)}</div></div>`}
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.th_typ')} *</label>
-                <select class="eingabe" id="belf-typ">
-                    ${_BEL_TYPEN.map(typ => `<option value="${typ}" ${(!ist_neu && belohnung.typ === typ) ? 'selected' : ''}>${belLabels[typ]}</option>`).join('')}
-                </select>
-            </div>
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.label_titel')} *</label>
-                <input class="eingabe" id="belf-titel" type="text" value="${ist_neu ? '' : esc(belohnung.titel)}">
-            </div>
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.label_beschreibung')}</label>
-                <textarea class="eingabe" id="belf-beschreibung" rows="2">${ist_neu ? '' : esc(belohnung.beschreibung || '')}</textarea>
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_xp_wert')}</label>
-                <input class="eingabe" id="belf-xp" type="number" min="0" value="${ist_neu ? 0 : belohnung.xp_wert}">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_reihenfolge')}</label>
-                <input class="eingabe" id="belf-reihenfolge" type="number" min="0" value="${ist_neu ? 0 : belohnung.reihenfolge}">
-            </div>
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.label_bedingung')}</label>
-                <textarea class="eingabe" id="belf-bedingung" rows="2" placeholder='{"typ":"xp","wert":1000}'>${ist_neu ? '' : (belohnung.bedingung ? esc(JSON.stringify(belohnung.bedingung)) : '')}</textarea>
-                <details style="margin-top:6px;font-size:.82rem;color:var(--md-sys-color-on-surface-variant)">
-                    <summary style="cursor:pointer;user-select:none">Alle verfügbaren Bedingungstypen anzeigen</summary>
-                    <div style="margin-top:6px;display:grid;gap:4px">
-                        <strong style="margin-top:4px">Format 1 — Einzelbedingung: <code>{"typ":"...", "wert":N}</code></strong>
-                        <code>xp</code> / <code>xp_minimum</code> — Mindest-XP (z.B. <code>{"typ":"xp","wert":1000}</code>)<br>
-                        <code>streak</code> / <code>streak_minimum</code> — Mindest-Streak in Tagen<br>
-                        <code>level</code> / <code>level_minimum</code> — Mindest-Level (1–5)<br>
-                        <code>vokabeln_gelernt</code> / <code>vokabeln_gelernt_minimum</code> — Mindest-Vokabeln gelernt<br>
-                        <code>trainings</code> / <code>trainings_minimum</code> — Mindest-Trainings absolviert<br>
-                        <code>richtig_gesamt</code> — Gesamtanzahl richtig beantworteter Fragen<br>
-                        <code>liga_teilnahme</code> — Anzahl Liga-Teilnahmen (wert = Mindestanzahl)<br>
-                        <code>liga_gewonnen</code> — Anzahl gewonnener Ligen (wert = Mindestanzahl)<br>
-                        <code>perfekte_sitzung</code> — 100%-Sitzung; wert = Mindest-Fragenzahl (Standard: 5)<br>
-                        <code>alle_formen</code> — Vokabeln mit allen Formen gemeistert (wert = Mindestanzahl)<br>
-                        <strong style="margin-top:6px;display:block">Format 2 — Gruppen-Bedingung (kombinierbar):</strong>
-                        <code>{"min_streak":7, "min_vokabeln":100, "min_trainings":10}</code> — alle gesetzten Felder müssen erfüllt sein<br>
-                        <strong style="margin-top:6px;display:block">Format 3 — Mehrfachbedingung (alle müssen erfüllt sein):</strong>
-                        <code>[{"typ":"xp","wert":500}, {"typ":"streak","wert":7}]</code>
-                    </div>
-                </details>
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.th_status')}</label>
-                <select class="eingabe" id="belf-aktiv">
-                    <option value="1" ${ist_neu || belohnung.aktiv ? 'selected' : ''}>${t('admin.status_aktiv')}</option>
-                    <option value="0" ${!ist_neu && !belohnung.aktiv ? 'selected' : ''}>${t('admin.status_inaktiv')}</option>
-                </select>
-            </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-            <button class="btn btn--text" id="belf-abbrechen">${t('allgemein.abbrechen')}</button>
-            <button class="btn btn--gefuellt" id="belf-speichern">${ist_neu ? t('admin.erstellen') : t('allgemein.speichern')}</button>
-        </div>
-    `;
-
-    container.querySelector('#admin-bel-liste').before(div);
-
-    div.querySelector('#belf-abbrechen').addEventListener('click', () => div.remove());
-
-    div.querySelector('#belf-speichern').addEventListener('click', async () => {
-        const titel        = div.querySelector('#belf-titel').value.trim();
-        const typ          = div.querySelector('#belf-typ').value;
-        const beschreibung = div.querySelector('#belf-beschreibung').value.trim();
-        const xp_wert      = parseInt(div.querySelector('#belf-xp').value) || 0;
-        const reihenfolge  = parseInt(div.querySelector('#belf-reihenfolge').value) || 0;
-        const aktiv        = div.querySelector('#belf-aktiv').value === '1';
-        const bedingungRoh = div.querySelector('#belf-bedingung').value.trim();
-
-        if (!titel) { fehlerMsg(t('admin.titel_pflicht')); return; }
-
-        let bedingung = null;
-        if (bedingungRoh) {
-            try { bedingung = JSON.parse(bedingungRoh); } catch { fehlerMsg(t('admin.bedingung_ungueltig')); return; }
-        }
-
-        let ergebnis;
-        if (ist_neu) {
-            const code = div.querySelector('#belf-code').value.trim().toLowerCase();
-            if (!code) { fehlerMsg(t('admin.code_pflicht')); return; }
-            if (!/^[a-z0-9_]+$/.test(code)) { fehlerMsg(t('admin.code_format')); return; }
-            ergebnis = await apiPost('admin/belohnung_erstellen.php', { code, titel, beschreibung, typ, bedingung, xp_wert, reihenfolge, aktiv });
-        } else {
-            ergebnis = await apiPost('admin/belohnung_aktualisieren.php', { id: belohnung.id, titel, beschreibung, typ, bedingung, xp_wert, reihenfolge, aktiv });
-        }
-
-        if (ergebnis.erfolg) {
-            erfolg(ist_neu ? t('admin.belohnung_erstellt') : t('admin.belohnung_aktualisiert'));
-            div.remove();
-            _belohnungen_laden(container);
-        } else {
-            apiFehlerAnzeigen(ergebnis);
-        }
-    });
-}
-
-async function _belohnung_loeschen(id, container) {
-    const bestaetigt = await bestaetigung_anzeigen(
-        t('admin.belohnung_loeschen'),
-        t('admin.belohnung_loeschen_text'),
-        t('allgemein.loeschen'), t('allgemein.abbrechen'), true
-    );
-    if (!bestaetigt) return;
-
-    const ergebnis = await apiPost('admin/belohnung_loeschen.php', { id });
-    if (ergebnis.erfolg) {
-        erfolg(t('admin.belohnung_geloescht'));
-        _belohnungen_laden(container);
-    } else {
-        apiFehlerAnzeigen(ergebnis);
-    }
-}
-
-// ============================================================
-// Tab 3: Ligen
-// ============================================================
-
-function _ligen_tab(container) {
-    container.innerHTML = `
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-            <button class="btn btn--gefuellt btn--klein" id="btn-liga-neu">
-                <span class="material-symbols-outlined">add</span> ${t('admin.neue_liga')}
-            </button>
-        </div>
-        <div id="admin-ligen-liste"></div>
-        <div id="admin-ligen-paginierung" style="margin-top:16px"></div>
-    `;
-
-    container.querySelector('#btn-liga-neu').addEventListener('click', () => {
-        _liga_formular_anzeigen(container, null);
-    });
-
-    _ligen_laden(container);
-}
-
-async function _ligen_laden(container) {
-    const liste        = container.querySelector('#admin-ligen-liste');
-    const pagContainer = container.querySelector('#admin-ligen-paginierung');
-
-    lade_anzeige_rendern(liste);
-    pagContainer.innerHTML = '';
-
-    const ergebnis = await apiPaginiert('admin/ligen_liste.php', _liga_seite, {});
-    lade_anzeige_entfernen(liste);
-
-    if (!ergebnis.erfolg) {
-        leer_zustand_rendern(liste, 'error', t('allgemein.fehler'), t('admin.fehler_ligen_laden'));
-        return;
-    }
-
-    const eintraege   = ergebnis.daten?.eintraege || [];
-    const paginierung = ergebnis.daten?.paginierung;
-
-    if (eintraege.length === 0) {
-        leer_zustand_rendern(liste, 'leaderboard', t('admin.keine_ligen'), t('admin.keine_ligen_text'));
-        return;
-    }
-
-    const heute = new Date().toISOString().slice(0, 10);
-
-    let html = `
-        <div class="verwaltung-tabelle-wrapper">
-            <table class="verwaltung-tabelle">
-                <thead>
-                    <tr>
-                        <th>${t('admin.th_name')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_zeitraum')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_teilnehmer')}</th>
-                        <th class="verwaltung-tabelle__mobil-versteckt">${t('admin.th_wiederholung')}</th>
-                        <th>${t('admin.th_status')}</th>
-                        <th>${t('admin.th_aktionen')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-    const WIEDERHOLUNG_LABELS = {
-        nein: '\u2014', woechentlich: t('admin.wdh_woechentlich'), zweiwochentlich: t('admin.wdh_zweiwochentlich'),
-        monatlich: t('admin.wdh_monatlich'), jaehrlich: t('admin.wdh_jaehrlich'),
-    };
-
-    for (const l of eintraege) {
-        const laufend      = l.aktiv && l.start_datum <= heute && l.end_datum >= heute;
-        const statusKlasse = laufend ? 'tag--erfolg' : (l.aktiv ? 'tag--neutral' : 'tag--fehler');
-        const statusText   = laufend ? t('admin.liga_laeuft') : (l.aktiv ? t('admin.liga_geplant') : t('admin.status_inaktiv'));
-
-        html += `
-            <tr>
-                <td>
-                    <strong>${esc(l.name)}</strong>
-                    ${l.gruppen_name ? `<br><small style="color:var(--md-sys-color-on-surface-variant)">${t('admin.gruppe_label', {name: esc(l.gruppen_name)})}</small>` : ''}
-                </td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${esc(l.start_datum)} \u2013 ${esc(l.end_datum)}</td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${zahlFormatieren(l.teilnehmer_anzahl)}</td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${WIEDERHOLUNG_LABELS[l.wiederholung] || '\u2014'}</td>
-                <td><span class="tag ${statusKlasse}">${statusText}</span></td>
-                <td>
-                    <button class="btn-icon" data-liga-edit="${l.id}" title="${t('allgemein.bearbeiten')}">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
-                </td>
-            </tr>
-        `;
-    }
-
-    html += '</tbody></table></div>';
-    liste.innerHTML = html;
-
-    liste.querySelectorAll('[data-liga-edit]').forEach(btn => {
-        const id = parseInt(btn.dataset.ligaEdit);
-        btn.addEventListener('click', () => _liga_formular_anzeigen(container, eintraege.find(l => l.id === id)));
-    });
-
-    if (paginierung && paginierung.gesamt_seiten > 1) {
-        paginierung_rendern(pagContainer, paginierung, s => {
-            _liga_seite = s;
-            _ligen_laden(container);
-        });
-    }
-}
-
-function _liga_formular_anzeigen(container, liga) {
-    const ist_neu = !liga;
-    const formId  = 'admin-liga-formular';
-
-    const alt = container.querySelector('#' + formId);
-    if (alt) alt.remove();
-
-    const div = document.createElement('div');
-    div.id    = formId;
-    div.className = 'karte';
-    div.style.cssText = 'padding:20px;margin-bottom:16px';
-
-    div.innerHTML = `
-        <h3 style="margin:0 0 16px">${ist_neu ? t('admin.neue_liga') : t('admin.liga_bearbeiten')}</h3>
-        <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.th_name')} *</label>
-                <input class="eingabe" id="ligaf-name" type="text" value="${ist_neu ? '' : esc(liga.name)}">
-            </div>
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.label_beschreibung')}</label>
-                <textarea class="eingabe" id="ligaf-beschreibung" rows="2">${ist_neu ? '' : esc(liga.beschreibung || '')}</textarea>
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_startdatum')} *</label>
-                <input class="eingabe" id="ligaf-start" type="date" value="${ist_neu ? '' : esc(liga.start_datum)}">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.label_enddatum')} *</label>
-                <input class="eingabe" id="ligaf-end" type="date" value="${ist_neu ? '' : esc(liga.end_datum)}">
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.th_status')}</label>
-                <select class="eingabe" id="ligaf-aktiv">
-                    <option value="1" ${ist_neu || liga.aktiv ? 'selected' : ''}>${t('admin.status_aktiv')}</option>
-                    <option value="0" ${!ist_neu && !liga.aktiv ? 'selected' : ''}>${t('admin.status_inaktiv')}</option>
-                </select>
-            </div>
-            <div class="formular-gruppe" style="margin:0">
-                <label class="formular-label">${t('admin.auto_wiederholen')}</label>
-                <select class="eingabe" id="ligaf-wiederholung">
-                    <option value="nein"            ${ist_neu || (liga.wiederholung || 'nein') === 'nein'                      ? 'selected' : ''}>${t('admin.wdh_nein')}</option>
-                    <option value="woechentlich"    ${!ist_neu && liga.wiederholung === 'woechentlich'    ? 'selected' : ''}>${t('admin.wdh_jede_woche')}</option>
-                    <option value="zweiwochentlich" ${!ist_neu && liga.wiederholung === 'zweiwochentlich' ? 'selected' : ''}>${t('admin.wdh_alle_2_wochen')}</option>
-                    <option value="monatlich"       ${!ist_neu && liga.wiederholung === 'monatlich'       ? 'selected' : ''}>${t('admin.wdh_monatlich')}</option>
-                    <option value="jaehrlich"       ${!ist_neu && liga.wiederholung === 'jaehrlich'       ? 'selected' : ''}>${t('admin.wdh_jaehrlich')}</option>
-                </select>
-            </div>
-            <div class="formular-gruppe" style="margin:0;grid-column:1/-1">
-                <label class="formular-label">${t('admin.krone_typ_label')}</label>
-                <div id="ligaf-krone-auswahl" class="admin-krone-auswahl">
-                    ${KRONE_TYPEN.map(typ => {
-                        const aktiv = !ist_neu && (liga.krone_typ || 'standard') === typ ? 'admin-krone-option--aktiv' : (ist_neu && typ === 'standard' ? 'admin-krone-option--aktiv' : '');
-                        return `<button type="button" class="admin-krone-option ${aktiv}" data-typ="${typ}">
-                            <span class="admin-krone-option__vorschau">${krone_svg_html(typ, 1)}</span>
-                            <span class="admin-krone-option__label">${t('admin.krone_typ_' + typ)}</span>
-                        </button>`;
-                    }).join('')}
-                </div>
-                <input type="hidden" id="ligaf-krone-typ" value="${ist_neu ? 'standard' : (liga.krone_typ || 'standard')}">
-            </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-            <button class="btn btn--text" id="ligaf-abbrechen">${t('allgemein.abbrechen')}</button>
-            <button class="btn btn--gefuellt" id="ligaf-speichern">${ist_neu ? t('admin.erstellen') : t('allgemein.speichern')}</button>
-        </div>
-    `;
-
-    container.querySelector('#admin-ligen-liste').before(div);
-
-    div.querySelector('#ligaf-abbrechen').addEventListener('click', () => div.remove());
-
-    // Krone-Typ-Auswahl per Klick auf die Vorschau-Buttons
-    div.querySelector('#ligaf-krone-auswahl').addEventListener('click', e => {
-        const btn = e.target.closest('.admin-krone-option');
-        if (!btn) return;
-        div.querySelectorAll('.admin-krone-option').forEach(b => b.classList.remove('admin-krone-option--aktiv'));
-        btn.classList.add('admin-krone-option--aktiv');
-        div.querySelector('#ligaf-krone-typ').value = btn.dataset.typ;
-    });
-
-    div.querySelector('#ligaf-speichern').addEventListener('click', async () => {
-        const name         = div.querySelector('#ligaf-name').value.trim();
-        const beschreibung = div.querySelector('#ligaf-beschreibung').value.trim();
-        const start_datum  = div.querySelector('#ligaf-start').value;
-        const end_datum    = div.querySelector('#ligaf-end').value;
-        const aktiv        = div.querySelector('#ligaf-aktiv').value === '1';
-        const wiederholung = div.querySelector('#ligaf-wiederholung').value;
-        const krone_typ    = div.querySelector('#ligaf-krone-typ').value;
-
-        if (!name)                      { fehlerMsg(t('admin.name_pflicht')); return; }
-        if (!start_datum || !end_datum) { fehlerMsg(t('admin.datum_pflicht')); return; }
-        if (start_datum >= end_datum)   { fehlerMsg(t('admin.datum_reihenfolge')); return; }
-
-        let ergebnis;
-        if (ist_neu) {
-            ergebnis = await apiPost('admin/liga_erstellen.php', { name, beschreibung, start_datum, end_datum, aktiv, wiederholung, krone_typ });
-        } else {
-            ergebnis = await apiPost('admin/liga_aktualisieren.php', { id: liga.id, name, beschreibung, start_datum, end_datum, aktiv, wiederholung, krone_typ });
-        }
-
-        if (ergebnis.erfolg) {
-            erfolg(ist_neu ? t('admin.liga_erstellt') : t('admin.liga_aktualisiert'));
-            div.remove();
-            _ligen_laden(container);
-        } else {
-            apiFehlerAnzeigen(ergebnis);
-        }
-    });
-}
+function _belohnungen_tab(container) { container.innerHTML = ''; } // entfernt
+function _ligen_tab(container)      { container.innerHTML = ''; } // entfernt
 
 // ============================================================
 // Tab 4: Konfiguration
@@ -1166,11 +582,7 @@ const _KONFIG_GRUPPEN = {
         'rang_minimum_komplexe_formen', 'max_neue_formen_pro_sitzung',
         'wiederholt_stufe_schwelle', 'min_fragen_fuer_streak',
     ],
-    // 3. XP & Gamification
-    'admin.konfig_stern_xp':   ['xp_pro_bronze', 'xp_pro_silber', 'xp_pro_gold'],
-    'admin.konfig_xp_multi':   ['multiplikator_perfekt', 'multiplikator_streak', 'multiplikator_erstes_mal', 'schnellueben_xp_faktor', 'level_aufstieg_bonus_xp'],
-    'admin.konfig_gamification': ['streak_abzug_pro_tag'],
-    // 4. Inhalte & Community-Limits
+    // 3. Inhalte & Community-Limits
     'admin.konfig_inhalte':    ['max_private_vokabeln', 'max_gruppen_pro_user', 'max_mitglieder_pro_gruppe'],
     // 5. System & Infrastruktur
     'admin.konfig_system':     ['token_gueltig_tage', 'magic_link_gueltig_minuten', 'max_upload_mb', 'aktivitaeten_aufbewahrung_tage'],
@@ -1194,9 +606,6 @@ const _MASKOTTCHEN_BILDER_FALLBACK = [
 const _KONFIG_GRUPPEN_INFO = {
     'admin.konfig_training':    'admin.konfig_info_training',
     'admin.konfig_wiederholung':'admin.konfig_info_wiederholung',
-    'admin.konfig_stern_xp':    'admin.konfig_info_stern_xp',
-    'admin.konfig_xp_multi':    'admin.konfig_info_xp_multi',
-    'admin.konfig_gamification':'admin.konfig_info_gamification',
     'admin.konfig_inhalte':     'admin.konfig_info_inhalte',
     'admin.konfig_system':      'admin.konfig_info_system',
     'admin.konfig_backup':      'admin.konfig_info_backup',
@@ -2955,266 +2364,6 @@ async function _server_einstellungen_speichern(container) {
     } else {
         info_el.style.color = 'var(--md-sys-color-error)';
         info_el.textContent = '✗ ' + (res.fehler?.nachricht || 'Fehler beim Speichern');
-        apiFehlerAnzeigen(res);
-    }
-}
-
-// ============================================================
-// Level-System — Tab
-// ============================================================
-
-function _LEVEL_ALLE_FORMEN() {
-    return [
-        { key: 'unbestimmt_singular', label: t('admin.form_unbestimmt_singular'), gruppe: t('admin.gruppe_nomen') },
-        { key: 'bestimmt_singular',   label: t('admin.form_bestimmt_singular'),   gruppe: t('admin.gruppe_nomen') },
-        { key: 'unbestimmt_plural',   label: t('admin.form_unbestimmt_plural'),   gruppe: t('admin.gruppe_nomen') },
-        { key: 'bestimmt_plural',     label: t('admin.form_bestimmt_plural'),     gruppe: t('admin.gruppe_nomen') },
-        { key: 'infinitiv',           label: t('admin.form_infinitiv'),           gruppe: t('admin.gruppe_verb') },
-        { key: 'praesens',            label: t('admin.form_praesens'),            gruppe: t('admin.gruppe_verb') },
-        { key: 'praeteritum',         label: t('admin.form_praeteritum'),         gruppe: t('admin.gruppe_verb') },
-        { key: 'supinum',             label: t('admin.form_supinum'),             gruppe: t('admin.gruppe_verb') },
-        { key: 'imperativ',           label: t('admin.form_imperativ'),           gruppe: t('admin.gruppe_verb') },
-        { key: 'perfekt_partizip',    label: t('admin.form_perfekt_partizip'),    gruppe: t('admin.gruppe_verb') },
-        { key: 'grundform',           label: t('admin.form_grundform'),           gruppe: t('admin.gruppe_adjektiv') },
-        { key: 'komparativ',          label: t('admin.form_komparativ'),          gruppe: t('admin.gruppe_adjektiv') },
-        { key: 'superlativ',          label: t('admin.form_superlativ'),          gruppe: t('admin.gruppe_adjektiv') },
-        { key: 'bestimmte_form',      label: t('admin.form_bestimmte_form'),      gruppe: t('admin.gruppe_adjektiv') },
-        { key: 'neutrum_form',        label: t('admin.form_neutrum_form'),        gruppe: t('admin.gruppe_adjektiv') },
-    ];
-}
-
-const _LEVEL_ALLE_SPRACHNIVEAUS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-
-async function _level_system_tab(container) {
-    container.innerHTML = '';
-    lade_anzeige_rendern(container);
-
-    const ergebnis = await apiGet('admin/level_konfiguration.php');
-    lade_anzeige_entfernen(container);
-
-    if (!ergebnis.erfolg) {
-        container.innerHTML = `
-            <div class="karte" style="padding:16px;color:var(--md-sys-color-error)">
-                ${t('admin.level_konfig_fehler')}
-            </div>`;
-        return;
-    }
-
-    const level_daten = ergebnis.daten || [];
-
-    const intro = document.createElement('div');
-    intro.style.cssText = 'padding:0 0 16px 0;color:var(--md-sys-color-on-surface-variant);font-size:13px;line-height:1.5';
-    intro.textContent = t('admin.level_intro');
-    container.appendChild(intro);
-
-    // Button: Für alle Benutzer neu berechnen
-    const neu_berechnen_zeile = document.createElement('div');
-    neu_berechnen_zeile.style.cssText = 'padding:0 0 16px 0';
-    const neu_berechnen_btn = document.createElement('button');
-    neu_berechnen_btn.className = 'btn btn--umrandet';
-    neu_berechnen_btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px">sync</span> ${t('admin.level_alle_neu_berechnen')}`;
-    neu_berechnen_btn.addEventListener('click', () => _level_alle_neu_berechnen(neu_berechnen_btn, container));
-    neu_berechnen_zeile.appendChild(neu_berechnen_btn);
-    container.appendChild(neu_berechnen_zeile);
-
-    for (let i = 0; i < level_daten.length; i++) {
-        const lv = level_daten[i];
-        // Alle Formen und Niveaus, die durch frühere Level bereits freigeschaltet sind
-        const vorgaenger_formen = new Set(
-            level_daten.slice(0, i).flatMap(l => l.formen)
-        );
-        const vorgaenger_niveaus = new Set(
-            level_daten.slice(0, i).flatMap(l => l.sprachniveaus)
-        );
-        container.appendChild(_level_karte_erstellen(lv, vorgaenger_formen, vorgaenger_niveaus));
-    }
-}
-
-function _level_karte_erstellen(lv, vorgaenger_formen = new Set(), vorgaenger_niveaus = new Set()) {
-    const wrap = document.createElement('div');
-    wrap.className = 'karte';
-    wrap.style.cssText = 'padding:0;overflow:hidden;margin-bottom:16px';
-    wrap.dataset.levelNr = lv.level;
-
-    // --- Kopfzeile ---
-    const kopf = document.createElement('div');
-    kopf.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;' +
-        'background:var(--md-sys-color-surface-container);border-bottom:1px solid var(--md-sys-color-outline-variant)';
-
-    const badge = document.createElement('span');
-    badge.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
-        'width:28px;height:28px;border-radius:50%;background:var(--md-sys-color-primary);' +
-        'color:var(--md-sys-color-on-primary);font-weight:700;font-size:13px;flex-shrink:0';
-    badge.textContent = lv.level;
-
-    const titel = document.createElement('span');
-    titel.style.cssText = 'font-weight:600;font-size:14px;flex:1';
-    titel.textContent = `Level ${lv.level}`;
-
-    kopf.appendChild(badge);
-    kopf.appendChild(titel);
-    wrap.appendChild(kopf);
-
-    // --- Body ---
-    const body = document.createElement('div');
-    body.style.padding = '16px';
-
-    // Name
-    body.appendChild(_level_feld_erstellen(t('admin.level_name'), `
-        <input type="text" class="lv-name" value="${esc(lv.name)}"
-            style="border:1px solid var(--md-sys-color-outline);border-radius:8px;padding:8px 12px;
-                   font-size:14px;width:100%;box-sizing:border-box;background:var(--md-sys-color-surface)">
-    `));
-
-    // Schwelle
-    body.appendChild(_level_feld_erstellen(
-        t('admin.level_schwelle'),
-        `<div style="display:flex;align-items:center;gap:8px">
-            <input type="number" class="lv-schwelle" value="${lv.schwelle}" min="0" step="1"
-                style="border:1px solid var(--md-sys-color-outline);border-radius:8px;padding:8px 12px;
-                       font-size:14px;width:120px;background:var(--md-sys-color-surface)">
-            <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">${t('admin.level_schwelle_einheit')}</span>
-        </div>`,
-        t('admin.level_schwelle_hinweis')
-    ));
-
-    // Formen (Checkboxen, nach Wortart gruppiert)
-    // vorgaenger_formen = bereits durch frühere Level gesperrt → disabled + grau
-    const formen_set = new Set(lv.formen);
-    const gruppen = {};
-    for (const f of _LEVEL_ALLE_FORMEN()) {
-        if (!gruppen[f.gruppe]) gruppen[f.gruppe] = [];
-        gruppen[f.gruppe].push(f);
-    }
-
-    let formen_html = '<div class="lv-formen" style="display:flex;flex-wrap:wrap;gap:8px 24px">';
-    for (const [gruppe, felder] of Object.entries(gruppen)) {
-        formen_html += `<div style="min-width:160px">
-            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
-                color:var(--md-sys-color-on-surface-variant);margin-bottom:4px">${esc(gruppe)}</div>`;
-        for (const f of felder) {
-            const ist_vorgaenger = vorgaenger_formen.has(f.key);
-            const checked        = (formen_set.has(f.key) || ist_vorgaenger) ? 'checked' : '';
-            const disabled       = ist_vorgaenger ? 'disabled' : '';
-            const label_stil     = ist_vorgaenger
-                ? 'display:flex;align-items:center;gap:6px;cursor:default;margin-bottom:2px;font-size:13px;opacity:0.45'
-                : 'display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:2px;font-size:13px';
-            const cb_klasse      = ist_vorgaenger ? '' : 'lv-form-cb';
-            formen_html += `<label style="${label_stil}" title="${ist_vorgaenger ? t('admin.level_form_vorgaenger') : ''}">
-                <input type="checkbox" ${cb_klasse ? `class="${cb_klasse}"` : ''} data-form="${esc(f.key)}" ${checked} ${disabled}
-                    style="width:16px;height:16px;${ist_vorgaenger ? 'cursor:default' : 'cursor:pointer;accent-color:var(--md-sys-color-primary)'} ">
-                ${esc(f.label)}${ist_vorgaenger ? ' <span style="font-size:10px;margin-left:2px">✓</span>' : ''}
-            </label>`;
-        }
-        formen_html += '</div>';
-    }
-    formen_html += '</div>';
-    body.appendChild(_level_feld_erstellen(t('admin.level_formen_titel'), formen_html,
-        t('admin.level_formen_hinweis')));
-
-    // Sprachniveaus
-    // vorgaenger_niveaus = bereits durch frühere Level gesperrt → disabled + grau
-    const niv_set = new Set(lv.sprachniveaus);
-    let niv_html = '<div class="lv-sprachniveaus" style="display:flex;flex-wrap:wrap;gap:6px 16px">';
-    for (const niv of _LEVEL_ALLE_SPRACHNIVEAUS) {
-        const ist_vorgaenger = vorgaenger_niveaus.has(niv);
-        const checked        = (niv_set.has(niv) || ist_vorgaenger) ? 'checked' : '';
-        const disabled       = ist_vorgaenger ? 'disabled' : '';
-        const label_stil     = ist_vorgaenger
-            ? 'display:flex;align-items:center;gap:6px;cursor:default;font-size:13px;opacity:0.45'
-            : 'display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px';
-        const cb_klasse      = ist_vorgaenger ? '' : 'lv-niv-cb';
-        niv_html += `<label style="${label_stil}" title="${ist_vorgaenger ? t('admin.level_niv_vorgaenger') : ''}">
-            <input type="checkbox" ${cb_klasse ? `class="${cb_klasse}"` : ''} data-niv="${esc(niv)}" ${checked} ${disabled}
-                style="width:16px;height:16px;${ist_vorgaenger ? 'cursor:default' : 'cursor:pointer;accent-color:var(--md-sys-color-primary)'}">
-            ${esc(niv)}
-        </label>`;
-    }
-    niv_html += '</div>';
-    body.appendChild(_level_feld_erstellen(t('admin.level_niveaus_titel'), niv_html,
-        t('admin.level_niveaus_hinweis')));
-
-    // Speichern-Button
-    const btn_zeile = document.createElement('div');
-    btn_zeile.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:16px;' +
-        'border-top:1px solid var(--md-sys-color-outline-variant)';
-
-    const btn = document.createElement('button');
-    btn.className = 'btn btn--gefuellt';
-    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px">save</span> ${t('allgemein.speichern')}`;
-    btn.addEventListener('click', () => _level_speichern(wrap, lv.level, btn));
-
-    btn_zeile.appendChild(btn);
-    body.appendChild(btn_zeile);
-
-    wrap.appendChild(body);
-    return wrap;
-}
-
-function _level_feld_erstellen(label, inhalt_html, hinweis = '') {
-    const zeile = document.createElement('div');
-    zeile.style.marginBottom = '14px';
-    zeile.innerHTML = `
-        <div style="font-size:13px;font-weight:500;margin-bottom:6px;color:var(--md-sys-color-on-surface)">${esc(label)}</div>
-        ${inhalt_html}
-        ${hinweis ? `<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:4px">${esc(hinweis)}</div>` : ''}
-    `;
-    return zeile;
-}
-
-async function _level_speichern(karte, level_nr, btn) {
-    const name     = karte.querySelector('.lv-name')?.value.trim();
-    const schwelle = parseInt(karte.querySelector('.lv-schwelle')?.value, 10);
-
-    const formen = [...karte.querySelectorAll('.lv-form-cb:checked')]
-        .map(cb => cb.dataset.form);
-
-    const sprachniveaus = [...karte.querySelectorAll('.lv-niv-cb:checked')]
-        .map(cb => cb.dataset.niv);
-
-    if (!name) { fehlerMsg(t('admin.level_name_leer')); return; }
-    if (isNaN(schwelle) || schwelle < 0) { fehlerMsg(t('admin.level_schwelle_ungueltig')); return; }
-
-    btn.disabled = true;
-    btn.textContent = t('admin.wird_gespeichert');
-
-    const res = await apiPost('admin/level_konfiguration.php', {
-        level: level_nr,
-        name,
-        schwelle,
-        formen,
-        sprachniveaus,
-    });
-
-    if (res.erfolg) {
-        erfolg(t('admin.level_gespeichert', { nr: level_nr }));
-        // Tab komplett neu laden — dadurch werden alle vererbten Formen
-        // in den nachfolgenden Level-Karten automatisch korrekt aktualisiert
-        const container = karte.parentElement;
-        if (container) _level_system_tab(container);
-    } else {
-        btn.disabled = false;
-        btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px">save</span> ${t('allgemein.speichern')}`;
-        apiFehlerAnzeigen(res);
-    }
-}
-
-async function _level_alle_neu_berechnen(btn, container) {
-    if (!confirm(t('admin.level_neu_berechnen_confirm'))) return;
-
-    const orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px">sync</span> ${t('admin.level_wird_berechnet')}`;
-
-    const res = await apiPost('admin/level_neu_berechnen.php', {});
-
-    btn.disabled = false;
-    btn.innerHTML = orig;
-
-    if (res.erfolg) {
-        const d = res.daten || {};
-        erfolg(t('admin.level_neu_berechnet', { geprueft: d.aktualisiert, geaendert: d.geaendert }));
-    } else {
         apiFehlerAnzeigen(res);
     }
 }

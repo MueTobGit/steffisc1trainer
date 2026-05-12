@@ -5,8 +5,8 @@
  * DELETE /api/kategorien/loeschen.php?id=X
  *
  * Hard-Delete. Kinder-Kategorien werden ebenfalls geloescht.
- * Lektionen in diesen Kategorien werden ebenfalls hard-deleted
- * (lektion_vokabeln per CASCADE automatisch).
+ * Themenfelder in diesen Kategorien werden ebenfalls hard-deleted
+ * (themenfeld_vokabeln per CASCADE automatisch).
  *
  * FK-Kaskaden der DB (ON DELETE SET NULL):
  *   - vokabeln.kategorie_id → NULL
@@ -35,7 +35,7 @@ $kategorie = id_existiert($id, 'kategorien', 'Kategorie');
 
 $pdo = db_verbindung();
 
-// Betroffene Vokabeln und Lektionen zählen (inkl. Kinder-Kategorien)
+// Betroffene Vokabeln und Themenfelder zählen (inkl. Kinder-Kategorien)
 $kinder_ids  = _alle_kinder_ids($pdo, $id);
 $alle_ids    = array_merge([$id], $kinder_ids);
 $platzhalter = implode(',', array_fill(0, count($alle_ids), '?'));
@@ -44,16 +44,16 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM vokabeln WHERE kategorie_id IN ({$pl
 $stmt->execute($alle_ids);
 $vokabeln_betroffen = (int) $stmt->fetchColumn();
 
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM lektionen WHERE kategorie_id IN ({$platzhalter})");
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM Themenfelder WHERE kategorie_id IN ({$platzhalter})");
 $stmt->execute($alle_ids);
 $lektionen_betroffen = (int) $stmt->fetchColumn();
 
-// Hard-Delete — Lektionen zuerst loeschen (inkl. ihrer lektion_vokabeln per CASCADE),
+// Hard-Delete — Themenfelder zuerst loeschen (inkl. ihrer themenfeld_vokabeln per CASCADE),
 // dann Kategorien (FK ON DELETE SET NULL setzt vokabeln.kategorie_id auf NULL)
 $pdo->beginTransaction();
 try {
-    // Lektionen in allen betroffenen Kategorien loeschen (lektion_vokabeln per CASCADE)
-    $pdo->prepare("DELETE FROM lektionen WHERE kategorie_id IN ({$platzhalter})")->execute($alle_ids);
+    // Themenfelder in allen betroffenen Kategorien loeschen (themenfeld_vokabeln per CASCADE)
+    $pdo->prepare("DELETE FROM Themenfelder WHERE kategorie_id IN ({$platzhalter})")->execute($alle_ids);
 
     // Kinder-Kategorien zuerst (Blätter → Wurzel), damit FK eltern_id nicht stört
     foreach (array_reverse($kinder_ids) as $kid) {
@@ -96,3 +96,4 @@ function _alle_kinder_ids(PDO $pdo, int $eltern_id): array
     }
     return $ids;
 }
+

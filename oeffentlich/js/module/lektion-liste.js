@@ -317,7 +317,7 @@ function _liste_rendern(container, lektionen) {
     // Events
     container.querySelectorAll('[data-aktion="vokabeln-ansehen"]').forEach(btn => {
         btn.addEventListener('click', () => {
-            navigieren(`/vokabeln?lektion_id=${btn.dataset.id}`);
+            navigieren(`/vokabeln?themenfeld_id=${btn.dataset.id}`);
         });
     });
 
@@ -533,11 +533,10 @@ async function _zuordnung_anzeigen(lektionId) {
         if (q.length >= 2) suchParams.q = q;
         if (!ist_admin()) suchParams.nur_privat = 1; // Non-Admin: nur eigene private Vokabeln
         if (nurOhne) {
-            suchParams.ohne_lektion = '1';
-        } else {
-            // Nur Vokabeln, die noch nicht in DIESER Lektion sind
-            suchParams.lektion_id = lektionId;
+            suchParams.ohne_themenfeld = '1';
         }
+        // Kein Ausschluss bei normaler Suche — zeigt alle Vokabeln,
+        // Häkchen zeigt aktuelle Zuordnung (auch mehrere Themenfelder möglich)
 
         const suchErg = await apiGet('vokabeln/suchen.php', suchParams);
         if (suchErg.erfolg) {
@@ -599,7 +598,7 @@ function _zuordnung_liste_rendern(vokabeln, zugeordnete) {
         html += `
             <label class="zuordnung-eintrag">
                 <input type="checkbox" class="zuordnung-checkbox" value="${v.id}" ${checked}>
-                <strong>${esc(v.schwedisch)}</strong> — ${esc(v.deutsch)}
+                <strong>${esc(v.englisch || v.schwedisch || '')}</strong> — ${esc(v.deutsch)}
                 <span class="tag tag--${(v.wortart || '').toLowerCase()}">${esc(v.wortart)}</span>
             </label>
         `;

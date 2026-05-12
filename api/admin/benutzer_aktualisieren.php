@@ -4,13 +4,12 @@
  *
  * POST /api/admin/benutzer_aktualisieren.php
  *
- * Admin kann Rolle, Status und Level eines Benutzers aendern.
+ * Admin kann Rolle und Status eines Benutzers aendern.
  *
  * Body:
  *   - benutzer_id (Pflicht)
  *   - rolle (optional: 'admin' | 'benutzer')
  *   - aktiv (optional: boolean)
- *   - globales_level (optional: 1-5)
  */
 
 declare(strict_types=1);
@@ -60,15 +59,6 @@ if (isset($daten['aktiv'])) {
     $aenderungen['aktiv'] = $daten['aktiv'] ? 1 : 0;
 }
 
-// --- Globales Level ---
-if (isset($daten['globales_level'])) {
-    $level = (int) $daten['globales_level'];
-    if ($level < 1 || $level > 5) {
-        fehler_ungueltige_eingabe('globales_level muss zwischen 1 und 5 liegen.');
-    }
-    $aenderungen['globales_level'] = $level;
-}
-
 if (empty($aenderungen)) {
     fehler_ungueltige_eingabe('Keine Aenderungen angegeben.');
 }
@@ -87,12 +77,6 @@ if (!empty($benutzer_felder)) {
     $benutzer_werte[] = $ziel_id;
     $stmt = $pdo->prepare("UPDATE benutzer SET " . implode(', ', $benutzer_felder) . " WHERE id = ?");
     $stmt->execute($benutzer_werte);
-}
-
-// Statistik-Tabelle (globales_level)
-if (isset($aenderungen['globales_level'])) {
-    $stmt = $pdo->prepare("UPDATE benutzer_statistik SET globales_level = ? WHERE benutzer_id = ?");
-    $stmt->execute([$aenderungen['globales_level'], $ziel_id]);
 }
 
 // --- Aktivitaet loggen ---

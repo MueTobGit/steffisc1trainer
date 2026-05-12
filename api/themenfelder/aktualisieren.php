@@ -33,7 +33,7 @@ if ($id < 1) {
 $pdo = db_verbindung();
 
 // --- Lektion laden (fuer Berechtigungs-Check) ---
-$stmt_lek = $pdo->prepare('SELECT id, ist_privat, besitzer_id FROM lektionen WHERE id = ?');
+$stmt_lek = $pdo->prepare('SELECT id, ist_privat, besitzer_id FROM themenfelder WHERE id = ?');
 $stmt_lek->execute([$id]);
 $lektion = $stmt_lek->fetch();
 if (!$lektion) {
@@ -101,12 +101,12 @@ if (empty($felder)) {
 
 // --- Update ---
 $params[] = $id;
-$sql = "UPDATE lektionen SET " . implode(', ', $felder) . " WHERE id = ?";
+$sql = "UPDATE themenfelder SET " . implode(', ', $felder) . " WHERE id = ?";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 
 // Aktualisierte Lektion laden
-$stmt = $pdo->prepare('SELECT * FROM lektionen WHERE id = ?');
+$stmt = $pdo->prepare('SELECT * FROM themenfelder WHERE id = ?');
 $stmt->execute([$id]);
 $aktualisiert = $stmt->fetch();
 

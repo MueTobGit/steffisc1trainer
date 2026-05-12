@@ -42,12 +42,13 @@ $v = _app_version_berechnen(__DIR__);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Vokabeltrainer Schwedisch-Deutsch — Lerne schwedische Vokabeln mit Karteikarten, Abfragen und Spielen.">
-    <meta name="theme-color" content="#006AA7">
+    <meta name="description" content="Steffis C1-Trainer — Englisch C1 Vokabeltraining">
+    <meta name="theme-color" content="#012169">
 
-    <title>Vokabeltrainer — Schwedisch-Deutsch</title>
+    <title>Steffis C1-Trainer</title>
 
     <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="oeffentlich/bilder/favicon.svg">
     <link rel="icon" type="image/png" href="oeffentlich/bilder/favicon.png">
 
     <!-- Lokale Schriften (DSGVO-konform, lange gecacht – ändern sich nie) -->
@@ -63,10 +64,6 @@ $v = _app_version_berechnen(__DIR__);
     <link rel="stylesheet" href="oeffentlich/css/lernmodus.css?v=<?= $v ?>">
     <link rel="stylesheet" href="oeffentlich/css/training.css?v=<?= $v ?>">
     <link rel="stylesheet" href="oeffentlich/css/schnellueben.css?v=<?= $v ?>">
-    <link rel="stylesheet" href="oeffentlich/css/gamification.css?v=<?= $v ?>">
-    <link rel="stylesheet" href="oeffentlich/css/sozial.css?v=<?= $v ?>">
-    <link rel="stylesheet" href="oeffentlich/css/grammatik.css?v=<?= $v ?>">
-    <link rel="stylesheet" href="oeffentlich/css/praepositionen.css?v=<?= $v ?>">
     <link rel="stylesheet" href="oeffentlich/css/feinschliff.css?v=<?= $v ?>">
 
     <!-- Material Web Bundle (wird spaeter hinzugefuegt) -->
@@ -83,10 +80,10 @@ $v = _app_version_berechnen(__DIR__);
     <div id="lade-bildschirm" class="lade-bildschirm">
         <div class="lade-bildschirm__inhalt">
             <div class="lade-bildschirm__logo">
-                <span class="lade-bildschirm__flagge">🇸🇪</span>
+                <span class="lade-bildschirm__flagge">🇬🇧</span>
             </div>
-            <h1 class="lade-bildschirm__titel">Vokabeltrainer</h1>
-            <p class="lade-bildschirm__untertitel">Schwedisch-Deutsch</p>
+            <h1 class="lade-bildschirm__titel">Steffis C1-Trainer</h1>
+            <p class="lade-bildschirm__untertitel">Englisch C1</p>
             <div class="lade-bildschirm__fortschritt">
                 <div class="lade-bildschirm__fortschritt-balken"></div>
             </div>

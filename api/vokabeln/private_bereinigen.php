@@ -3,7 +3,7 @@
  * API: Vokabeln — Private Vokabeln bereinigen
  *
  * Findet private Vokabeln, die eine oeffentliche Vokabel mit gleichem
- * schwedischen Wort und gleicher Wortart duplizieren (z.B. nach CSV-Import
+ * englischen Wort und gleicher Wortart duplizieren (z.B. nach CSV-Import
  * mit Modus "Beide behalten"). Nur Admins.
  *
  * GET  /api/vokabeln/private_bereinigen.php
@@ -35,11 +35,11 @@ $methode = $_SERVER['REQUEST_METHOD'];
 if ($methode === 'GET') {
 
     // Private Vokabeln, fuer die eine oeffentliche Vokabel mit gleichem
-    // schwedischen Wort + Wortart existiert
+    // englischen Wort + Wortart existiert
     $stmt = $pdo->query("
         SELECT
             priv.id,
-            priv.schwedisch,
+            priv.englisch,
             priv.deutsch       AS priv_deutsch,
             priv.wortart,
             priv.sprachniveau,
@@ -51,17 +51,17 @@ if ($methode === 'GET') {
             COUNT(DISTINCT f.benutzer_id) AS nutzer_mit_lernstand
         FROM vokabeln priv
         JOIN vokabeln pub
-            ON  LOWER(priv.schwedisch) = LOWER(pub.schwedisch)
+            ON  LOWER(priv.englisch) = LOWER(pub.englisch)
             AND priv.wortart           = pub.wortart
             AND pub.ist_privat         = 0
         LEFT JOIN benutzer b ON b.id = priv.besitzer_id
         LEFT JOIN fortschritt f ON f.vokabel_id = priv.id
         WHERE priv.ist_privat = 1
         GROUP BY
-            priv.id, priv.schwedisch, priv.deutsch, priv.wortart,
+            priv.id, priv.englisch, priv.deutsch, priv.wortart,
             priv.sprachniveau, priv.erstellt_am, priv.besitzer_id,
             b.benutzername, pub.id, pub.deutsch
-        ORDER BY b.benutzername ASC, LOWER(priv.schwedisch) ASC
+        ORDER BY b.benutzername ASC, LOWER(priv.englisch) ASC
     ");
 
     $zeilen = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -79,7 +79,7 @@ if ($methode === 'GET') {
         }
         $nach_benutzer[$uid]['vokabeln'][] = [
             'id'                  => (int) $z['id'],
-            'schwedisch'          => $z['schwedisch'],
+            'englisch'          => $z['englisch'],
             'priv_deutsch'        => $z['priv_deutsch'],
             'wortart'             => $z['wortart'],
             'sprachniveau'        => $z['sprachniveau'],

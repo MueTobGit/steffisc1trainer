@@ -48,30 +48,11 @@ if (!$vokabel) {
 // Typen casten
 $vokabel['id'] = (int) $vokabel['id'];
 $vokabel['kategorie_id'] = $vokabel['kategorie_id'] !== null ? (int) $vokabel['kategorie_id'] : null;
-$vokabel['media_id'] = $vokabel['media_id'] !== null ? (int) $vokabel['media_id'] : null;
 $vokabel['erstellt_von'] = $vokabel['erstellt_von'] !== null ? (int) $vokabel['erstellt_von'] : null;
 $vokabel['besitzer_id'] = $vokabel['besitzer_id'] !== null ? (int) $vokabel['besitzer_id'] : null;
 $vokabel['aktiv'] = (bool) $vokabel['aktiv'];
 $vokabel['ist_privat'] = (bool) $vokabel['ist_privat'];
 
-// --- Formen laden ---
-$stmt = $pdo->prepare("
-    SELECT id, form_bezeichnung, form_wert, reihenfolge, media_id
-    FROM vokabel_formen
-    WHERE vokabel_id = ?
-    ORDER BY reihenfolge ASC, id ASC
-");
-$stmt->execute([$id]);
-$formen = $stmt->fetchAll();
-
-foreach ($formen as &$f) {
-    $f['id'] = (int) $f['id'];
-    $f['reihenfolge'] = (int) $f['reihenfolge'];
-    $f['media_id'] = $f['media_id'] !== null ? (int) $f['media_id'] : null;
-}
-unset($f);
-
-$vokabel['formen'] = $formen;
 
 // --- Synonyme laden ---
 $stmt = $pdo->prepare("
@@ -92,7 +73,7 @@ $vokabel['synonyme'] = $synonyme;
 
 // --- Saetze laden ---
 $stmt = $pdo->prepare("
-    SELECT id, schwedisch_satz, deutsch_satz, benoetigte_form, sprachniveau, media_id, aktiv
+    SELECT id, englisch_satz, deutsch_satz, benoetigte_form, sprachniveau, aktiv
     FROM saetze
     WHERE vokabel_id = ? AND aktiv = 1
     ORDER BY id ASC
@@ -101,8 +82,7 @@ $stmt->execute([$id]);
 $saetze = $stmt->fetchAll();
 
 foreach ($saetze as &$satz) {
-    $satz['id'] = (int) $satz['id'];
-    $satz['media_id'] = $satz['media_id'] !== null ? (int) $satz['media_id'] : null;
+    $satz['id']    = (int) $satz['id'];
     $satz['aktiv'] = (bool) $satz['aktiv'];
 }
 unset($satz);
@@ -136,22 +116,22 @@ $stmt = $pdo->prepare("
 $stmt->execute([$benutzer['id'], $id]);
 $vokabel['ist_favorit'] = (int) $stmt->fetchColumn() > 0;
 
-// --- Lektionen ---
+// --- Themenfelder ---
 $stmt = $pdo->prepare("
-    SELECT l.id, l.titel
-    FROM lektion_vokabeln lv
-    JOIN lektionen l ON l.id = lv.lektion_id
-    WHERE lv.vokabel_id = ? AND l.aktiv = 1
-    ORDER BY l.titel ASC
+    SELECT t.id, t.titel
+    FROM themenfeld_vokabeln tv
+    JOIN themenfelder t ON t.id = tv.themenfeld_id
+    WHERE tv.vokabel_id = ? AND t.aktiv = 1
+    ORDER BY t.titel ASC
 ");
 $stmt->execute([$id]);
-$lektionen = $stmt->fetchAll();
+$themenfelder = $stmt->fetchAll();
 
-foreach ($lektionen as &$lk) {
-    $lk['id'] = (int) $lk['id'];
+foreach ($themenfelder as &$tf) {
+    $tf['id'] = (int) $tf['id'];
 }
-unset($lk);
+unset($tf);
 
-$vokabel['lektionen'] = $lektionen;
+$vokabel['themenfelder'] = $themenfelder;
 
 json_erfolg($vokabel);

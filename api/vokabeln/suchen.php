@@ -4,9 +4,9 @@
  *
  * GET /api/vokabeln/suchen.php?q=SUCHBEGRIFF
  *
- * Volltextsuche in schwedisch + deutsch.
+ * Volltextsuche in englisch + deutsch.
  * Min. 2 Zeichen. Max. 20 Ergebnisse (ohne Spezialfilter).
- * Bei ohne_lektion / lektion_id: bis zu MAX_PRO_SEITE Ergebnisse.
+ * Bei ohne_themenfeld / themenfeld_id: bis zu MAX_PRO_SEITE Ergebnisse.
  * Fuer Autocomplete/Schnellsuche + Vokabel-Zuordnung.
  */
 
@@ -27,11 +27,11 @@ $q = get_param('q', '');
 $q = trim($q);
 
 // Optionaler Filter: nur Vokabeln ohne Lektionszuordnung
-$ohne_lektion          = get_param('ohne_lektion', '0') === '1';
-$ausschluss_lektion_id = get_param_int('lektion_id', 0); // Vokabeln die NICHT in dieser Lektion sind
+$ohne_themenfeld          = get_param('ohne_themenfeld', '0') === '1';
+$ausschluss_themenfeld_id = get_param_int('themenfeld_id', 0); // Vokabeln die NICHT in dieser themenfeld sind
 
 // Mindestlänge nur erzwingen wenn kein Spezialfilter aktiv
-$filter_aktiv = $ohne_lektion || $ausschluss_lektion_id > 0;
+$filter_aktiv = $ohne_themenfeld || $ausschluss_themenfeld_id > 0;
 if (!$filter_aktiv && mb_strlen($q) < 2) {
     fehler_ungueltige_eingabe('Suchbegriff muss mindestens 2 Zeichen lang sein.');
 }
@@ -45,19 +45,19 @@ $sql_params  = [];
 if ($q !== '') {
     $such_param    = '%' . $q . '%';
     $exakt_param   = $q . '%';
-    $bedingungen[] = '(v.schwedisch LIKE ? OR v.deutsch LIKE ?)';
+    $bedingungen[] = '(v.englisch LIKE ? OR v.deutsch LIKE ?)';
     $sql_params[]  = $such_param;
     $sql_params[]  = $such_param;
 } else {
     $exakt_param = '%'; // Fuer ORDER BY Fallback
 }
 
-// Lektion-Filter
-if ($ohne_lektion) {
-    $bedingungen[] = 'NOT EXISTS (SELECT 1 FROM lektion_vokabeln lv WHERE lv.vokabel_id = v.id)';
-} elseif ($ausschluss_lektion_id > 0) {
-    $bedingungen[] = 'NOT EXISTS (SELECT 1 FROM lektion_vokabeln lv WHERE lv.vokabel_id = v.id AND lv.lektion_id = ?)';
-    $sql_params[]  = $ausschluss_lektion_id;
+// themenfeld-Filter
+if ($ohne_themenfeld) {
+    $bedingungen[] = 'NOT EXISTS (SELECT 1 FROM themenfeld_vokabeln lv WHERE lv.vokabel_id = v.id)';
+} elseif ($ausschluss_themenfeld_id > 0) {
+    $bedingungen[] = 'NOT EXISTS (SELECT 1 FROM themenfeld_vokabeln lv WHERE lv.vokabel_id = v.id AND lv.themenfeld_id = ?)';
+    $sql_params[]  = $ausschluss_themenfeld_id;
 }
 
 $where = 'WHERE ' . implode(' AND ', $bedingungen);
@@ -67,11 +67,9 @@ $order_params = [$exakt_param . '%', $exakt_param . '%'];
 $sql = "
     SELECT
         v.id,
-        v.schwedisch,
+        v.englisch,
         v.deutsch,
         v.wortart,
-        v.genus,
-        v.verbgruppe,
         v.sprachniveau,
         v.kategorie_id,
         k.name AS kategorie_name
@@ -80,11 +78,11 @@ $sql = "
     {$where}
     ORDER BY
         CASE
-            WHEN v.schwedisch LIKE ? THEN 0
+            WHEN v.englisch LIKE ? THEN 0
             WHEN v.deutsch LIKE ? THEN 1
             ELSE 2
         END,
-        v.schwedisch ASC
+        v.englisch ASC
     LIMIT " . ($filter_aktiv ? MAX_PRO_SEITE : 20) . "
 ";
 
@@ -99,3 +97,4 @@ foreach ($ergebnisse as &$v) {
 unset($v);
 
 json_erfolg($ergebnisse);
+

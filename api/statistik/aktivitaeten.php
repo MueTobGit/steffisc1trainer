@@ -28,7 +28,7 @@ $pdo = db_verbindung();
 $typ_filter = get_param('typ');
 
 // Typ validieren
-$erlaubte_typen = ['training', 'login', 'belohnung', 'level_aufstieg', 'streak', 'admin_aktion'];
+$erlaubte_typen = ['training', 'login', 'admin_aktion'];
 if ($typ_filter !== null && !in_array($typ_filter, $erlaubte_typen, true)) {
     $typ_filter = null;
 }
