@@ -306,36 +306,26 @@ function _mc_aufgabe(array $vok, array $alle_vokabeln, array $synonyme_map, int 
         $syn_kandidaten   = $synonyme_map[$vid]['en'] ?? [];
     }
 
-    // Bis zu 1 Synonym als zusaetzliche richtige Option (nur wenn es sich vom Hauptwort unterscheidet)
-    $synonym_option = null;
-    if (!empty($syn_kandidaten)) {
-        shuffle($syn_kandidaten);
-        foreach ($syn_kandidaten as $syn) {
-            $syn = trim($syn);
-            if ($syn !== '' && mb_strtolower($syn) !== mb_strtolower($richtige_antwort)) {
-                $synonym_option = $syn;
-                break;
-            }
+    // Wenn Synonyme vorhanden: zufaellig entweder Hauptwort ODER ein Synonym als einzige richtige Antwort
+    // → bleibt klassisches MC (1 von 4), aber trainiert abwechselnd beide Formen
+    $alternativen = [$richtige_antwort];
+    foreach ($syn_kandidaten as $syn) {
+        $syn = trim($syn);
+        if ($syn !== '' && mb_strtolower($syn) !== mb_strtolower($richtige_antwort)) {
+            $alternativen[] = $syn;
         }
     }
+    shuffle($alternativen);
+    $gewaehlte_antwort = $alternativen[0];
 
-    // Mit Synonym: 2 richtige + 2 Distraktoren; ohne: 1 richtige + 3 Distraktoren
-    $anzahl_distraktoren = $synonym_option !== null ? 2 : 3;
-    $distraktoren = _distraktoren_finden($vok, $alle_vokabeln, $distraktor_feld, $anzahl_distraktoren, $syn_kandidaten);
+    // Immer 1 richtige + 3 Distraktoren; alle Synonyme aus Distraktor-Pool ausschliessen
+    $distraktoren = _distraktoren_finden($vok, $alle_vokabeln, $distraktor_feld, 3, $syn_kandidaten);
 
-    if (count($distraktoren) < $anzahl_distraktoren) return null;
+    if (count($distraktoren) < 3) return null;
 
-    $optionen = [['id' => 0, 'text' => $richtige_antwort, 'richtig' => true]];
-
-    if ($synonym_option !== null) {
-        $optionen[] = ['id' => 1, 'text' => $synonym_option, 'richtig' => true];
-        foreach ($distraktoren as $i => $d) {
-            $optionen[] = ['id' => $i + 2, 'text' => $d, 'richtig' => false];
-        }
-    } else {
-        foreach ($distraktoren as $i => $d) {
-            $optionen[] = ['id' => $i + 1, 'text' => $d, 'richtig' => false];
-        }
+    $optionen = [['id' => 0, 'text' => $gewaehlte_antwort, 'richtig' => true]];
+    foreach ($distraktoren as $i => $d) {
+        $optionen[] = ['id' => $i + 1, 'text' => $d, 'richtig' => false];
     }
 
     shuffle($optionen);

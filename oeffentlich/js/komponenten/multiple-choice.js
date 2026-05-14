@@ -103,9 +103,9 @@ export function multiple_choice_erstellen(aufgabe, optionen = {}) {
                 btn.classList.add('mc-aufgabe__option--richtig');
             } else {
                 btn.classList.add('mc-aufgabe__option--falsch');
-                // Alle richtigen Antworten markieren (inkl. Synonyme)
-                buttons.filter(b => b.dataset.richtig === '1')
-                       .forEach(b => b.classList.add('mc-aufgabe__option--richtig'));
+                // Richtige Antwort markieren
+                const richtigeBtn = buttons.find(b => b.dataset.richtig === '1');
+                if (richtigeBtn) richtigeBtn.classList.add('mc-aufgabe__option--richtig');
             }
 
             // XP-Badge + Weiter-Aktionen anzeigen
