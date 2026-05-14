@@ -176,6 +176,22 @@
     border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
+.editor-formular__synonym-gruppe-titel {
+    font-size: var(--md-sys-typescale-label-medium-size, 12px);
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.editor-formular__synonym-hinweis {
+    font-size: var(--md-sys-typescale-body-small-size, 11px);
+    color: var(--md-sys-color-on-surface-variant);
+    font-style: italic;
+    margin-bottom: 6px;
+}
+
 .editor-formular__synonym-reihe {
     display: flex;
     align-items: center;
@@ -185,11 +201,6 @@
 
 .editor-formular__synonym-reihe .eingabe {
     flex: 1;
-}
-
-.editor-formular__synonym-reihe select {
-    width: 120px;
-    flex-shrink: 0;
 }
 
 .editor-formular__hinweis {

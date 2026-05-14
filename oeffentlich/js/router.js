@@ -16,6 +16,7 @@ const ROUTEN = {
     '/vokabeln':        { modul: 'vokabel-liste',   titel: 'Vokabeln',         titel_key: 'navigation.vokabeln',      icon: 'dictionary',     auth: true },
     '/vokabeln/neu':    { modul: 'vokabel-editor',  titel: 'Vokabel erstellen', titel_key: 'navigation.vokabel_neu',   icon: 'add_circle',     auth: true },
     '/vokabeln/:id':    { modul: 'vokabel-editor',  titel: 'Vokabel bearbeiten',titel_key: 'navigation.vokabel_edit',  icon: 'edit',           auth: true },
+    '/synonyme':        { modul: 'synonyme',         titel: 'Synonyme',          titel_key: 'navigation.synonyme',      icon: 'merge_type',     auth: true },
     '/saetze':          { modul: 'satz-editor',     titel: 'Sätze',            titel_key: 'navigation.saetze',        icon: 'text_ad',        auth: true },
     '/kategorien':      { modul: 'kategorie-liste', titel: 'Kategorien',       titel_key: 'navigation.kategorien',    icon: 'folder',         auth: true, admin: true },
     '/lektionen':       { modul: 'lektion-liste',   titel: 'Themenfelder',     titel_key: 'navigation.lektionen',     icon: 'note_stack',     auth: true },
@@ -233,6 +234,7 @@ export function seitenleiste_routen() {
         ],
         inhalte: [
             { pfad: '/vokabeln', ...ROUTEN['/vokabeln'] },
+            { pfad: '/synonyme', ...ROUTEN['/synonyme'] },
             { pfad: '/saetze', ...ROUTEN['/saetze'] },
             { pfad: '/kategorien', ...ROUTEN['/kategorien'] },
             { pfad: '/lektionen', ...ROUTEN['/lektionen'] },

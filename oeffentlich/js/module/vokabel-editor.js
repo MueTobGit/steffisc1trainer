@@ -180,11 +180,24 @@ function _formular_rendern(container) {
                 <!-- Synonyme -->
                 <fieldset class="editor-formular__abschnitt">
                     <legend>${t('vokabel_editor.synonyme')}</legend>
-                    <div id="synonyme-bereich"></div>
-                    <button type="button" class="btn btn--text" id="btn-synonym-hinzufuegen" tabindex="-1">
-                        <span class="material-symbols-outlined" style="font-size:18px">add</span>
-                        ${t('vokabel_editor.synonym_hinzufuegen')}
-                    </button>
+                    <div class="editor-formular__synonym-gruppe">
+                        <div class="editor-formular__synonym-gruppe-titel">${t('vokabel_editor.en_synonyme')}</div>
+                        <div class="editor-formular__synonym-hinweis">${t('vokabel_editor.en_synonym_hinweis')}</div>
+                        <div id="synonyme-en-bereich"></div>
+                        <button type="button" class="btn btn--text btn--klein" id="btn-synonym-en-hinzufuegen" tabindex="-1">
+                            <span class="material-symbols-outlined" style="font-size:16px">add</span>
+                            ${t('vokabel_editor.en_synonym_hinzufuegen')}
+                        </button>
+                    </div>
+                    <div class="editor-formular__synonym-gruppe" style="margin-top:12px">
+                        <div class="editor-formular__synonym-gruppe-titel">${t('vokabel_editor.de_synonyme')}</div>
+                        <div class="editor-formular__synonym-hinweis">${t('vokabel_editor.de_synonym_hinweis')}</div>
+                        <div id="synonyme-de-bereich"></div>
+                        <button type="button" class="btn btn--klein btn--text" id="btn-synonym-de-hinzufuegen" tabindex="-1">
+                            <span class="material-symbols-outlined" style="font-size:16px">add</span>
+                            ${t('vokabel_editor.de_synonym_hinzufuegen')}
+                        </button>
+                    </div>
                 </fieldset>
 
                 <!-- Aktionen — visuell unten, Tab-Reihenfolge 4/5/6 via tabindex -->
@@ -216,7 +229,12 @@ function _formular_rendern(container) {
     document.getElementById('btn-zurueck')?.addEventListener('click', () => navigieren('/vokabeln'));
     document.getElementById('btn-abbrechen')?.addEventListener('click', () => navigieren('/vokabeln'));
 
-    document.getElementById('btn-synonym-hinzufuegen')?.addEventListener('click', () => {
+    document.getElementById('btn-synonym-en-hinzufuegen')?.addEventListener('click', () => {
+        _synonyme.push({ synonym: '', sprache: 'en' });
+        _synonyme_rendern();
+    });
+
+    document.getElementById('btn-synonym-de-hinzufuegen')?.addEventListener('click', () => {
         _synonyme.push({ synonym: '', sprache: 'de' });
         _synonyme_rendern();
     });
@@ -262,26 +280,29 @@ function _kategorien_select_befuellen(letzteKat = '') {
 }
 
 function _synonyme_rendern() {
-    const bereich = document.getElementById('synonyme-bereich');
+    _synonyme_gruppe_rendern('en', 'synonyme-en-bereich');
+    _synonyme_gruppe_rendern('de', 'synonyme-de-bereich');
+}
+
+function _synonyme_gruppe_rendern(sprache, bereachId) {
+    const bereich = document.getElementById(bereachId);
     if (!bereich) return;
 
-    if (_synonyme.length === 0) {
-        bereich.innerHTML = `<p class="editor-formular__hinweis">${t('vokabel_editor.keine_synonyme')}</p>`;
+    const hat_eintraege = _synonyme.some(s => s.sprache === sprache);
+    if (!hat_eintraege) {
+        bereich.innerHTML = `<p class="editor-formular__hinweis" style="margin:4px 0 6px">${t('vokabel_editor.keine_synonyme')}</p>`;
         return;
     }
 
     let html = '';
     _synonyme.forEach((syn, index) => {
+        if (syn.sprache !== sprache) return;
         html += `
-            <div class="editor-formular__synonym-reihe" data-index="${index}">
+            <div class="editor-formular__synonym-reihe">
                 <input class="eingabe eingabe--klein" type="text" tabindex="-1"
                     data-synonym-index="${index}"
                     value="${esc(syn.synonym)}"
                     placeholder="${t('vokabel_editor.synonym_placeholder')}">
-                <select class="eingabe eingabe--klein" data-synonym-sprache="${index}" tabindex="-1">
-                    <option value="de" ${syn.sprache === 'de' ? 'selected' : ''}>Deutsch</option>
-                    <option value="en" ${syn.sprache === 'en' ? 'selected' : ''}>Englisch</option>
-                </select>
                 <button type="button" class="btn-icon btn-icon--gefaehrlich" tabindex="-1"
                     data-synonym-entfernen="${index}">
                     <span class="material-symbols-outlined">close</span>
@@ -303,14 +324,7 @@ function _synonyme_rendern() {
     bereich.querySelectorAll('[data-synonym-index]').forEach(input => {
         input.addEventListener('input', () => {
             const idx = parseInt(input.dataset.synonymIndex, 10);
-            _synonyme[idx].synonym = input.value;
-        });
-    });
-
-    bereich.querySelectorAll('[data-synonym-sprache]').forEach(select => {
-        select.addEventListener('change', () => {
-            const idx = parseInt(select.dataset.synonymSprache, 10);
-            _synonyme[idx].sprache = select.value;
+            if (_synonyme[idx]) _synonyme[idx].synonym = input.value;
         });
     });
 }
