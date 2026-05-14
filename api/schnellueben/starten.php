@@ -140,6 +140,22 @@ foreach ($vokabeln as $v) {
     $vokabel_map[$v['id']] = $v;
 }
 
+// --- Synonyme laden (fuer multiple_choice) ---
+$synonyme_map = [];
+if (in_array('multiple_choice', $aufgaben_typen) && !empty($vokabel_ids)) {
+    $ph_syn = implode(',', array_fill(0, count($vokabel_ids), '?'));
+    $stmt = $pdo->prepare("
+        SELECT vokabel_id, synonym, sprache
+        FROM synonyme
+        WHERE vokabel_id IN ({$ph_syn})
+    ");
+    $stmt->execute($vokabel_ids);
+    foreach ($stmt->fetchAll() as $s) {
+        $vid = (int) $s['vokabel_id'];
+        $synonyme_map[$vid][$s['sprache']][] = $s['synonym'];
+    }
+}
+
 // --- Saetze laden (fuer satz_bauen) ---
 $saetze_map = [];
 if (in_array('satz_bauen', $aufgaben_typen)) {
@@ -161,7 +177,7 @@ $stmt->execute([$benutzer['id']]);
 $sitzung_id = (int) $pdo->lastInsertId();
 
 // --- Aufgaben generieren ---
-$aufgaben = _aufgaben_generieren($vokabeln, $saetze_map, $anzahl, $aufgaben_typen);
+$aufgaben = _aufgaben_generieren($vokabeln, $saetze_map, $synonyme_map, $anzahl, $aufgaben_typen);
 
 json_erfolg([
     'sitzung_id' => $sitzung_id,
@@ -172,7 +188,7 @@ json_erfolg([
 
 // ============================================================
 
-function _aufgaben_generieren(array $vokabeln, array $saetze_map, int $anzahl, array $typen): array
+function _aufgaben_generieren(array $vokabeln, array $saetze_map, array $synonyme_map, int $anzahl, array $typen): array
 {
     $aufgaben = [];
     $index = 0;
@@ -241,7 +257,7 @@ function _aufgaben_generieren(array $vokabeln, array $saetze_map, int $anzahl, a
         $mc_zaehler = 0;
         foreach ($mc_pool as $vok) {
             if ($mc_zaehler >= $mc_slots) break;
-            $a = _mc_aufgabe($vok, $gemischte, $index);
+            $a = _mc_aufgabe($vok, $gemischte, $synonyme_map, $index);
             if ($a !== null) { $aufgaben[] = $a; $index++; $mc_zaehler++; }
         }
     }
@@ -272,28 +288,56 @@ function _satz_kandidaten_sammeln(array $vokabeln, array $saetze_map): array
     return $kandidaten;
 }
 
-function _mc_aufgabe(array $vok, array $alle_vokabeln, int $index): ?array
+function _mc_aufgabe(array $vok, array $alle_vokabeln, array $synonyme_map, int $index): ?array
 {
     // 50/50: Englisch anzeigen → Deutsch wählen, oder Deutsch anzeigen → Englisch wählen
     $richtung = mt_rand(0, 1) === 0 ? 'ED' : 'DE';
+    $vid = (int) $vok['id'];
 
     if ($richtung === 'ED') {
-        $frage_text      = $vok['englisch'];
+        $frage_text       = $vok['englisch'];
         $richtige_antwort = $vok['deutsch'];
         $distraktor_feld  = 'deutsch';
+        $syn_kandidaten   = $synonyme_map[$vid]['de'] ?? [];
     } else {
-        $frage_text      = $vok['deutsch'];
+        $frage_text       = $vok['deutsch'];
         $richtige_antwort = $vok['englisch'];
         $distraktor_feld  = 'englisch';
+        $syn_kandidaten   = $synonyme_map[$vid]['en'] ?? [];
     }
 
-    $distraktoren = _distraktoren_finden($vok, $alle_vokabeln, $distraktor_feld, 3);
-    if (count($distraktoren) < 3) return null;
+    // Bis zu 1 Synonym als zusaetzliche richtige Option (nur wenn es sich vom Hauptwort unterscheidet)
+    $synonym_option = null;
+    if (!empty($syn_kandidaten)) {
+        shuffle($syn_kandidaten);
+        foreach ($syn_kandidaten as $syn) {
+            $syn = trim($syn);
+            if ($syn !== '' && mb_strtolower($syn) !== mb_strtolower($richtige_antwort)) {
+                $synonym_option = $syn;
+                break;
+            }
+        }
+    }
+
+    // Mit Synonym: 2 richtige + 2 Distraktoren; ohne: 1 richtige + 3 Distraktoren
+    $anzahl_distraktoren = $synonym_option !== null ? 2 : 3;
+    $distraktoren = _distraktoren_finden($vok, $alle_vokabeln, $distraktor_feld, $anzahl_distraktoren, $syn_kandidaten);
+
+    if (count($distraktoren) < $anzahl_distraktoren) return null;
 
     $optionen = [['id' => 0, 'text' => $richtige_antwort, 'richtig' => true]];
-    foreach ($distraktoren as $i => $d) {
-        $optionen[] = ['id' => $i + 1, 'text' => $d, 'richtig' => false];
+
+    if ($synonym_option !== null) {
+        $optionen[] = ['id' => 1, 'text' => $synonym_option, 'richtig' => true];
+        foreach ($distraktoren as $i => $d) {
+            $optionen[] = ['id' => $i + 2, 'text' => $d, 'richtig' => false];
+        }
+    } else {
+        foreach ($distraktoren as $i => $d) {
+            $optionen[] = ['id' => $i + 1, 'text' => $d, 'richtig' => false];
+        }
     }
+
     shuffle($optionen);
     foreach ($optionen as $i => &$opt) { $opt['id'] = $i; }
     unset($opt);
@@ -301,17 +345,22 @@ function _mc_aufgabe(array $vok, array $alle_vokabeln, int $index): ?array
     return [
         'index'      => $index,
         'typ'        => 'multiple_choice',
-        'vokabel_id' => (int) $vok['id'],
+        'vokabel_id' => $vid,
         'richtung'   => $richtung,
         'frage_text' => $frage_text,
         'optionen'   => $optionen,
     ];
 }
 
-function _distraktoren_finden(array $vok, array $alle, string $feld, int $anzahl): array
+function _distraktoren_finden(array $vok, array $alle, string $feld, int $anzahl, array $synonyme_ausschliessen = []): array
 {
     $ergebnis = [];
-    $benutzt  = [mb_strtolower($vok[$feld])];
+    // Eigenen Wert und alle Synonyme aus dem Distraktoren-Pool ausschliessen
+    $benutzt = [mb_strtolower($vok[$feld])];
+    foreach ($synonyme_ausschliessen as $syn) {
+        $lower = mb_strtolower(trim($syn));
+        if ($lower !== '') $benutzt[] = $lower;
+    }
 
     $gleiche_wortart = array_filter($alle, fn($v) => (int)$v['id'] !== (int)$vok['id'] && $v['wortart'] === $vok['wortart']);
     shuffle($gleiche_wortart);
