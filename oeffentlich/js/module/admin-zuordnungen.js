@@ -24,9 +24,9 @@ let _suche            = '';
 let _nur_ohne         = false;
 let _tf_filter        = new Set();
 let _aenderungen      = new Map();   // 'vid_tid' → bool
-let _sort_spalte      = 'englisch';  // 'englisch' | 'deutsch' | 'tf'
-let _sort_tf_id       = null;        // TF-ID wenn _sort_spalte === 'tf'
-let _sort_richtung    = 'ASC';       // 'ASC' | 'DESC'
+let _sort_spalte      = '';      // '' | 'englisch' | 'deutsch' | 'tf'
+let _sort_tf_id       = null;    // TF-ID wenn _sort_spalte === 'tf'
+let _sort_richtung    = 'ASC';   // 'ASC' | 'DESC'
 let _speichern_laeuft = false;
 
 const PRO_SEITE_OPTIONEN = [10, 25, 50, 100, 200, 500, 0]; // 0 = alle
@@ -38,10 +38,11 @@ export async function rendern(params = {}) {
     if (!container) return;
 
     _aenderungen.clear();
-    _seite       = 1;
-    _suche       = '';
-    _nur_ohne    = false;
-    _sort_spalte = 'englisch';
+    _seite         = 1;
+    _suche         = '';
+    _nur_ohne      = false;
+    _sort_spalte   = '';
+    _sort_tf_id    = null;
     _sort_richtung = 'ASC';
 
     lade_anzeige_rendern(container);
@@ -323,17 +324,19 @@ function _sort_events_binden(container) {
             if (th.dataset.sortTf) {
                 const tid = parseInt(th.dataset.sortTf, 10);
                 if (_sort_spalte === 'tf' && _sort_tf_id === tid) {
-                    _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
+                    _sort_richtung = _sort_richtung === 'DESC' ? 'ASC' : 'DESC';
                 } else {
+                    // Erste Klick auf TF: zugeordnet zuerst = DESC (1 vor 0)
                     _sort_spalte   = 'tf';
                     _sort_tf_id    = tid;
-                    _sort_richtung = 'ASC';
+                    _sort_richtung = 'DESC';
                 }
             } else {
                 const spalte = th.dataset.sort;
                 if (_sort_spalte === spalte) {
                     _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
                 } else {
+                    // Erste Klick auf Textspalte: A→Z = ASC
                     _sort_spalte   = spalte;
                     _sort_tf_id    = null;
                     _sort_richtung = 'ASC';
@@ -468,7 +471,7 @@ export function aufraeumen() {
     _nur_ohne         = false;
     _seite            = 1;
     _pro_seite        = 50;
-    _sort_spalte      = 'englisch';
+    _sort_spalte      = '';
     _sort_tf_id       = null;
     _sort_richtung    = 'ASC';
     _speichern_laeuft = false;

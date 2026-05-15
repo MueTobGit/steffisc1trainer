@@ -1478,6 +1478,8 @@
 
 .zuordnung-matrix-wrapper {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 280px);
     margin-top: 16px;
     border: 1px solid var(--md-sys-color-outline-variant);
     border-radius: var(--md-sys-shape-corner-medium);
@@ -1495,11 +1497,12 @@
     padding: 0;
 }
 
-.zuordnung-matrix thead tr {
-    background: var(--md-sys-color-surface-container);
+/* Sticky: einzelne th-Elemente, nicht thead tr — funktioniert in overflow-x-Containern */
+.zuordnung-matrix thead th {
     position: sticky;
     top: 0;
     z-index: 2;
+    background: var(--md-sys-color-surface-container);
 }
 
 .zuordnung-matrix__vok-kopf {
