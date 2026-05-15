@@ -65,10 +65,24 @@ $pro_seite     = $pro_seite_raw <= 0 ? 99999 : min(99999, max(10, $pro_seite_raw
 $nur_ohne      = !empty($_GET['nur_ohne']);
 $tf_filter     = array_filter(array_map('intval', explode(',', $_GET['themenfeld_ids'] ?? '')), fn($x) => $x > 0);
 
-// Sortierung (nur erlaubte Spalten)
-$erlaubte_sort = ['englisch' => 'v.englisch', 'deutsch' => 'v.deutsch'];
-$sort_spalte   = $erlaubte_sort[$_GET['sort_spalte'] ?? ''] ?? 'v.englisch';
-$sort_richtung = strtoupper($_GET['sort_richtung'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+// Sortierung
+$sort_richtung   = strtoupper($_GET['sort_richtung'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+$sort_spalte_raw = $_GET['sort_spalte'] ?? 'englisch';
+$erlaubte_sort   = ['englisch' => 'v.englisch', 'deutsch' => 'v.deutsch'];
+
+// Themenfeld-Sortierung: sort_spalte = 'tf' + sort_tf_id = <int>
+$sort_tf_id = (int) ($_GET['sort_tf_id'] ?? 0);
+if ($sort_spalte_raw === 'tf' && $sort_tf_id > 0) {
+    // Zugeordnet (1) vs. nicht zugeordnet (0) — via LEFT JOIN
+    $sort_spalte  = null; // wird unten speziell behandelt
+    $sort_join    = "LEFT JOIN themenfeld_vokabeln tv_sort
+                        ON tv_sort.vokabel_id = v.id AND tv_sort.themenfeld_id = {$sort_tf_id}";
+    $sort_order   = "CASE WHEN tv_sort.themenfeld_id IS NOT NULL THEN 1 ELSE 0 END {$sort_richtung}, v.englisch ASC";
+} else {
+    $sort_spalte = $erlaubte_sort[$sort_spalte_raw] ?? 'v.englisch';
+    $sort_join   = '';
+    $sort_order  = "{$sort_spalte} {$sort_richtung}";
+}
 
 // --- Alle Themenfelder laden ---
 $stmt_tf = $pdo->query(
@@ -109,8 +123,9 @@ $offset = ($seite - 1) * $pro_seite;
 $stmt_vok = $pdo->prepare(
     "SELECT v.id, v.englisch, v.deutsch, v.wortart, v.sprachniveau
      FROM vokabeln v
+     {$sort_join}
      {$where_sql}
-     ORDER BY {$sort_spalte} {$sort_richtung}
+     ORDER BY {$sort_order}
      LIMIT {$pro_seite} OFFSET {$offset}"
 );
 $stmt_vok->execute($where_params);

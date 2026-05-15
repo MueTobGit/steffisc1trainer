@@ -191,23 +191,9 @@ function _matrix_html() {
     }
     kopf += '</tr>';
 
-    // Bei TF-Sortierung: client-seitig sortieren (API kennt keine TF-Spalten)
-    const anzuzeigende = _sort_spalte === 'tf' && _sort_tf_id !== null
-        ? [..._vokabeln].sort((a, b) => {
-            const aChecked = _aenderungen.has(`${a.id}_${_sort_tf_id}`)
-                ? _aenderungen.get(`${a.id}_${_sort_tf_id}`)
-                : a.themenfeld_ids.includes(_sort_tf_id);
-            const bChecked = _aenderungen.has(`${b.id}_${_sort_tf_id}`)
-                ? _aenderungen.get(`${b.id}_${_sort_tf_id}`)
-                : b.themenfeld_ids.includes(_sort_tf_id);
-            const diff = (bChecked ? 1 : 0) - (aChecked ? 1 : 0); // zugeordnet zuerst
-            return _sort_richtung === 'ASC' ? diff : -diff;
-        })
-        : _vokabeln;
-
     // Datenzeilen
     let zeilen = '';
-    for (const vok of anzuzeigende) {
+    for (const vok of _vokabeln) {
         zeilen += `<tr>
             <td class="zuordnung-matrix__vok-zelle">
                 <span class="zuordnung-matrix__englisch">${esc(vok.englisch)}</span>
@@ -334,7 +320,6 @@ function _sort_events_binden(container) {
     container.querySelectorAll('.zuordnung-matrix__sortierbar').forEach(th => {
         th.addEventListener('click', () => {
             if (th.dataset.sortTf) {
-                // TF-Spalte: client-seitig sortieren, kein API-Call
                 const tid = parseInt(th.dataset.sortTf, 10);
                 if (_sort_spalte === 'tf' && _sort_tf_id === tid) {
                     _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
@@ -343,10 +328,7 @@ function _sort_events_binden(container) {
                     _sort_tf_id    = tid;
                     _sort_richtung = 'ASC';
                 }
-                _matrix_aktualisieren(container);
-                _sort_events_binden(container);
             } else {
-                // Text-Spalte: API-Call mit Sortierung
                 const spalte = th.dataset.sort;
                 if (_sort_spalte === spalte) {
                     _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
@@ -355,9 +337,9 @@ function _sort_events_binden(container) {
                     _sort_tf_id    = null;
                     _sort_richtung = 'ASC';
                 }
-                _seite = 1;
-                _laden_und_aktualisieren(container);
             }
+            _seite = 1;
+            _laden_und_aktualisieren(container);
         });
     });
 }
@@ -396,14 +378,16 @@ function _paginierung_events_binden(container) {
 // ---- Daten laden ----
 
 function _api_params() {
-    return {
-        seite:        _pro_seite === 0 ? 1        : _seite,
-        pro_seite:    _pro_seite === 0 ? 99999    : _pro_seite,
-        suche:        _suche,
-        nur_ohne:     _nur_ohne ? 1 : 0,
-        sort_spalte:  _sort_spalte,
+    const p = {
+        seite:         _pro_seite === 0 ? 1     : _seite,
+        pro_seite:     _pro_seite === 0 ? 99999 : _pro_seite,
+        suche:         _suche,
+        nur_ohne:      _nur_ohne ? 1 : 0,
+        sort_spalte:   _sort_spalte,
         sort_richtung: _sort_richtung,
     };
+    if (_sort_spalte === 'tf' && _sort_tf_id) p.sort_tf_id = _sort_tf_id;
+    return p;
 }
 
 function _daten_uebernehmen(daten) {
