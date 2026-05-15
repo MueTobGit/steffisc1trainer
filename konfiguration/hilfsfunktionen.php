@@ -78,13 +78,15 @@ function levenshtein_utf8(string $s1, string $s2): int
  * "the car"  → "car"
  * "an apple" → "apple"
  * "a cat"    → "cat"
+ * "to go"    → "go"
+ * "to"       → "to"         (kein Folgetext)
  * "antenna"  → "antenna"   (kein Match, kein Leerzeichen nach "an")
  * "a"        → "a"          (kein Folgetext)
  */
 function artikel_entfernen(string $text): string
 {
     $text = trim($text);
-    if (preg_match('/^(?:the|an?)\s+(.+)$/iu', $text, $m)) {
+    if (preg_match('/^(?:the|an?|to)\s+(.+)$/iu', $text, $m)) {
         return trim($m[1]);
     }
     return $text;
@@ -292,18 +294,11 @@ function _antwort_bewerten_einzel(string $eingabe, string $erwartet, array $syno
         return 5;
     }
 
-    // Endungs-Schutz: die letzten 4 Zeichen muessen exakt stimmen (case-insensitiv),
-    // damit Tippfehler-Toleranz nicht falsche Endungen durchlaesst (bilet vs bilen).
-    // Wird auf BEIDEN Varianten geprueft (original + artikel-bereinigt).
-    $endung_laenge = 4;
-    $endung_stimmt_orig = _endung_pruefen($eingabe_lower, $erwartet_lower, $endung_laenge);
-    $endung_stimmt_na   = _endung_pruefen($eingabe_lower_na, $erwartet_lower_na, $endung_laenge);
-
     // Tippfehler pruefen (Levenshtein <= 1) — original UND artikel-bereinigt
     $distanz_orig = levenshtein_utf8($eingabe_clean, $erwartet_clean);
     $distanz_na   = levenshtein_utf8($eingabe_no_art, $erwartet_no_art);
-    if (($distanz_orig <= 1 && mb_strlen($erwartet_clean, 'UTF-8') > 2 && $endung_stimmt_orig)
-        || ($distanz_na <= 1 && mb_strlen($erwartet_no_art, 'UTF-8') > 2 && $endung_stimmt_na)) {
+    if (($distanz_orig <= 1 && mb_strlen($erwartet_clean, 'UTF-8') > 2)
+        || ($distanz_na <= 1 && mb_strlen($erwartet_no_art, 'UTF-8') > 2)) {
         return 4;
     }
 
@@ -319,17 +314,15 @@ function _antwort_bewerten_einzel(string $eingabe, string $erwartet, array $syno
         // Tippfehler bei Synonym — beide Varianten
         $syn_dist_orig = levenshtein_utf8($eingabe_clean, $synonym_clean);
         $syn_dist_na   = levenshtein_utf8($eingabe_no_art, $synonym_no_art);
-        if (($syn_dist_orig <= 1 && mb_strlen($synonym_clean, 'UTF-8') > 2
-             && _endung_pruefen($eingabe_lower, $synonym_lower, $endung_laenge))
-            || ($syn_dist_na <= 1 && mb_strlen($synonym_no_art, 'UTF-8') > 2
-                && _endung_pruefen($eingabe_lower_na, $synonym_lower_na, $endung_laenge))) {
+        if (($syn_dist_orig <= 1 && mb_strlen($synonym_clean, 'UTF-8') > 2)
+            || ($syn_dist_na <= 1 && mb_strlen($synonym_no_art, 'UTF-8') > 2)) {
             return 3;
         }
     }
 
     // Fast richtig (Levenshtein 2-3) — beide Varianten
-    if (($distanz_orig <= 3 && mb_strlen($erwartet_clean, 'UTF-8') > 4 && $endung_stimmt_orig)
-        || ($distanz_na <= 3 && mb_strlen($erwartet_no_art, 'UTF-8') > 4 && $endung_stimmt_na)) {
+    if (($distanz_orig <= 3 && mb_strlen($erwartet_clean, 'UTF-8') > 4)
+        || ($distanz_na <= 3 && mb_strlen($erwartet_no_art, 'UTF-8') > 4)) {
         return 2;
     }
 
