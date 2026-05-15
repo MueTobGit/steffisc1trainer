@@ -23,8 +23,9 @@ const ROUTEN = {
     '/fortschritt':     { modul: 'fortschritt',     titel: 'Lernfortschritt',  titel_key: 'navigation.fortschritt',   icon: 'trending_up',    auth: true },
     '/profil':          { modul: 'profil',          titel: 'Profil',           titel_key: 'navigation.profil',        icon: 'person',         auth: true },
     '/einstellungen':   { modul: 'einstellungen',   titel: 'Einstellungen',    titel_key: 'navigation.einstellungen', icon: 'settings',       auth: true },
-    '/admin':           { modul: 'admin-panel',     titel: 'Admin',            titel_key: 'navigation.admin',         icon: 'admin_panel_settings', auth: true, admin: true },
-    '/admin/import':    { modul: 'csv-import',      titel: 'CSV-Import',       titel_key: 'navigation.csv_import',    icon: 'upload_file',    auth: true, admin: true },
+    '/admin':                { modul: 'admin-panel',       titel: 'Admin',                titel_key: 'navigation.admin',              icon: 'admin_panel_settings', auth: true, admin: true },
+    '/admin/import':         { modul: 'csv-import',        titel: 'CSV-Import',           titel_key: 'navigation.csv_import',         icon: 'upload_file',          auth: true, admin: true },
+    '/admin/zuordnungen':    { modul: 'admin-zuordnungen', titel: 'Themenfeld-Zuordnungen', titel_key: 'navigation.admin_zuordnungen',  icon: 'table_chart',          auth: true, admin: true },
     '/impressum':       { modul: 'impressum',       titel: 'Impressum',        titel_key: 'navigation.impressum',     icon: 'gavel',          auth: false },
 };
 
@@ -244,8 +245,9 @@ export function seitenleiste_routen() {
             { pfad: '/profil', ...ROUTEN['/profil'] },
         ],
         admin: [
-            { pfad: '/admin',        ...ROUTEN['/admin'] },
-            { pfad: '/admin/import', ...ROUTEN['/admin/import'] },
+            { pfad: '/admin',             ...ROUTEN['/admin'] },
+            { pfad: '/admin/import',      ...ROUTEN['/admin/import'] },
+            { pfad: '/admin/zuordnungen', ...ROUTEN['/admin/zuordnungen'] },
         ],
     };
 }

@@ -10,7 +10,8 @@
  * UNIQUE-Check bei englisch/wortart-Aenderung.
  *
  * Body: Gleiche Felder wie erstellen, alle optional.
- *   Zusaetzlich fuer Non-Admin: themenfeld_id (oeffentliches oder eigenes privates Themenfeld zuordnen, 0 = keine)
+ *   themenfeld_ids  (Array von IDs) — ersetzt alle Themenfeld-Zuordnungen (Admin + Non-Admin).
+ *   themenfeld_id   (einzelne ID, Fallback) — fuer Abwaertskompatibilitaet.
  */
 
 declare(strict_types=1);
@@ -124,9 +125,19 @@ if ($als_admin && isset($daten['aktiv'])) {
     $params[] = $daten['aktiv'] ? 1 : 0;
 }
 
-// Nichts zu aktualisieren (themenfeld_id wird separat behandelt)?
-// Fuer Non-Admins mit nur themenfeld_id-Aenderung kann $felder leer sein — das ist ok.
-if (empty($felder) && !(!$als_admin && array_key_exists('themenfeld_id', $daten))) {
+// Themenfeld-IDs ermitteln (Array bevorzugt, Einzel-ID als Fallback)
+$themenfeld_ids_neu = null;
+if (array_key_exists('themenfeld_ids', $daten)) {
+    $themenfeld_ids_neu = array_values(
+        array_filter(array_map('intval', (array) $daten['themenfeld_ids']), fn($x) => $x > 0)
+    );
+} elseif (array_key_exists('themenfeld_id', $daten)) {
+    $tid = (int) $daten['themenfeld_id'];
+    $themenfeld_ids_neu = $tid > 0 ? [$tid] : [];
+}
+
+// Nichts zu aktualisieren?
+if (empty($felder) && $themenfeld_ids_neu === null) {
     fehler_ungueltige_eingabe('Keine Felder zum Aktualisieren angegeben.');
 }
 
@@ -147,30 +158,39 @@ if (!empty($felder)) {
     }
 }
 
-// --- themenfeld-Zuordnung (nur Non-Admin) ---
-if (!$als_admin && array_key_exists('themenfeld_id', $daten)) {
-    $pdo_lekt = db_verbindung();
-    $themenfeld_id_neu = (int) $daten['themenfeld_id'];
-
-    // Vokabel aus allen sichtbaren Themenfeldern entfernen (eigene private + alle oeffentlichen)
-    $pdo_lekt->prepare(
-        'DELETE tv FROM themenfeld_vokabeln tv
-         JOIN themenfelder t ON t.id = tv.themenfeld_id
-         WHERE tv.vokabel_id = ?
-           AND (t.ist_privat = 0 OR (t.ist_privat = 1 AND t.besitzer_id = ?))'
-    )->execute([$id, $benutzer_id]);
-
-    // Neue Zuordnung einfuegen (falls themenfeld_id > 0)
-    if ($themenfeld_id_neu > 0) {
-        $stmt_lek = $pdo_lekt->prepare(
-            'SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1
-             AND (ist_privat = 0 OR (ist_privat = 1 AND besitzer_id = ?))'
-        );
-        $stmt_lek->execute([$themenfeld_id_neu, $benutzer_id]);
-        if ($stmt_lek->fetchColumn()) {
-            $pdo_lekt->prepare(
-                'INSERT IGNORE INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)'
-            )->execute([$themenfeld_id_neu, $id]);
+// --- themenfeld-Zuordnung (Admin + Non-Admin) ---
+if ($themenfeld_ids_neu !== null) {
+    if ($als_admin) {
+        // Admin: alle bisherigen Zuordnungen ersetzen
+        $pdo->prepare('DELETE FROM themenfeld_vokabeln WHERE vokabel_id = ?')->execute([$id]);
+        foreach ($themenfeld_ids_neu as $tid) {
+            $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1');
+            $stmt_tf->execute([$tid]);
+            if ($stmt_tf->fetchColumn()) {
+                $pdo->prepare(
+                    'INSERT IGNORE INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)'
+                )->execute([$tid, $id]);
+            }
+        }
+    } else {
+        // Non-Admin: nur sichtbare Themenfelder (oeffentlich + eigene private)
+        $pdo->prepare(
+            'DELETE tv FROM themenfeld_vokabeln tv
+             JOIN themenfelder t ON t.id = tv.themenfeld_id
+             WHERE tv.vokabel_id = ?
+               AND (t.ist_privat = 0 OR (t.ist_privat = 1 AND t.besitzer_id = ?))'
+        )->execute([$id, $benutzer_id]);
+        foreach ($themenfeld_ids_neu as $tid) {
+            $stmt_tf = $pdo->prepare(
+                'SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1
+                 AND (ist_privat = 0 OR (ist_privat = 1 AND besitzer_id = ?))'
+            );
+            $stmt_tf->execute([$tid, $benutzer_id]);
+            if ($stmt_tf->fetchColumn()) {
+                $pdo->prepare(
+                    'INSERT IGNORE INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)'
+                )->execute([$tid, $id]);
+            }
         }
     }
 }

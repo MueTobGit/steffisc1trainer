@@ -16,14 +16,15 @@ import { erfolg, fehler, apiFehlerAnzeigen } from '../benachrichtigungen.js';
 // LS-Keys für gemerkerte Werte
 const LS_KATEGORIE   = 'vt_vok_kategorie';
 const LS_NIVEAU      = 'vt_vok_niveau';
-const LS_THEMENFELD  = 'vt_vok_themenfeld';
+const LS_THEMENFELD  = 'vt_vok_themenfeld'; // komma-getrennte IDs
 
 let _modus = 'neu'; // 'neu' | 'bearbeiten'
 let _vokabelId = null;
 let _vokabelDaten = null;
 let _synonyme = [];
 let _kategorien = [];
-let _themenfelder = [];
+let _themenfelder = [];          // alle verfügbaren Themenfelder
+let _zugeordneteThemenfelder = []; // { id, titel } — aktuell zugeordnete
 let _naechste = false; // Flag: "Speichern und nächste" wurde gedrückt
 
 export async function rendern(params = {}) {
@@ -49,7 +50,7 @@ export async function rendern(params = {}) {
         apiGet('themenfelder/liste.php', { pro_seite: 500 }),
     ]);
 
-    _kategorien  = katErg.erfolg ? (katErg.daten || []) : [];
+    _kategorien   = katErg.erfolg ? (katErg.daten || []) : [];
     _themenfelder = tfErg.erfolg ? (tfErg.daten?.eintraege || []) : [];
 
     // Bei Bearbeiten: Vokabel laden
@@ -62,6 +63,8 @@ export async function rendern(params = {}) {
         }
         _vokabelDaten = ergebnis.daten;
         _synonyme = _vokabelDaten.synonyme || [];
+        // Bestehende Themenfeld-Zuordnungen laden
+        _zugeordneteThemenfelder = (_vokabelDaten.themenfelder || []).map(tf => ({ id: tf.id, titel: tf.titel }));
 
         const benutzer = holen('benutzer');
         const istEigenePrivate = _vokabelDaten.ist_privat && _vokabelDaten.besitzer_id === benutzer?.id;
@@ -70,6 +73,13 @@ export async function rendern(params = {}) {
             navigieren('/vokabeln');
             return;
         }
+    } else {
+        // Neu-Modus: aus localStorage vorbelegen
+        const lsIds = (localStorage.getItem(LS_THEMENFELD) || '').split(',').map(Number).filter(Boolean);
+        _zugeordneteThemenfelder = lsIds
+            .map(id => _themenfelder.find(tf => tf.id === id))
+            .filter(Boolean)
+            .map(tf => ({ id: tf.id, titel: tf.titel }));
     }
 
     _formular_rendern(container);
@@ -83,17 +93,8 @@ function _formular_rendern(container) {
         : t('vokabel_editor.titel_bearbeiten', { wort: v.englisch || t('vokabel_liste.titel') });
 
     // Gemerkte Werte (nur im Neu-Modus)
-    const letzteKat    = _modus === 'neu' ? (localStorage.getItem(LS_KATEGORIE) || '')  : '';
-    const letztesNiv   = _modus === 'neu' ? (localStorage.getItem(LS_NIVEAU)    || 'C1') : (v.sprachniveau || 'C1');
-    const letztesTf    = _modus === 'neu' ? (localStorage.getItem(LS_THEMENFELD) || '') : '';
-
-    // Themenfeld-Optionen (details.php liefert themenfelder[] Array — erstes Themenfeld vorauswaehlen)
-    const aktuellesTfId = _modus === 'neu' ? letztesTf : String(v.themenfelder?.[0]?.id || '');
-    const tfOptionen = _themenfelder.map(tf =>
-        `<option value="${tf.id}" ${aktuellesTfId === String(tf.id) ? 'selected' : ''}>
-            ${esc(tf.titel)}${tf.kategorie_name ? ' · ' + esc(tf.kategorie_name) : ''}
-        </option>`
-    ).join('');
+    const letzteKat  = _modus === 'neu' ? (localStorage.getItem(LS_KATEGORIE) || '') : '';
+    const letztesNiv = _modus === 'neu' ? (localStorage.getItem(LS_NIVEAU)    || 'C1') : (v.sprachniveau || 'C1');
 
     container.innerHTML = `
         <div class="editor-formular">
@@ -160,10 +161,10 @@ function _formular_rendern(container) {
                         ` : ''}
 
                         <div class="formular-gruppe">
-                            <label class="formular-label" for="ed-themenfeld">${t('vokabel_editor.themenfeld')}</label>
-                            <select class="eingabe" id="ed-themenfeld" name="themenfeld_id" tabindex="9">
-                                <option value="">${t('vokabel_editor.kein_themenfeld')}</option>
-                                ${tfOptionen}
+                            <label class="formular-label">${t('vokabel_editor.themenfelder_label')}</label>
+                            <div class="tf-chips" id="tf-chips"></div>
+                            <select class="eingabe eingabe--klein" id="ed-themenfeld-add" tabindex="9">
+                                <option value="">${t('vokabel_editor.themenfeld_hinzufuegen')}</option>
                             </select>
                         </div>
                     </div>
@@ -222,6 +223,8 @@ function _formular_rendern(container) {
     }
 
     _synonyme_rendern();
+    _tf_add_select_befuellen();
+    _tf_chips_rendern();
 
     // Event-Listener
     document.getElementById('btn-zurueck')?.addEventListener('click', () => navigieren('/vokabeln'));
@@ -275,6 +278,63 @@ function _kategorien_select_befuellen(letzteKat = '') {
     }
 
     _optionen(_kategorien);
+}
+
+// ---- Themenfeld Chip-Editor ----
+
+function _tf_add_select_befuellen() {
+    const sel = document.getElementById('ed-themenfeld-add');
+    if (!sel) return;
+    // Bereits zugeordnete IDs ausblenden
+    const zugeordnetIds = new Set(_zugeordneteThemenfelder.map(tf => tf.id));
+    // Optionen neu aufbauen
+    sel.innerHTML = `<option value="">${t('vokabel_editor.themenfeld_hinzufuegen')}</option>`;
+    for (const tf of _themenfelder) {
+        if (zugeordnetIds.has(tf.id)) continue;
+        const opt = document.createElement('option');
+        opt.value = tf.id;
+        opt.textContent = tf.titel + (tf.kategorie_name ? ' · ' + tf.kategorie_name : '');
+        sel.appendChild(opt);
+    }
+    // Listener (neu binden)
+    sel.onchange = () => {
+        const id = parseInt(sel.value, 10);
+        if (!id) return;
+        const tf = _themenfelder.find(t => t.id === id);
+        if (!tf) return;
+        _zugeordneteThemenfelder.push({ id: tf.id, titel: tf.titel });
+        sel.value = '';
+        _tf_add_select_befuellen();
+        _tf_chips_rendern();
+    };
+}
+
+function _tf_chips_rendern() {
+    const container = document.getElementById('tf-chips');
+    if (!container) return;
+
+    if (_zugeordneteThemenfelder.length === 0) {
+        container.innerHTML = `<span class="tf-chips__leer">${t('vokabel_editor.kein_themenfeld')}</span>`;
+        return;
+    }
+
+    container.innerHTML = _zugeordneteThemenfelder.map((tf, idx) => `
+        <span class="tf-chip" data-tf-idx="${idx}">
+            <span class="tf-chip__label">${esc(tf.titel)}</span>
+            <button type="button" class="tf-chip__entfernen" data-tf-entfernen="${idx}" title="${t('allgemein.entfernen') || 'Entfernen'}">
+                <span class="material-symbols-outlined" style="font-size:14px;pointer-events:none">close</span>
+            </button>
+        </span>
+    `).join('');
+
+    container.querySelectorAll('[data-tf-entfernen]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.tfEntfernen, 10);
+            _zugeordneteThemenfelder.splice(idx, 1);
+            _tf_add_select_befuellen();
+            _tf_chips_rendern();
+        });
+    });
 }
 
 function _synonyme_rendern() {
@@ -352,9 +412,8 @@ async function _speichern(e) {
     if (admin) {
         daten.kategorie_id = document.getElementById('ed-kategorie')?.value || null;
     }
-    // themenfeld_id immer senden (0 = kein Themenfeld), damit Entfernen einer Zuordnung funktioniert
-    const tfVal = document.getElementById('ed-themenfeld')?.value;
-    if (!admin) daten.themenfeld_id = tfVal ? parseInt(tfVal, 10) : 0;
+    // themenfeld_ids immer senden (leeres Array = alle Zuordnungen entfernen)
+    daten.themenfeld_ids = _zugeordneteThemenfelder.map(tf => tf.id);
 
     // Synonyme aus Feldern lesen
     document.querySelectorAll('[data-synonym-index]').forEach(input => {
@@ -395,10 +454,13 @@ async function _speichern(e) {
         if (_modus === 'neu') {
             const katVal = document.getElementById('ed-kategorie')?.value || '';
             const nivVal = document.getElementById('ed-sprachniveau')?.value || 'C1';
-            const tfSel  = document.getElementById('ed-themenfeld')?.value || '';
-            if (katVal) localStorage.setItem(LS_KATEGORIE,  katVal);
-            localStorage.setItem(LS_NIVEAU,     nivVal);
-            if (tfSel)  localStorage.setItem(LS_THEMENFELD, tfSel);
+            if (katVal) localStorage.setItem(LS_KATEGORIE, katVal);
+            localStorage.setItem(LS_NIVEAU, nivVal);
+            if (_zugeordneteThemenfelder.length > 0) {
+                localStorage.setItem(LS_THEMENFELD, _zugeordneteThemenfelder.map(tf => tf.id).join(','));
+            } else {
+                localStorage.removeItem(LS_THEMENFELD);
+            }
         }
 
         erfolg(_modus === 'neu' ? t('vokabel_editor.erstellt') : t('vokabel_editor.aktualisiert'));
@@ -435,5 +497,6 @@ export function aufraeumen() {
     _vokabelDaten = null;
     _synonyme = [];
     _themenfelder = [];
+    _zugeordneteThemenfelder = [];
     _naechste = false;
 }

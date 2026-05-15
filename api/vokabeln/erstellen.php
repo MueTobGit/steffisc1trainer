@@ -16,7 +16,8 @@
  *   - notizen        (optional)
  *   - kategorie_id   (optional, nur Admin)
  *   - synonyme       (optional, Array von {synonym, sprache:'en'|'de'})
- *   - themenfeld_id  (optional, Non-Admin: oeffentliches oder eigenes privates Themenfeld)
+ *   - themenfeld_ids (optional, Array von IDs — mehrere Themenfelder gleichzeitig zuordnen)
+ *   - themenfeld_id  (optional, einzelne ID — Fallback fuer Abwaertskompatibilitaet)
  */
 
 declare(strict_types=1);
@@ -75,7 +76,16 @@ if ($stmt->fetchColumn()) {
     fehler_doppelter_eintrag("Eine Vokabel '{$daten['englisch']}' mit Wortart '{$daten['wortart']}' existiert bereits.");
 }
 
-$themenfeld_id_neu = !empty($daten['themenfeld_id']) ? (int) $daten['themenfeld_id'] : 0;
+// Themenfeld-IDs ermitteln (Array bevorzugt, Einzel-ID als Fallback)
+$themenfeld_ids_neu = [];
+if (!empty($daten['themenfeld_ids']) && is_array($daten['themenfeld_ids'])) {
+    $themenfeld_ids_neu = array_values(
+        array_filter(array_map('intval', $daten['themenfeld_ids']), fn($x) => $x > 0)
+    );
+} elseif (!empty($daten['themenfeld_id'])) {
+    $tid = (int) $daten['themenfeld_id'];
+    if ($tid > 0) $themenfeld_ids_neu = [$tid];
+}
 
 $pdo->beginTransaction();
 try {
@@ -99,18 +109,18 @@ try {
 
     $vokabel_id = (int) $pdo->lastInsertId();
 
-    // Themenfeld zuordnen (optional)
-    if ($themenfeld_id_neu > 0) {
+    // Themenfelder zuordnen (optional, mehrere moeglich)
+    foreach ($themenfeld_ids_neu as $tid) {
         if ($als_admin) {
             $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1');
-            $stmt_tf->execute([$themenfeld_id_neu]);
+            $stmt_tf->execute([$tid]);
         } else {
             $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1 AND (ist_privat = 0 OR (ist_privat = 1 AND besitzer_id = ?))');
-            $stmt_tf->execute([$themenfeld_id_neu, $benutzer_id]);
+            $stmt_tf->execute([$tid, $benutzer_id]);
         }
         if ($stmt_tf->fetchColumn()) {
             $pdo->prepare('INSERT IGNORE INTO themenfeld_vokabeln (themenfeld_id, vokabel_id, reihenfolge) VALUES (?, ?, 0)')
-                ->execute([$themenfeld_id_neu, $vokabel_id]);
+                ->execute([$tid, $vokabel_id]);
         }
     }
 
