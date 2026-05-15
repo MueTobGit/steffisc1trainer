@@ -236,6 +236,7 @@ export function seitenleiste_routen() {
         inhalte: [
             { pfad: '/vokabeln', ...ROUTEN['/vokabeln'] },
             { pfad: '/synonyme', ...ROUTEN['/synonyme'] },
+            { pfad: '/admin/zuordnungen', ...ROUTEN['/admin/zuordnungen'] },
             { pfad: '/saetze', ...ROUTEN['/saetze'] },
             { pfad: '/kategorien', ...ROUTEN['/kategorien'] },
             { pfad: '/lektionen', ...ROUTEN['/lektionen'] },
@@ -245,9 +246,8 @@ export function seitenleiste_routen() {
             { pfad: '/profil', ...ROUTEN['/profil'] },
         ],
         admin: [
-            { pfad: '/admin',             ...ROUTEN['/admin'] },
-            { pfad: '/admin/import',      ...ROUTEN['/admin/import'] },
-            { pfad: '/admin/zuordnungen', ...ROUTEN['/admin/zuordnungen'] },
+            { pfad: '/admin',        ...ROUTEN['/admin'] },
+            { pfad: '/admin/import', ...ROUTEN['/admin/import'] },
         ],
     };
 }
