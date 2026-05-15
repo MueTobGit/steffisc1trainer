@@ -489,12 +489,18 @@ async function _zuordnung_anzeigen(lektionId) {
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     lade_anzeige_rendern(container);
 
-    // Lektion-Details laden (inkl. zugeordnete Vokabeln)
+    // Lektion-Details laden (inkl. zugeordnete Vokabeln mit hinzugefuegt_am)
     const erg = await apiGet(`lektionen/details.php?id=${lektionId}`);
     if (!erg.erfolg) { apiFehlerAnzeigen(erg); return; }
 
     const lektion = erg.daten;
     const zugeordnete = new Set(lektion.vokabeln.map(v => v.id));
+
+    // hinzugefuegt_am-Map: id → Datum (nur für zugeordnete Vokabeln bekannt)
+    const hinzugefuegtMap = new Map(lektion.vokabeln.map(v => [v.id, v.hinzugefuegt_am || null]));
+
+    // Sortierzustand für die Zuordnungsliste
+    let _zuordnSort = { spalte: 'hinzugefuegt', richtung: 'DESC' };
 
     container.innerHTML = `
         <div class="karte zuordnung-box">
@@ -507,6 +513,18 @@ async function _zuordnung_anzeigen(lektionId) {
                     <input type="checkbox" id="zuordnung-nur-ohne-lektion">
                     <span>${t('lektion_liste.zuordnen_ohne_lektion')}</span>
                 </label>
+                <label class="filter-checkbox" style="white-space:nowrap">
+                    <input type="checkbox" id="zuordnung-alle-anzeigen">
+                    <span>${t('lektion_liste.zuordnen_alle_anzeigen')}</span>
+                </label>
+            </div>
+
+            <div class="zuordnung-sort-zeile" style="display:flex;align-items:center;gap:8px;padding:4px 0 8px;font-size:0.85em;color:var(--md-sys-color-on-surface-variant)">
+                <span>Sortierung:</span>
+                <button class="btn btn--text btn--klein zuordnung-sort-btn" data-sort="englisch" type="button">${t('lektion_liste.zuordnen_sort_englisch')}</button>
+                <button class="btn btn--text btn--klein zuordnung-sort-btn" data-sort="deutsch" type="button">${t('lektion_liste.zuordnen_sort_deutsch')}</button>
+                <button class="btn btn--text btn--klein zuordnung-sort-btn zuordnung-sort-btn--aktiv" data-sort="hinzugefuegt" type="button">${t('lektion_liste.zuordnen_sort_hinzugefuegt')} ↓</button>
+                <button class="btn btn--text btn--klein zuordnung-sort-btn" data-sort="erstellt_am" type="button">${t('lektion_liste.zuordnen_sort_erstellt_am')}</button>
             </div>
 
             <div id="zuordnung-ergebnisse" class="zuordnung-liste"></div>
@@ -518,42 +536,121 @@ async function _zuordnung_anzeigen(lektionId) {
         </div>
     `;
 
-    // Hilfsfunktion: aktuelle Suche ausführen
-    async function _zuordnung_suche_ausfuehren() {
-        const q       = document.getElementById('zuordnung-suche')?.value?.trim() || '';
-        const nurOhne = document.getElementById('zuordnung-nur-ohne-lektion')?.checked ?? false;
+    // Sortier-Hilfsfunktion
+    function _zuordnung_sortieren(vokabeln) {
+        const { spalte, richtung } = _zuordnSort;
+        return [...vokabeln].sort((a, b) => {
+            let va, vb;
+            if (spalte === 'englisch') {
+                va = (a.englisch || '').toLowerCase();
+                vb = (b.englisch || '').toLowerCase();
+            } else if (spalte === 'deutsch') {
+                va = (a.deutsch || '').toLowerCase();
+                vb = (b.deutsch || '').toLowerCase();
+            } else if (spalte === 'erstellt_am') {
+                va = a.erstellt_am || '0';
+                vb = b.erstellt_am || '0';
+            } else { // hinzugefuegt
+                va = hinzugefuegtMap.get(a.id) || '0';
+                vb = hinzugefuegtMap.get(b.id) || '0';
+            }
+            const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+            return richtung === 'ASC' ? cmp : -cmp;
+        });
+    }
 
-        if (!nurOhne && q.length < 2) {
+    // Sort-Buttons aktualisieren
+    function _sort_buttons_aktualisieren() {
+        container.querySelectorAll('.zuordnung-sort-btn').forEach(btn => {
+            const s = btn.dataset.sort;
+            const aktiv = s === _zuordnSort.spalte;
+            btn.classList.toggle('zuordnung-sort-btn--aktiv', aktiv);
+            btn.textContent = t(`lektion_liste.zuordnen_sort_${s}`) +
+                (aktiv ? (_zuordnSort.richtung === 'ASC' ? ' ↑' : ' ↓') : '');
+        });
+    }
+
+    // Hilfsfunktion: aktuelle Liste rendern (mit Sortierung)
+    function _aktuell_rendern(vokabeln) {
+        _zuordnung_liste_rendern(_zuordnung_sortieren(vokabeln), zugeordnete, hinzugefuegtMap);
+    }
+
+    // Aktuell angezeigte Vokabeln (für Re-Render nach Sortierwechsel)
+    let _aktuelleVokabeln = lektion.vokabeln;
+
+    // Hilfsfunktion: Suche/Filter ausführen
+    async function _zuordnung_suche_ausfuehren() {
+        const q          = document.getElementById('zuordnung-suche')?.value?.trim() || '';
+        const nurOhne    = document.getElementById('zuordnung-nur-ohne-lektion')?.checked ?? false;
+        const alleAnz    = document.getElementById('zuordnung-alle-anzeigen')?.checked ?? false;
+
+        if (!nurOhne && !alleAnz && q.length < 2) {
             // Kein Filter aktiv → bestehende Zuordnungen zeigen
-            _zuordnung_liste_rendern(lektion.vokabeln, zugeordnete);
+            _aktuelleVokabeln = lektion.vokabeln;
+            _aktuell_rendern(_aktuelleVokabeln);
+            return;
+        }
+
+        if (alleAnz && q.length < 2 && !nurOhne) {
+            // Alle Vokabeln laden (ohne Suchfilter)
+            const alleErg = await apiGet('vokabeln/liste.php', { pro_seite: 500, sortierung: 'englisch' });
+            if (alleErg.erfolg) {
+                _aktuelleVokabeln = alleErg.daten?.eintraege || alleErg.daten || [];
+                _aktuell_rendern(_aktuelleVokabeln);
+            }
             return;
         }
 
         const suchParams = {};
         if (q.length >= 2) suchParams.q = q;
-        if (!ist_admin()) suchParams.nur_privat = 1; // Non-Admin: nur eigene private Vokabeln
-        if (nurOhne) {
-            suchParams.ohne_themenfeld = '1';
+        if (!ist_admin()) suchParams.nur_privat = 1;
+        if (nurOhne) suchParams.ohne_themenfeld = '1';
+        if (alleAnz) suchParams.alle = '1'; // hint für suchen.php (wird ignoriert, aber Signal)
+
+        // Wenn "Alle anzeigen" + Suche: liste.php mit suche-Parameter (min. 2 Zeichen)
+        if (alleAnz && q.length >= 2) {
+            const alleErg = await apiGet('vokabeln/liste.php', { pro_seite: 500, suche: q, sortierung: 'englisch' });
+            if (alleErg.erfolg) {
+                _aktuelleVokabeln = alleErg.daten?.eintraege || alleErg.daten || [];
+                _aktuell_rendern(_aktuelleVokabeln);
+            }
+            return;
         }
-        // Kein Ausschluss bei normaler Suche — zeigt alle Vokabeln,
-        // Häkchen zeigt aktuelle Zuordnung (auch mehrere Themenfelder möglich)
 
         const suchErg = await apiGet('vokabeln/suchen.php', suchParams);
         if (suchErg.erfolg) {
-            _zuordnung_liste_rendern(suchErg.daten, zugeordnete);
+            _aktuelleVokabeln = suchErg.daten;
+            _aktuell_rendern(_aktuelleVokabeln);
         }
     }
 
     // Bestehende Vokabeln initial anzeigen
-    _zuordnung_liste_rendern(lektion.vokabeln, zugeordnete);
+    _aktuell_rendern(lektion.vokabeln);
 
     // Suche
     document.getElementById('zuordnung-suche')?.addEventListener('input',
         entprellen(_zuordnung_suche_ausfuehren, 300));
 
-    // Checkbox "Nur ohne Lektion"
+    // Checkboxen
     document.getElementById('zuordnung-nur-ohne-lektion')?.addEventListener('change',
         _zuordnung_suche_ausfuehren);
+    document.getElementById('zuordnung-alle-anzeigen')?.addEventListener('change',
+        _zuordnung_suche_ausfuehren);
+
+    // Sort-Buttons
+    container.querySelectorAll('.zuordnung-sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const s = btn.dataset.sort;
+            if (_zuordnSort.spalte === s) {
+                _zuordnSort.richtung = _zuordnSort.richtung === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                _zuordnSort.spalte    = s;
+                _zuordnSort.richtung  = (s === 'hinzugefuegt' || s === 'erstellt_am') ? 'DESC' : 'ASC';
+            }
+            _sort_buttons_aktualisieren();
+            _aktuell_rendern(_aktuelleVokabeln);
+        });
+    });
 
     // Schliessen
     document.getElementById('btn-zuordnung-schliessen')?.addEventListener('click', () => {
@@ -563,12 +660,7 @@ async function _zuordnung_anzeigen(lektionId) {
 
     // Speichern
     document.getElementById('btn-zuordnung-speichern')?.addEventListener('click', async () => {
-        // zugeordnete-Set als Quelle nutzen: enthält ALLE zugewiesenen IDs (vorhandene +
-        // neu angehakte), unabhängig davon welche Vokabeln gerade sichtbar sind (z.B. bei
-        // aktivem "Ohne Lektion"-Filter wären vorhandene Vokabeln sonst nicht sichtbar und
-        // würden fälschlicherweise aus der Lektion entfernt).
         const ids = Array.from(zugeordnete);
-
         const saveErg = await apiPost(`lektionen/vokabeln_zuordnen.php?id=${lektionId}`, { vokabel_ids: ids });
         if (saveErg.erfolg) {
             erfolg(t('lektion_liste.zuordnen_erfolg', {anzahl: saveErg.daten.zugeordnet}));
@@ -581,7 +673,7 @@ async function _zuordnung_anzeigen(lektionId) {
     });
 }
 
-function _zuordnung_liste_rendern(vokabeln, zugeordnete) {
+function _zuordnung_liste_rendern(vokabeln, zugeordnete, hinzugefuegtMap) {
     const container = document.getElementById('zuordnung-ergebnisse');
     if (!container) return;
 
@@ -595,11 +687,16 @@ function _zuordnung_liste_rendern(vokabeln, zugeordnete) {
     </div>`;
     for (const v of vokabeln) {
         const checked = zugeordnete.has(v.id) ? 'checked' : '';
+        const datum = hinzugefuegtMap?.get(v.id);
+        const datumHtml = datum
+            ? `<span class="zuordnung-datum">${new Date(datum).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'})}</span>`
+            : '';
         html += `
             <label class="zuordnung-eintrag">
                 <input type="checkbox" class="zuordnung-checkbox" value="${v.id}" ${checked}>
                 <strong>${esc(v.englisch || v.schwedisch || '')}</strong> — ${esc(v.deutsch)}
                 <span class="tag tag--${(v.wortart || '').toLowerCase()}">${esc(v.wortart)}</span>
+                ${datumHtml}
             </label>
         `;
     }

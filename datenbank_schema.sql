@@ -167,6 +167,7 @@ CREATE TABLE themenfeld_vokabeln (
     themenfeld_id INT NOT NULL,
     vokabel_id INT NOT NULL,
     reihenfolge INT DEFAULT 0,
+    hinzugefuegt_am DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (themenfeld_id) REFERENCES themenfelder(id) ON DELETE CASCADE,
     FOREIGN KEY (vokabel_id) REFERENCES vokabeln(id) ON DELETE CASCADE,
     UNIQUE (themenfeld_id, vokabel_id)

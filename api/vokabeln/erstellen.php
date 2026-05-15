@@ -16,7 +16,7 @@
  *   - notizen        (optional)
  *   - kategorie_id   (optional, nur Admin)
  *   - synonyme       (optional, Array von {synonym, sprache:'en'|'de'})
- *   - themenfeld_id  (optional, Non-Admin: eigenes privates Themenfeld)
+ *   - themenfeld_id  (optional, Non-Admin: oeffentliches oder eigenes privates Themenfeld)
  */
 
 declare(strict_types=1);
@@ -105,7 +105,7 @@ try {
             $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1');
             $stmt_tf->execute([$themenfeld_id_neu]);
         } else {
-            $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND ist_privat = 1 AND besitzer_id = ? AND aktiv = 1');
+            $stmt_tf = $pdo->prepare('SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1 AND (ist_privat = 0 OR (ist_privat = 1 AND besitzer_id = ?))');
             $stmt_tf->execute([$themenfeld_id_neu, $benutzer_id]);
         }
         if ($stmt_tf->fetchColumn()) {

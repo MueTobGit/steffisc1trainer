@@ -57,7 +57,9 @@ $stmt = $pdo->prepare("
         v.deutsch,
         v.wortart,
         v.sprachniveau,
+        v.erstellt_am,
         lv.reihenfolge,
+        MIN(lv.hinzugefuegt_am) AS hinzugefuegt_am,
         COUNT(DISTINCT s.id) AS satz_anzahl
     FROM themenfeld_vokabeln lv
     JOIN vokabeln v ON v.id = lv.vokabel_id

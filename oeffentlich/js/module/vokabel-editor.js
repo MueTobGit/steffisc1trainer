@@ -46,10 +46,7 @@ export async function rendern(params = {}) {
     const admin = ist_admin();
     const [katErg, tfErg] = await Promise.all([
         admin ? apiGet('kategorien/liste.php') : Promise.resolve({ erfolg: false }),
-        apiGet('themenfelder/liste.php', {
-            pro_seite: 500,
-            ...(admin ? {} : { nur_privat: '1' }),
-        }),
+        apiGet('themenfelder/liste.php', { pro_seite: 500 }),
     ]);
 
     _kategorien  = katErg.erfolg ? (katErg.daten || []) : [];
@@ -90,9 +87,10 @@ function _formular_rendern(container) {
     const letztesNiv   = _modus === 'neu' ? (localStorage.getItem(LS_NIVEAU)    || 'C1') : (v.sprachniveau || 'C1');
     const letztesTf    = _modus === 'neu' ? (localStorage.getItem(LS_THEMENFELD) || '') : '';
 
-    // Themenfeld-Optionen
+    // Themenfeld-Optionen (details.php liefert themenfelder[] Array — erstes Themenfeld vorauswaehlen)
+    const aktuellesTfId = _modus === 'neu' ? letztesTf : String(v.themenfelder?.[0]?.id || '');
     const tfOptionen = _themenfelder.map(tf =>
-        `<option value="${tf.id}" ${((_modus === 'neu' ? letztesTf : String(v.themenfeld_id || '')) === String(tf.id)) ? 'selected' : ''}>
+        `<option value="${tf.id}" ${aktuellesTfId === String(tf.id) ? 'selected' : ''}>
             ${esc(tf.titel)}${tf.kategorie_name ? ' · ' + esc(tf.kategorie_name) : ''}
         </option>`
     ).join('');
@@ -354,8 +352,9 @@ async function _speichern(e) {
     if (admin) {
         daten.kategorie_id = document.getElementById('ed-kategorie')?.value || null;
     }
+    // themenfeld_id immer senden (0 = kein Themenfeld), damit Entfernen einer Zuordnung funktioniert
     const tfVal = document.getElementById('ed-themenfeld')?.value;
-    if (tfVal) daten.themenfeld_id = parseInt(tfVal, 10);
+    if (!admin) daten.themenfeld_id = tfVal ? parseInt(tfVal, 10) : 0;
 
     // Synonyme aus Feldern lesen
     document.querySelectorAll('[data-synonym-index]').forEach(input => {

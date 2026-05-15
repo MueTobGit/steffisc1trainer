@@ -10,7 +10,7 @@
  * UNIQUE-Check bei englisch/wortart-Aenderung.
  *
  * Body: Gleiche Felder wie erstellen, alle optional.
- *   Zusaetzlich fuer Non-Admin: themenfeld_id (eigene private themenfeld zuordnen, 0 = keine)
+ *   Zusaetzlich fuer Non-Admin: themenfeld_id (oeffentliches oder eigenes privates Themenfeld zuordnen, 0 = keine)
  */
 
 declare(strict_types=1);
@@ -152,17 +152,19 @@ if (!$als_admin && array_key_exists('themenfeld_id', $daten)) {
     $pdo_lekt = db_verbindung();
     $themenfeld_id_neu = (int) $daten['themenfeld_id'];
 
-    // Vokabel aus allen eigenen privaten Themenfeldern entfernen
+    // Vokabel aus allen sichtbaren Themenfeldern entfernen (eigene private + alle oeffentlichen)
     $pdo_lekt->prepare(
         'DELETE tv FROM themenfeld_vokabeln tv
          JOIN themenfelder t ON t.id = tv.themenfeld_id
-         WHERE tv.vokabel_id = ? AND t.besitzer_id = ? AND t.ist_privat = 1'
+         WHERE tv.vokabel_id = ?
+           AND (t.ist_privat = 0 OR (t.ist_privat = 1 AND t.besitzer_id = ?))'
     )->execute([$id, $benutzer_id]);
 
     // Neue Zuordnung einfuegen (falls themenfeld_id > 0)
     if ($themenfeld_id_neu > 0) {
         $stmt_lek = $pdo_lekt->prepare(
-            'SELECT id FROM themenfelder WHERE id = ? AND ist_privat = 1 AND besitzer_id = ? AND aktiv = 1'
+            'SELECT id FROM themenfelder WHERE id = ? AND aktiv = 1
+             AND (ist_privat = 0 OR (ist_privat = 1 AND besitzer_id = ?))'
         );
         $stmt_lek->execute([$themenfeld_id_neu, $benutzer_id]);
         if ($stmt_lek->fetchColumn()) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Vokabel-Liste — Paginierte Tabelle mit Filtern
  *
  * Filter: Suche, Wortart, Kategorie (alphabetisch), Lektion (alphabetisch), Niveau.
@@ -35,7 +35,6 @@ let _auchPrivate = false;       // Admin: alle privaten Inhalte anzeigen
 let _nurPrivate = false;        // Admin: ausschließlich private Vokabeln anzeigen
 let _filterBesitzerId = '';     // Admin: private Vokabeln nach Besitzer filtern
 let _benutzerListe = [];        // Admin: Cache für User-Dropdown
-let _kategorien = [];
 let _lektionInfo = null;        // Wenn aus Lektions-Kontext aufgerufen
 let _privatLimit = null;        // { anzahl, limit } für User-Anzeige
 
@@ -43,13 +42,24 @@ let _privatLimit = null;        // { anzahl, limit } für User-Anzeige
 let _sortierung = null;
 // Erlaubte Spalten-Keys → API-Parameter-Wert
 const _SORTIER_SPALTEN = {
-    englisch: 'englisch',
-    deutsch:       'deutsch',
-    wortart:       'wortart',
-    sprachniveau:  'sprachniveau',
-    kategorie:     'kategorie_name',
-    ausgeblendet:  'aktiv',
+    englisch:     'englisch',
+    deutsch:      'deutsch',
+    wortart:      'wortart',
+    sprachniveau: 'sprachniveau',
+    kategorie:    'kategorie_name',
+    erstellt_am:  'erstellt_am',
+    ausgeblendet: 'aktiv',
 };
+
+/**
+ * Text in der Mitte kürzen: Anfang und Ende bleiben sichtbar.
+ * "Advanced / Expert C1 › House and Garden" → "Advanced / Expert C1 › Ho…arden"
+ */
+function _mittelkuerzen(text, max = 42) {
+    if (!text || text.length <= max) return esc(text);
+    const half = Math.floor((max - 1) / 2);
+    return esc(text.slice(0, half)) + '…' + esc(text.slice(-(max - 1 - half)));
+}
 
 // Hash-Query-Parameter auslesen (z.B. #/vokabeln?lektion_id=3)
 function _hash_params() {
@@ -230,11 +240,6 @@ export async function rendern() {
                         <option value="Phrase">Phrase</option>
                     </select>
                 </div>
-                <div class="filter-leiste__feld">
-                    <select class="eingabe eingabe--klein" id="filter-kategorie">
-                        <option value="">${t('vokabel_liste.alle_kategorien')}</option>
-                    </select>
-                </div>
                 ${!_lektionInfo ? `
                     <div class="filter-leiste__feld">
                         <select class="eingabe eingabe--klein" id="filter-lektion">
@@ -365,13 +370,6 @@ export async function rendern() {
         _laden();
     });
 
-    document.getElementById('filter-kategorie')?.addEventListener('change', (e) => {
-        _filter.kategorie_id = e.target.value;
-        _seite = 1;
-        _lektionen_laden(e.target.value);
-        _laden();
-    });
-
     document.getElementById('filter-lektion')?.addEventListener('change', (e) => {
         _filter.lektion_id = e.target.value;
         _seite = 1;
@@ -425,11 +423,10 @@ export async function rendern() {
         _laden();
     });
 
-    // Filterleiste laden (Kategorien/Lektionen/Dropdowns) — nur wenn sichtbar
+    // Filterleiste laden (Themenfelder/Dropdowns) — nur wenn sichtbar
     const filterVerborgen = _filterModus || _vonRoute === 'lernpfad' || _vonRoute === 'fortschritt';
     if (!filterVerborgen) {
-        await _kategorien_laden();
-        if (!_lektionInfo) await _lektionen_laden(_filter.kategorie_id);
+        if (!_lektionInfo) await _lektionen_laden();
 
         // Admin: Besitzer-Dropdown vorab laden wenn "Nur Private" bereits aktiv
         if (admin && _nurPrivate) {
@@ -440,10 +437,6 @@ export async function rendern() {
         if (_filter.wortart) {
             const el = document.getElementById('filter-wortart');
             if (el) el.value = _filter.wortart;
-        }
-        if (_filter.kategorie_id) {
-            const el = document.getElementById('filter-kategorie');
-            if (el) el.value = _filter.kategorie_id;
         }
         if (_filter.lektion_id && !_lektionInfo) {
             const el = document.getElementById('filter-lektion');
@@ -466,64 +459,16 @@ export async function rendern() {
     }
 }
 
-async function _kategorien_laden() {
-    // sortierung=name damit Dropdown alphabetisch ist
-    const erg = await apiGet('kategorien/liste.php', { sortierung: 'name' });
-    if (erg.erfolg) {
-        _kategorien = erg.daten || [];
-        // Sortiere Top-Level alphabetisch, Kinder ebenfalls
-        _kategorien_sortieren(_kategorien);
-        const select = document.getElementById('filter-kategorie');
-        if (select) {
-            _kategorien_optionen(select, _kategorien);
-            // Option für nicht zugeordnete Vokabeln (kategorie_id IS NULL)
-            const optNone = document.createElement('option');
-            optNone.value = 'keine';
-            optNone.textContent = t('vokabel_liste.nicht_zugeordnet');
-            select.appendChild(optNone);
-        }
-    }
-}
-
-function _kategorien_sortieren(liste) {
-    liste.sort((a, b) => a.name.localeCompare(b.name, 'de'));
-    for (const k of liste) {
-        if (k.kinder?.length > 0) _kategorien_sortieren(k.kinder);
-    }
-}
-
-function _kategorien_optionen(select, kategorien, prefix = '') {
-    for (const kat of kategorien) {
-        const option = document.createElement('option');
-        option.value = kat.id;
-        option.textContent = prefix + kat.name + (kat.vokabel_anzahl > 0 ? ` (${kat.vokabel_anzahl})` : '');
-        select.appendChild(option);
-        if (kat.kinder?.length > 0) {
-            _kategorien_optionen(select, kat.kinder, prefix + '\u00A0\u00A0\u00A0');
-        }
-    }
-}
-
-async function _lektionen_laden(kategorieId = '') {
+async function _lektionen_laden() {
     const select = document.getElementById('filter-lektion');
     if (!select) return;
 
-    const params = { pro_seite: 200, nur_aktive: 1, sortierung: 'titel' };
-    if (kategorieId) params.kategorie_id = kategorieId;
-
-    const erg = await apiGet('lektionen/liste.php', params);
+    const erg = await apiGet('lektionen/liste.php', { pro_seite: 500, nur_aktive: 1 });
     select.innerHTML = `<option value="">${t('vokabel_liste.alle_lektionen')}</option><option value="ohne">${t('vokabel_liste.ohne_lektion')}</option>`;
 
     if (erg.erfolg) {
         const lektionen = (erg.daten?.eintraege || [])
-            .sort((a, b) => {
-                // Alphabetisch: erst nach Kategorie, dann nach Titel
-                const katA = a.kategorie_name || '';
-                const katB = b.kategorie_name || '';
-                const katCmp = katA.localeCompare(katB, 'de');
-                if (katCmp !== 0) return katCmp;
-                return a.titel.localeCompare(b.titel, 'de');
-            });
+            .sort((a, b) => a.titel.localeCompare(b.titel, 'de'));
 
         for (const l of lektionen) {
             const option = document.createElement('option');
@@ -658,9 +603,9 @@ function _tabelle_rendern(container, vokabeln) {
         { key: 'englisch',   label: t('vokabel_liste.spalte_schwedisch'),   klasse: 'verwaltung-tabelle__englisch' },
         { key: 'deutsch',      label: t('vokabel_liste.spalte_deutsch') },
         { key: 'wortart',      label: t('vokabel_liste.spalte_wortart') },
-        { key: null,           label: t('vokabel_liste.spalte_genus'),  mobil: true },
         { key: 'sprachniveau', label: t('vokabel_liste.spalte_niveau'),        mobil: true },
         { key: 'kategorie',    label: t('vokabel_liste.spalte_kategorie'),     mobil: true },
+        { key: 'erstellt_am',  label: t('vokabel_liste.spalte_erstellt_am'),   mobil: true },
         // "Ausgeblendet" nur wenn Admin und Checkbox aktiv
         ...(admin && zeigeAusgeblendet
             ? [{ key: 'ausgeblendet', label: t('vokabel_liste.spalte_ausgeblendet'), mobil: true }]
@@ -708,19 +653,19 @@ function _tabelle_rendern(container, vokabeln) {
         if (istDeaktiviert) zeilenKlasse += ' verwaltung-tabelle__zeile--deaktiviert';
         if (istPrivat)      zeilenKlasse += ' verwaltung-tabelle__zeile--privat';
 
-        let genusGruppe = '';
-        if (v.wortart === 'Nomen' && v.genus) {
-            genusGruppe = `<span class="tag tag--${v.genus}">${v.genus}</span>`;
-        } else if (v.wortart === 'Verb' && v.verbgruppe) {
-            genusGruppe = `Gr.&nbsp;${esc(v.verbgruppe)}`;
-        }
-
-        // Kategorie-Label: privat ohne Kategorie zeigt „Private Sammlung"
-        let kategorieName = esc(v.kategorie_name || '–');
+        // Kategorie › Themenfeld kombiniert, ggf. in der Mitte gekürzt
+        let kategorieLektion;
         if (istPrivat && !v.kategorie_name) {
             const besitzerName = v.besitzer_name || t('vokabel_liste.besitzer_unbekannt');
-            kategorieName = `<em style="color:var(--md-sys-color-primary)">🔒 ${esc(besitzerName)}</em>`;
+            kategorieLektion = `<em style="color:var(--md-sys-color-primary)">🔒 ${esc(besitzerName)}</em>`;
+        } else {
+            const teile = [];
+            if (v.kategorie_name) teile.push(v.kategorie_name);
+            if (v.themenfeld_titel) teile.push(v.themenfeld_titel);
+            const kombi = teile.length ? teile.join(' › ') : '–';
+            kategorieLektion = _mittelkuerzen(kombi, 42);
         }
+        const kategorieTitle = [v.kategorie_name, v.themenfeld_titel].filter(Boolean).join(' › ');
 
         // Aktionen-Spalte
         let aktionenHtml = '';
@@ -786,11 +731,13 @@ function _tabelle_rendern(container, vokabeln) {
                 </td>
                 <td>${esc(v.deutsch)}</td>
                 <td><span class="${wortartKlasse}">${esc(v.wortart)}</span></td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${genusGruppe}</td>
                 <td class="verwaltung-tabelle__mobil-versteckt">
                     <span class="${niveauKlasse}">${esc(v.sprachniveau)}</span>
                 </td>
-                <td class="verwaltung-tabelle__mobil-versteckt">${kategorieName}</td>
+                <td class="verwaltung-tabelle__mobil-versteckt" title="${esc(kategorieTitle)}">${kategorieLektion}</td>
+                <td class="verwaltung-tabelle__mobil-versteckt" style="white-space:nowrap;font-size:0.85em;color:var(--md-sys-color-on-surface-variant)">
+                    ${v.erstellt_am ? new Date(v.erstellt_am).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '–'}
+                </td>
                 ${admin && zeigeAusgeblendet ? `
                     <td class="verwaltung-tabelle__mobil-versteckt" style="text-align:center">
                         ${istDeaktiviert

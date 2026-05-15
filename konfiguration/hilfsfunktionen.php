@@ -73,6 +73,24 @@ function levenshtein_utf8(string $s1, string $s2): int
  * @return int Qualitaet 0-5
  */
 /**
+ * Fuehrenden englischen Artikel entfernen (the, a, an) fuer Vergleichszwecke.
+ *
+ * "the car"  → "car"
+ * "an apple" → "apple"
+ * "a cat"    → "cat"
+ * "antenna"  → "antenna"   (kein Match, kein Leerzeichen nach "an")
+ * "a"        → "a"          (kein Folgetext)
+ */
+function artikel_entfernen(string $text): string
+{
+    $text = trim($text);
+    if (preg_match('/^(?:the|an?)\s+(.+)$/iu', $text, $m)) {
+        return trim($m[1]);
+    }
+    return $text;
+}
+
+/**
  * Klammerzusaetze entfernen: "(…)"-Bloecke inkl. fuehrender Leerzeichen.
  * "hon (är stor)" → "hon", "sie (ist groß)" → "sie"
  * Nur fuer Bewertung/TTS — Anzeige behaelt die Klammern.
@@ -213,27 +231,41 @@ function _antwort_bewerten_einzel(string $eingabe, string $erwartet, array $syno
         return 0;
     }
 
+    // Artikel-Varianten vorab berechnen (the/a/an am Anfang werden ignoriert)
+    // Ermoeglicht: "the car" eingegeben als "car" → richtig; oder umgekehrt.
+    $eingabe_no_art  = artikel_entfernen($eingabe_clean);
+    $erwartet_no_art = artikel_entfernen($erwartet_clean);
+
     if ($modus === 'flexion') {
         // Flexion: nur Groß-/Kleinschreibung ignorieren, sonst exakt
         $eingabe_lc  = mb_strtolower($eingabe_clean, 'UTF-8');
         $erwartet_lc = mb_strtolower($erwartet_clean, 'UTF-8');
 
-        if ($eingabe_lc === $erwartet_lc) {
+        if ($eingabe_lc === $erwartet_lc
+            || mb_strtolower($eingabe_no_art, 'UTF-8') === mb_strtolower($erwartet_no_art, 'UTF-8')) {
             return 5;
         }
         // Satzzeichen-normalisiert (fuer Satz-Antworten wie "Jag det är jag" vs "Jag, det är jag.")
         $eingabe_fn  = mb_strtolower(satzzeichen_normalisieren($eingabe_clean), 'UTF-8');
         $erwartet_fn = mb_strtolower(satzzeichen_normalisieren($erwartet_clean), 'UTF-8');
-        if ($eingabe_fn === $erwartet_fn) {
+        if ($eingabe_fn === $erwartet_fn
+            || mb_strtolower(satzzeichen_normalisieren($eingabe_no_art), 'UTF-8')
+               === mb_strtolower(satzzeichen_normalisieren($erwartet_no_art), 'UTF-8')) {
             return 5;
         }
         // Synonyme bei Flexion (ebenfalls exakt, nur Case-insensitiv)
         foreach ($synonyme as $synonym) {
-            $syn_clean = satzzeichen_bereinigen(klammerzusatz_entfernen($synonym));
-            if ($eingabe_lc === mb_strtolower($syn_clean, 'UTF-8')) {
+            $syn_clean   = satzzeichen_bereinigen(klammerzusatz_entfernen($synonym));
+            $syn_no_art  = artikel_entfernen($syn_clean);
+            $syn_lc      = mb_strtolower($syn_clean, 'UTF-8');
+            $syn_lc_na   = mb_strtolower($syn_no_art, 'UTF-8');
+            if ($eingabe_lc === $syn_lc
+                || mb_strtolower($eingabe_no_art, 'UTF-8') === $syn_lc_na) {
                 return 3;
             }
-            if ($eingabe_fn === mb_strtolower(satzzeichen_normalisieren($syn_clean), 'UTF-8')) {
+            if ($eingabe_fn === mb_strtolower(satzzeichen_normalisieren($syn_clean), 'UTF-8')
+                || mb_strtolower(satzzeichen_normalisieren($eingabe_no_art), 'UTF-8')
+                   === mb_strtolower(satzzeichen_normalisieren($syn_no_art), 'UTF-8')) {
                 return 3;
             }
         }
@@ -243,47 +275,61 @@ function _antwort_bewerten_einzel(string $eingabe, string $erwartet, array $syno
     // Normaler Modus: Case-insensitiv
     $eingabe_lower  = mb_strtolower($eingabe_clean, 'UTF-8');
     $erwartet_lower = mb_strtolower($erwartet_clean, 'UTF-8');
+    $eingabe_lower_na  = mb_strtolower($eingabe_no_art, 'UTF-8');
+    $erwartet_lower_na = mb_strtolower($erwartet_no_art, 'UTF-8');
 
-    if ($eingabe_lower === $erwartet_lower) {
+    if ($eingabe_lower === $erwartet_lower || $eingabe_lower_na === $erwartet_lower_na) {
         return 5;
     }
 
     // Satzzeichen-normalisierter Vergleich (z.B. "Jag det är jag" = "Jag, det är jag.")
     $eingabe_norm  = mb_strtolower(satzzeichen_normalisieren($eingabe_clean), 'UTF-8');
     $erwartet_norm = mb_strtolower(satzzeichen_normalisieren($erwartet_clean), 'UTF-8');
+    $eingabe_norm_na  = mb_strtolower(satzzeichen_normalisieren($eingabe_no_art), 'UTF-8');
+    $erwartet_norm_na = mb_strtolower(satzzeichen_normalisieren($erwartet_no_art), 'UTF-8');
 
-    if ($eingabe_norm === $erwartet_norm) {
+    if ($eingabe_norm === $erwartet_norm || $eingabe_norm_na === $erwartet_norm_na) {
         return 5;
     }
 
     // Endungs-Schutz: die letzten 4 Zeichen muessen exakt stimmen (case-insensitiv),
     // damit Tippfehler-Toleranz nicht falsche Endungen durchlaesst (bilet vs bilen).
+    // Wird auf BEIDEN Varianten geprueft (original + artikel-bereinigt).
     $endung_laenge = 4;
-    $endung_stimmt = _endung_pruefen($eingabe_lower, $erwartet_lower, $endung_laenge);
+    $endung_stimmt_orig = _endung_pruefen($eingabe_lower, $erwartet_lower, $endung_laenge);
+    $endung_stimmt_na   = _endung_pruefen($eingabe_lower_na, $erwartet_lower_na, $endung_laenge);
 
-    // Tippfehler pruefen (Levenshtein <= 1)
-    $distanz = levenshtein_utf8($eingabe_clean, $erwartet_clean);
-    if ($distanz <= 1 && mb_strlen($erwartet_clean, 'UTF-8') > 2 && $endung_stimmt) {
+    // Tippfehler pruefen (Levenshtein <= 1) — original UND artikel-bereinigt
+    $distanz_orig = levenshtein_utf8($eingabe_clean, $erwartet_clean);
+    $distanz_na   = levenshtein_utf8($eingabe_no_art, $erwartet_no_art);
+    if (($distanz_orig <= 1 && mb_strlen($erwartet_clean, 'UTF-8') > 2 && $endung_stimmt_orig)
+        || ($distanz_na <= 1 && mb_strlen($erwartet_no_art, 'UTF-8') > 2 && $endung_stimmt_na)) {
         return 4;
     }
 
     // Synonyme pruefen
     foreach ($synonyme as $synonym) {
-        $synonym_clean = satzzeichen_bereinigen(klammerzusatz_entfernen($synonym));
-        $synonym_lower = mb_strtolower($synonym_clean, 'UTF-8');
-        if ($eingabe_lower === $synonym_lower) {
+        $synonym_clean    = satzzeichen_bereinigen(klammerzusatz_entfernen($synonym));
+        $synonym_no_art   = artikel_entfernen($synonym_clean);
+        $synonym_lower    = mb_strtolower($synonym_clean, 'UTF-8');
+        $synonym_lower_na = mb_strtolower($synonym_no_art, 'UTF-8');
+        if ($eingabe_lower === $synonym_lower || $eingabe_lower_na === $synonym_lower_na) {
             return 3;
         }
-        // Tippfehler bei Synonym (ebenfalls Endungs-Schutz)
-        if (levenshtein_utf8($eingabe_clean, $synonym_clean) <= 1
-            && mb_strlen($synonym_clean, 'UTF-8') > 2
-            && _endung_pruefen($eingabe_lower, $synonym_lower, $endung_laenge)) {
+        // Tippfehler bei Synonym — beide Varianten
+        $syn_dist_orig = levenshtein_utf8($eingabe_clean, $synonym_clean);
+        $syn_dist_na   = levenshtein_utf8($eingabe_no_art, $synonym_no_art);
+        if (($syn_dist_orig <= 1 && mb_strlen($synonym_clean, 'UTF-8') > 2
+             && _endung_pruefen($eingabe_lower, $synonym_lower, $endung_laenge))
+            || ($syn_dist_na <= 1 && mb_strlen($synonym_no_art, 'UTF-8') > 2
+                && _endung_pruefen($eingabe_lower_na, $synonym_lower_na, $endung_laenge))) {
             return 3;
         }
     }
 
-    // Fast richtig (Levenshtein 2-3, ebenfalls nur mit korrekter Endung)
-    if ($distanz <= 3 && mb_strlen($erwartet_clean, 'UTF-8') > 4 && $endung_stimmt) {
+    // Fast richtig (Levenshtein 2-3) — beide Varianten
+    if (($distanz_orig <= 3 && mb_strlen($erwartet_clean, 'UTF-8') > 4 && $endung_stimmt_orig)
+        || ($distanz_na <= 3 && mb_strlen($erwartet_no_art, 'UTF-8') > 4 && $endung_stimmt_na)) {
         return 2;
     }
 

@@ -1211,6 +1211,19 @@
     background: var(--md-sys-color-surface-container-high);
 }
 
+.zuordnung-sort-btn--aktiv {
+    color: var(--md-sys-color-primary) !important;
+    font-weight: 600;
+}
+
+.zuordnung-datum {
+    margin-left: auto;
+    font-size: 0.8em;
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 /* =========================================
    15. Suche-Ergebnisse
    ========================================= */

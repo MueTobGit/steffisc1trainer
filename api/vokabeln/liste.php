@@ -146,6 +146,17 @@ if (!empty($bedingungen)) {
     $where = 'WHERE ' . implode(' AND ', $bedingungen);
 }
 
+// --- Themenfeld-Anzeige ---
+// Bei aktivem themenfeld_id-Filter: JOIN auf die gefilterte Lektion.
+// Sonst: Subquery liefert den Titel des zuerst zugeordneten Themenfelds.
+$themenfeld_join_extra = '';
+$themenfeld_select     = "(SELECT tf2.titel FROM themenfeld_vokabeln tv2 JOIN themenfelder tf2 ON tf2.id = tv2.themenfeld_id WHERE tv2.vokabel_id = v.id AND tf2.aktiv = 1 ORDER BY tv2.id ASC LIMIT 1) AS themenfeld_titel";
+
+if ($themenfeld_id > 0) {
+    $themenfeld_join_extra = ' LEFT JOIN themenfelder tf_f ON tf_f.id = lv.themenfeld_id';
+    $themenfeld_select     = 'tf_f.titel AS themenfeld_titel';
+}
+
 // --- Sortierung validieren ---
 // Mapping: Parameter-Wert → SQL-Ausdruck
 $sortier_map = [
@@ -188,10 +199,11 @@ $sql = "
         v.ist_privat,
         v.besitzer_id,
         k.name AS kategorie_name,
-        b.benutzername AS besitzer_name
+        b.benutzername AS besitzer_name,
+        {$themenfeld_select}
     FROM vokabeln v
     LEFT JOIN benutzer b ON b.id = v.besitzer_id
-    {$join}
+    {$join}{$themenfeld_join_extra}
     LEFT JOIN kategorien k ON k.id = v.kategorie_id
     {$where}
     ORDER BY v.ist_privat DESC, {$sortier_sql} {$richtung}, v.englisch ASC
