@@ -312,6 +312,7 @@ function _tf_filter_events_binden(container) {
                 _tf_filter_events_binden(container);
             }
             _matrix_aktualisieren(container);
+            _sort_events_binden(container); // neue TF-Kopfzeilen brauchen neue Listener
         });
     });
 }
