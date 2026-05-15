@@ -18,7 +18,7 @@ require_once dirname(__DIR__) . '/_middleware/anfrage_helfer.php';
 require_once dirname(__DIR__) . '/_middleware/autorisierung.php';
 
 $benutzer = benutzer_authentifizieren();
-nur_admin_erlaubt($benutzer);
+admin_erzwingen($benutzer);
 
 $pdo = db_verbindung();
 
