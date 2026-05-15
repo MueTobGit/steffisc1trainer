@@ -1529,7 +1529,19 @@
     font-weight: 500;
     padding: 4px 2px;
     white-space: nowrap;
-    cursor: default;
+}
+
+.zuordnung-matrix__tf-kopf--aktiv {
+    background: color-mix(in srgb, var(--md-sys-color-primary-container) 60%, transparent);
+}
+
+.zuordnung-matrix__tf-kopf .zuordnung-matrix__sort-icon {
+    writing-mode: horizontal-tb;
+    transform: none;
+    display: block;
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 2px;
 }
 
 .zuordnung-matrix__vok-zelle {

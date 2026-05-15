@@ -24,7 +24,8 @@ let _suche            = '';
 let _nur_ohne         = false;
 let _tf_filter        = new Set();
 let _aenderungen      = new Map();   // 'vid_tid' → bool
-let _sort_spalte      = 'englisch';  // 'englisch' | 'deutsch'
+let _sort_spalte      = 'englisch';  // 'englisch' | 'deutsch' | 'tf'
+let _sort_tf_id       = null;        // TF-ID wenn _sort_spalte === 'tf'
 let _sort_richtung    = 'ASC';       // 'ASC' | 'DESC'
 let _speichern_laeuft = false;
 
@@ -165,8 +166,9 @@ function _matrix_html() {
         return `<p class="leer-zustand__beschreibung" style="padding:16px">${t('admin_zuordnungen.keine_vokabeln')}</p>`;
     }
 
-    const pfeil = (spalte) => {
-        if (_sort_spalte !== spalte) return '<span class="zuordnung-matrix__sort-icon">↕</span>';
+    const pfeil = (spalte, tfId = null) => {
+        const aktiv = spalte === 'tf' ? (_sort_spalte === 'tf' && _sort_tf_id === tfId) : _sort_spalte === spalte;
+        if (!aktiv) return '<span class="zuordnung-matrix__sort-icon">↕</span>';
         return _sort_richtung === 'ASC'
             ? '<span class="zuordnung-matrix__sort-icon zuordnung-matrix__sort-icon--aktiv">↑</span>'
             : '<span class="zuordnung-matrix__sort-icon zuordnung-matrix__sort-icon--aktiv">↓</span>';
@@ -181,15 +183,31 @@ function _matrix_html() {
             ${t('admin_zuordnungen.spalte_deutsch')} ${pfeil('deutsch')}
         </th>`;
     for (const tf of sichtbare) {
-        kopf += `<th class="zuordnung-matrix__tf-kopf" title="${esc(tf.titel)}">
-            <span>${esc(tf.titel)}</span>
+        const tfAktiv = _sort_spalte === 'tf' && _sort_tf_id === tf.id;
+        kopf += `<th class="zuordnung-matrix__tf-kopf zuordnung-matrix__sortierbar ${tfAktiv ? 'zuordnung-matrix__tf-kopf--aktiv' : ''}"
+            data-sort-tf="${tf.id}" title="${esc(tf.titel)}">
+            <span>${esc(tf.titel)}</span>${pfeil('tf', tf.id)}
         </th>`;
     }
     kopf += '</tr>';
 
+    // Bei TF-Sortierung: client-seitig sortieren (API kennt keine TF-Spalten)
+    const anzuzeigende = _sort_spalte === 'tf' && _sort_tf_id !== null
+        ? [..._vokabeln].sort((a, b) => {
+            const aChecked = _aenderungen.has(`${a.id}_${_sort_tf_id}`)
+                ? _aenderungen.get(`${a.id}_${_sort_tf_id}`)
+                : a.themenfeld_ids.includes(_sort_tf_id);
+            const bChecked = _aenderungen.has(`${b.id}_${_sort_tf_id}`)
+                ? _aenderungen.get(`${b.id}_${_sort_tf_id}`)
+                : b.themenfeld_ids.includes(_sort_tf_id);
+            const diff = (bChecked ? 1 : 0) - (aChecked ? 1 : 0); // zugeordnet zuerst
+            return _sort_richtung === 'ASC' ? diff : -diff;
+        })
+        : _vokabeln;
+
     // Datenzeilen
     let zeilen = '';
-    for (const vok of _vokabeln) {
+    for (const vok of anzuzeigende) {
         zeilen += `<tr>
             <td class="zuordnung-matrix__vok-zelle">
                 <span class="zuordnung-matrix__englisch">${esc(vok.englisch)}</span>
@@ -315,15 +333,31 @@ function _tf_filter_events_binden(container) {
 function _sort_events_binden(container) {
     container.querySelectorAll('.zuordnung-matrix__sortierbar').forEach(th => {
         th.addEventListener('click', () => {
-            const spalte = th.dataset.sort;
-            if (_sort_spalte === spalte) {
-                _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
+            if (th.dataset.sortTf) {
+                // TF-Spalte: client-seitig sortieren, kein API-Call
+                const tid = parseInt(th.dataset.sortTf, 10);
+                if (_sort_spalte === 'tf' && _sort_tf_id === tid) {
+                    _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    _sort_spalte   = 'tf';
+                    _sort_tf_id    = tid;
+                    _sort_richtung = 'ASC';
+                }
+                _matrix_aktualisieren(container);
+                _sort_events_binden(container);
             } else {
-                _sort_spalte   = spalte;
-                _sort_richtung = 'ASC';
+                // Text-Spalte: API-Call mit Sortierung
+                const spalte = th.dataset.sort;
+                if (_sort_spalte === spalte) {
+                    _sort_richtung = _sort_richtung === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    _sort_spalte   = spalte;
+                    _sort_tf_id    = null;
+                    _sort_richtung = 'ASC';
+                }
+                _seite = 1;
+                _laden_und_aktualisieren(container);
             }
-            _seite = 1;
-            _laden_und_aktualisieren(container);
         });
     });
 }
@@ -450,6 +484,7 @@ export function aufraeumen() {
     _seite            = 1;
     _pro_seite        = 50;
     _sort_spalte      = 'englisch';
+    _sort_tf_id       = null;
     _sort_richtung    = 'ASC';
     _speichern_laeuft = false;
 }
