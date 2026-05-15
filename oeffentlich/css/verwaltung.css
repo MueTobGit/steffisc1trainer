@@ -1617,6 +1617,28 @@
     color: var(--md-sys-color-on-surface);
 }
 
+/* Sortierbare Kopfzeilen */
+.zuordnung-matrix__sortierbar {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.zuordnung-matrix__sortierbar:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.zuordnung-matrix__sort-icon {
+    opacity: 0.35;
+    font-size: 0.85em;
+    margin-left: 3px;
+}
+
+.zuordnung-matrix__sort-icon--aktiv {
+    opacity: 1;
+    color: var(--md-sys-color-primary);
+}
+
 /* Änderungen-Zähler Badge */
 .zuordnung-matrix__badge {
     display: inline-flex;

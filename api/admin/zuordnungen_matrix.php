@@ -58,11 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---- GET: Matrix-Daten laden ----
 methode_erzwingen('GET');
 
-$suche      = trim($_GET['suche'] ?? '');
-$seite      = max(1, (int) ($_GET['seite'] ?? 1));
-$pro_seite  = min(100, max(10, (int) ($_GET['pro_seite'] ?? 50)));
-$nur_ohne   = !empty($_GET['nur_ohne']);
-$tf_filter  = array_filter(array_map('intval', explode(',', $_GET['themenfeld_ids'] ?? '')), fn($x) => $x > 0);
+$suche         = trim($_GET['suche'] ?? '');
+$seite         = max(1, (int) ($_GET['seite'] ?? 1));
+$pro_seite_raw = (int) ($_GET['pro_seite'] ?? 50);
+$pro_seite     = $pro_seite_raw <= 0 ? 99999 : min(99999, max(10, $pro_seite_raw));
+$nur_ohne      = !empty($_GET['nur_ohne']);
+$tf_filter     = array_filter(array_map('intval', explode(',', $_GET['themenfeld_ids'] ?? '')), fn($x) => $x > 0);
+
+// Sortierung (nur erlaubte Spalten)
+$erlaubte_sort = ['englisch' => 'v.englisch', 'deutsch' => 'v.deutsch'];
+$sort_spalte   = $erlaubte_sort[$_GET['sort_spalte'] ?? ''] ?? 'v.englisch';
+$sort_richtung = strtoupper($_GET['sort_richtung'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
 
 // --- Alle Themenfelder laden ---
 $stmt_tf = $pdo->query(
@@ -104,7 +110,7 @@ $stmt_vok = $pdo->prepare(
     "SELECT v.id, v.englisch, v.deutsch, v.wortart, v.sprachniveau
      FROM vokabeln v
      {$where_sql}
-     ORDER BY v.englisch ASC
+     ORDER BY {$sort_spalte} {$sort_richtung}
      LIMIT {$pro_seite} OFFSET {$offset}"
 );
 $stmt_vok->execute($where_params);
