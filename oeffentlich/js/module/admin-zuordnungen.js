@@ -29,7 +29,7 @@ let _sort_tf_id       = null;        // TF-ID wenn _sort_spalte === 'tf'
 let _sort_richtung    = 'ASC';       // 'ASC' | 'DESC'
 let _speichern_laeuft = false;
 
-const PRO_SEITE_OPTIONEN = [10, 25, 50, 100, 0]; // 0 = alle
+const PRO_SEITE_OPTIONEN = [10, 25, 50, 100, 200, 500, 0]; // 0 = alle
 
 // ---- Einstieg ----
 
