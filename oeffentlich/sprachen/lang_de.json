@@ -1263,7 +1263,7 @@
     "tipp_saetze.kein_themenfeld": "Kein Themenfeld",
     "tipp_saetze.leer_text": "Noch keine Sätze vorhanden. Erstelle den ersten Satz.",
     "tipp_saetze.leer_titel": "Keine Sätze",
-    "tipp_saetze.loeschen_text": "„{{text}}…" wirklich löschen?",
+    "tipp_saetze.loeschen_text": "Satz \"{{text}}…\" wirklich löschen?",
     "tipp_saetze.loeschen_titel": "Satz löschen",
     "tipp_saetze.neuer_satz": "Neuer Satz",
     "tipp_saetze.ohne_themenfeld": "Ohne Themenfeld",
