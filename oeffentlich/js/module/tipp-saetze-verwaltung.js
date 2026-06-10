@@ -46,7 +46,7 @@ async function _liste_laden(container) {
     });
     if (!erg.erfolg) { apiFehlerAnzeigen(erg); return; }
 
-    _seite_rendern(container, erg.daten, erg.paginierung);
+    _seite_rendern(container, erg.daten?.eintraege || [], erg.daten?.paginierung);
 }
 
 function _seite_rendern(container, saetze, paginierung) {
