@@ -141,16 +141,18 @@ function _zeile_html(s) {
             </td>
             <td style="white-space:nowrap;font-size:0.85em;color:var(--md-sys-color-on-surface-variant)">${datum}</td>
             <td class="verwaltung-tabelle__aktionen">
-                <button class="btn-icon" title="${t('allgemein.bearbeiten')}"
+                <button class="btn btn--text btn--klein"
                     data-bearbeiten="${s.id}"
                     data-text="${esc(s.text)}"
                     data-tf-id="${s.themenfeld_id ?? ''}">
-                    <span class="material-symbols-outlined">edit</span>
+                    <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+                    ${t('allgemein.bearbeiten')}
                 </button>
-                <button class="btn-icon btn-icon--gefaehrlich" title="${t('allgemein.loeschen')}"
+                <button class="btn btn--text btn--klein" style="color:var(--md-sys-color-error)"
                     data-loeschen="${s.id}"
                     data-text="${esc(s.text.slice(0, 60))}">
-                    <span class="material-symbols-outlined">delete</span>
+                    <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                    ${t('allgemein.loeschen')}
                 </button>
             </td>
         </tr>
