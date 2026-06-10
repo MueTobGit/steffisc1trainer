@@ -108,10 +108,19 @@ function _liste_rendern(saetze, paginierung) {
                             </tbody>
                         </table>
                     </div>
-                    ${paginierung ? paginierung_rendern(paginierung, _seite, 'data-seite') : ''}`
+                    <div id="paginierung-bereich"></div>`
             }
         </div>
     `;
+
+    // Paginierung
+    const pagEl = _container.querySelector('#paginierung-bereich');
+    if (pagEl && paginierung) {
+        paginierung_rendern(pagEl, paginierung, (seite) => {
+            _seite = seite;
+            _liste_laden();
+        });
+    }
 
     _events_binden();
 }
@@ -165,14 +174,6 @@ function _events_binden() {
         _themenfeld_id = parseInt(e.target.value, 10);
         _seite = 1;
         _liste_laden();
-    });
-
-    // Paginierung
-    _container.querySelectorAll('[data-seite]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const s = parseInt(btn.dataset.seite, 10);
-            if (s && s !== _seite) { _seite = s; _liste_laden(); }
-        });
     });
 
     // Neu
