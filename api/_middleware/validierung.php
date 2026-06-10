@@ -149,6 +149,7 @@ function id_existiert(int $id, string $tabelle, string $bezeichnung = 'Eintrag')
         'benutzer', 'vokabeln', 'saetze', 'kategorien', 'lektionen',
         'gruppen', 'ligen', 'belohnungen', 'medien', 'fortschritt',
         'trainings_sitzungen', 'vokabel_formen', 'synonyme',
+        'themenfelder', 'tipp_saetze',
     ];
 
     if (!in_array($tabelle, $erlaubte_tabellen, true)) {
