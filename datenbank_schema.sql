@@ -137,6 +137,24 @@ CREATE TABLE saetze (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- 6b. tipp_saetze — Saetze fuer Nachtippen-Uebungsmodus
+-- ============================================================
+DROP TABLE IF EXISTS tipp_saetze;
+CREATE TABLE tipp_saetze (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    text            TEXT NOT NULL,
+    themenfeld_id   INT NULL,
+    aktiv           BOOLEAN NOT NULL DEFAULT TRUE,
+    erstellt_am     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    erstellt_von    INT NULL,
+    aktualisiert_am DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (themenfeld_id) REFERENCES themenfelder(id) ON DELETE SET NULL,
+    FOREIGN KEY (erstellt_von)  REFERENCES benutzer(id)     ON DELETE SET NULL,
+    INDEX idx_themenfeld (themenfeld_id),
+    INDEX idx_aktiv      (aktiv)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- 7. themenfelder — m:n mit vokabeln moeglich
 -- ============================================================
 DROP TABLE IF EXISTS themenfelder;

@@ -65,6 +65,7 @@ $v = _app_version_berechnen(__DIR__);
     <link rel="stylesheet" href="oeffentlich/css/training.css?v=<?= $v ?>">
     <link rel="stylesheet" href="oeffentlich/css/schnellueben.css?v=<?= $v ?>">
     <link rel="stylesheet" href="oeffentlich/css/feinschliff.css?v=<?= $v ?>">
+    <link rel="stylesheet" href="oeffentlich/css/nachtippen.css?v=<?= $v ?>">
 
     <!-- Material Web Bundle (wird spaeter hinzugefuegt) -->
     <!-- <script type="module" src="oeffentlich/js/material-web-bundle.js?v=<?= $v ?>"></script> -->
