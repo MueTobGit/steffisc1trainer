@@ -19,7 +19,7 @@ admin_erzwingen($benutzer);
 
 $daten = json_body_lesen();
 pflichtfelder_pruefen($daten, ['text']);
-laenge_validieren($daten['text'], 'text', 2, 2000);
+laenge_validieren($daten['text'], 'text', 2, 4000);
 
 $text         = trim($daten['text']);
 $themenfeld_id = null;

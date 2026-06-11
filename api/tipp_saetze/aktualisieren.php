@@ -26,7 +26,7 @@ $felder = [];
 $params = [];
 
 if (isset($daten['text'])) {
-    laenge_validieren($daten['text'], 'text', 2, 2000);
+    laenge_validieren($daten['text'], 'text', 2, 4000);
     $felder[] = 'text = ?';
     $params[] = trim($daten['text']);
 }

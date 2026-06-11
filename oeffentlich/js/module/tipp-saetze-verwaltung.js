@@ -237,7 +237,8 @@ function _dialog_oeffnen(satz = null) {
 
             <div class="formular-gruppe" style="margin-bottom:14px">
                 <label class="formular-label" for="dlg-text">${t('tipp_saetze.text_label')}</label>
-                <textarea class="eingabe" id="dlg-text" rows="4"
+                <textarea class="eingabe" id="dlg-text" rows="8"
+                    maxlength="4000"
                     placeholder="${t('tipp_saetze.text_placeholder')}"
                     style="resize:vertical">${esc(satz?.text ?? '')}</textarea>
             </div>
