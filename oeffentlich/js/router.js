@@ -17,7 +17,7 @@ const ROUTEN = {
     '/vokabeln/neu':    { modul: 'vokabel-editor',  titel: 'Vokabel erstellen', titel_key: 'navigation.vokabel_neu',   icon: 'add_circle',     auth: true },
     '/vokabeln/:id':    { modul: 'vokabel-editor',  titel: 'Vokabel bearbeiten',titel_key: 'navigation.vokabel_edit',  icon: 'edit',           auth: true },
     '/synonyme':        { modul: 'synonyme',         titel: 'Synonyme',          titel_key: 'navigation.synonyme',      icon: 'merge_type',     auth: true },
-    '/saetze':          { modul: 'tipp-saetze-verwaltung', titel: 'Sätze',       titel_key: 'navigation.saetze',        icon: 'edit_note',      auth: true, admin: true },
+    '/saetze':          { modul: 'tipp-saetze-verwaltung', titel: 'Texte verwalten', titel_key: 'navigation.saetze',     icon: 'edit_note',      auth: true, admin: true },
     '/nachtippen':      { modul: 'nachtippen',       titel: 'Nachtippen',       titel_key: 'navigation.nachtippen',    icon: 'keyboard',       auth: true },
     '/kategorien':      { modul: 'kategorie-liste', titel: 'Kategorien',       titel_key: 'navigation.kategorien',    icon: 'folder',         auth: true, admin: true },
     '/lektionen':       { modul: 'lektion-liste',   titel: 'Themenfelder',     titel_key: 'navigation.lektionen',     icon: 'note_stack',     auth: true },

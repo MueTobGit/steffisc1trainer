@@ -33,7 +33,6 @@
 }
 
 .nt-start__abschnitt-titel {
-    font-size: var(--md-sys-typescale-title-small-size);
     font-weight: 600;
     margin: 0 0 14px;
     color: var(--md-sys-color-on-surface-variant);
@@ -108,7 +107,7 @@
 .nt-uebung {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     padding-top: 8px;
 }
 
@@ -134,25 +133,38 @@
     color: var(--md-sys-color-on-surface-variant);
 }
 
-.nt-stat .material-symbols-outlined {
-    font-size: 18px;
-}
-
-.nt-stat--korrekt .material-symbols-outlined { color: var(--md-sys-color-primary); }
+.nt-stat .material-symbols-outlined { font-size: 18px; }
+.nt-stat--korrekt .material-symbols-outlined     { color: var(--md-sys-color-primary); }
 .nt-stat--uebersprungen .material-symbols-outlined { color: var(--md-sys-color-outline); }
 
-/* Satz-Anzeige */
-.nt-satz-box {
+/* ---- Tipp-Box: die zentrale Karte ---- */
+.nt-tipp-box {
     background: var(--md-sys-color-surface-container-low);
     border-radius: var(--md-sys-shape-corner-large);
-    padding: 28px 24px 24px;
+    padding: 20px 24px 24px;
     position: relative;
+    cursor: text;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+    outline: none;
+    /* Mindesthöhe damit die Box stabil wirkt */
+    min-height: 120px;
+}
+
+.nt-tipp-box--fokus {
+    border-color: var(--md-sys-color-primary);
+}
+
+/* Badge-Zeile: Themenfeld links, Satz-Zähler rechts */
+.nt-tipp-badges {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    min-height: 22px;
 }
 
 .nt-themenfeld-badge {
-    position: absolute;
-    top: 10px;
-    right: 14px;
     font-size: 0.72em;
     color: var(--md-sys-color-on-surface-variant);
     background: var(--md-sys-color-surface-container);
@@ -160,49 +172,135 @@
     padding: 2px 8px;
 }
 
+.nt-satz-zaehler {
+    font-size: 0.75em;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container);
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+/* Aktueller Satz */
 .nt-satz-anzeige {
-    font-size: 1.45rem;
-    line-height: 1.7;
+    font-size: 1.5rem;
+    line-height: 1.75;
     letter-spacing: 0.01em;
     word-break: break-word;
     font-family: 'Roboto Mono', 'Courier New', monospace;
-    min-height: 2.5em;
+    min-height: 2em;
 }
 
-/* Einzel-Zeichen Klassen */
+/* Nächster Satz Vorschau */
+.nt-naechster-satz {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    margin-top: 12px;
+    word-break: break-word;
+    /* Nur anzeigen wenn nicht leer */
+    min-height: 0;
+}
+
+.nt-naechster-satz:empty {
+    display: none;
+}
+
+/* Versteckte Eingabe — fängt alle Tastatureingaben ab */
+.nt-versteckte-eingabe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: text;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    font-size: 16px; /* verhindert Auto-Zoom auf iOS/Android */
+    color: transparent;
+    caret-color: transparent;
+}
+
+/* ---- Einzel-Zeichen ---- */
 .nt-char {
-    position: relative;
+    /* Inline — wichtig: kein Block, damit Zeilenumbrüche korrekt fließen */
+    display: inline;
 }
 
+/* Noch nicht getippt: sehr hell (Starttext hellgrau) */
+.nt-char--offen {
+    color: var(--md-sys-color-on-surface);
+    opacity: 0.18;
+}
+
+/* Aktueller Cursor (nächstes Zeichen): blinkende Unterstreichung */
+.nt-char--cursor {
+    color: var(--md-sys-color-on-surface);
+    opacity: 0.3;
+    border-bottom: 2px solid var(--md-sys-color-primary);
+    animation: nt-cursor-blinken 1.1s step-start infinite;
+}
+
+/* Korrekt getippt: volle Deckkraft + fett (schwarz/dunkel) */
 .nt-char--korrekt {
-    color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-surface);
+    opacity: 1;
+    font-weight: bold;
 }
 
+/* Falsches Zeichen: rot, mit Hintergrund */
 .nt-char--falsch {
     color: var(--md-sys-color-error);
-    background: color-mix(in srgb, var(--md-sys-color-error-container) 60%, transparent);
+    opacity: 1;
+    background: color-mix(in srgb, var(--md-sys-color-error-container) 50%, transparent);
     border-radius: 2px;
 }
 
-.nt-char--naechst {
-    border-left: 2px solid var(--md-sys-color-primary);
-    animation: nt-blinken 1s step-start infinite;
-    margin-left: -1px;
+@keyframes nt-cursor-blinken {
+    0%, 100% { border-bottom-color: var(--md-sys-color-primary); }
+    50%       { border-bottom-color: transparent; }
 }
 
-.nt-char--offen {
+/* ---- Zeilenumbruch-Symbol ↵ ---- */
+/* Immer subtil angezeigt — kein bold, gedämpfte Farbe */
+.nt-char--nl {
+    font-weight: normal;
+    font-size: 0.75em;
+    vertical-align: middle;
+    color: var(--md-sys-color-primary);
+    margin: 0 1px;
+}
+
+/* Korrekt abgetippt: leicht sichtbar, aber nicht so dominant wie reguläre Zeichen */
+.nt-char--nl.nt-char--korrekt {
+    opacity: 0.55;
+    font-weight: normal; /* kein bold für ↵ */
+    color: var(--md-sys-color-primary);
+}
+
+/* Cursor-Position: blinkt */
+.nt-char--nl.nt-char--cursor {
+    opacity: 0.75;
+    color: var(--md-sys-color-primary);
+}
+
+/* Offen (noch nicht getippt) */
+.nt-char--nl.nt-char--offen {
+    opacity: 0.35;
     color: var(--md-sys-color-on-surface-variant);
-    opacity: 0.7;
 }
 
-@keyframes nt-blinken {
-    0%, 100% { border-color: var(--md-sys-color-primary); }
-    50%       { border-color: transparent; }
+/* Falsch */
+.nt-char--nl.nt-char--falsch {
+    color: var(--md-sys-color-error);
+    opacity: 1;
 }
 
-/* Fortschrittsbalken */
+/* ---- Fortschrittsbalken ---- */
 .nt-fortschritt-wrapper {
-    margin-top: 12px;
+    /* kein extra margin, da gap im parent */
 }
 
 .nt-fortschritt-bar {
@@ -216,45 +314,16 @@
     height: 100%;
     background: var(--md-sys-color-primary);
     border-radius: 2px;
-    transition: width 0.1s linear;
+    transition: width 0.08s linear;
 }
 
-/* Eingabe-Bereich */
-.nt-eingabe-bereich {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.nt-eingabe-feld {
-    width: 100%;
-    font-size: 1.1rem;
-    font-family: 'Roboto Mono', 'Courier New', monospace;
-    padding: 14px 16px;
-    border: 2px solid var(--md-sys-color-outline-variant);
-    border-radius: var(--md-sys-shape-corner-medium);
-    background: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
-    outline: none;
-    transition: border-color var(--vt-uebergang);
-    box-sizing: border-box;
-}
-
-.nt-eingabe-feld:focus {
-    border-color: var(--md-sys-color-primary);
-}
-
-.nt-eingabe-feld--falsch {
-    border-color: var(--md-sys-color-error) !important;
-    background: color-mix(in srgb, var(--md-sys-color-error-container) 20%, var(--md-sys-color-surface));
-}
-
-.nt-eingabe-aktionen {
+/* ---- Aktionen ---- */
+.nt-aktionen {
     display: flex;
     justify-content: flex-end;
 }
 
-/* Erfolgs-Overlay */
+/* ---- Erfolgs-Overlay ---- */
 .nt-erfolg-overlay {
     position: absolute;
     inset: 0;
@@ -273,7 +342,7 @@
 }
 
 .nt-erfolg-icon {
-    font-size: 3rem;
+    font-size: 3.5rem;
     color: var(--md-sys-color-primary);
     animation: nt-erfolg-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -283,14 +352,7 @@
     to   { transform: scale(1); }
 }
 
-/* Leer-Zustand */
-.nt-leer {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--md-sys-color-on-surface-variant);
-}
-
-/* Sätze-Verwaltung */
+/* ---- Texte-Verwaltung (Admin) ---- */
 .ts-text-vorschau {
     max-width: 400px;
     overflow: hidden;
@@ -303,14 +365,14 @@
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
     .nt-satz-anzeige {
-        font-size: 1.15rem;
+        font-size: 1.2rem;
     }
 
-    .nt-eingabe-feld {
-        font-size: 1rem;
+    .nt-naechster-satz {
+        font-size: 0.95rem;
     }
 
-    .nt-satz-box {
-        padding: 20px 16px 16px;
+    .nt-tipp-box {
+        padding: 16px 16px 20px;
     }
 }

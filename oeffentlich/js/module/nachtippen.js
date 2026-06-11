@@ -2,7 +2,7 @@
  * Nachtippen — Tipp-Übungsmodus
  *
  * Start-Screen: Themenfeld-Auswahl + Optionen
- * Übungs-Screen: Satz anzeigen, Zeichen-für-Zeichen Tipp-Prüfung
+ * Übungs-Screen: Text satzweise eintippen (direkt über den angezeigten Text)
  *
  * Route: /nachtippen
  */
@@ -13,26 +13,36 @@ import { t } from '../dienste/sprache.js';
 import { lade_anzeige_rendern } from '../komponenten/lade-anzeige.js';
 import { apiFehlerAnzeigen } from '../benachrichtigungen.js';
 
-// ---- State ----
+// ---- Modul-State ----
+let _container       = null;
+
+// Start-Screen State
 let _themenfelder    = [];
-let _aktive_tf_ids   = new Set();  // leere Set = alle
+let _aktive_tf_ids   = new Set();
 let _include_ohne    = true;
 let _pool_groesse    = 0;
 
 // Übungs-State
-let _satz            = null;    // { id, text, themenfeld_titel }
-let _korrekt         = 0;       // korrekt getippte Zeichen
+let _satz            = null;    // aktueller DB-Eintrag { id, text, themenfeld_titel }
+let _saetze          = [];      // grammatische Sätze (Split nach . ! ?)
+let _satz_index      = 0;       // aktueller Satz-Index in _saetze
+let _korrekt         = 0;       // korrekt getippte Zeichen im aktuellen Satz
 let _blockiert       = false;   // falsches Zeichen getippt
-let _session_korrekt = 0;       // Sätze diese Session
-let _session_skip    = 0;       // Übersprungen
+let _session_korrekt = 0;       // Texte diese Session vollständig abgetippt
+let _session_skip    = 0;       // Übersprungene Texte
 let _laedt           = false;
 
-export async function rendern(params = {}) {
-    const container = document.getElementById('inhalt');
-    if (!container) return;
+// ============================================================
+// ENTRY POINT
+// ============================================================
 
-    // State zurücksetzen
+export async function rendern(params = {}) {
+    _container = document.getElementById('inhalt');
+    if (!_container) return;
+
     _satz            = null;
+    _saetze          = [];
+    _satz_index      = 0;
     _korrekt         = 0;
     _blockiert       = false;
     _session_korrekt = 0;
@@ -40,22 +50,22 @@ export async function rendern(params = {}) {
     _aktive_tf_ids   = new Set();
     _include_ohne    = true;
 
-    lade_anzeige_rendern(container);
+    lade_anzeige_rendern(_container);
 
     const tfErg = await apiGet('themenfelder/liste.php', { pro_seite: 500 });
     _themenfelder = tfErg.erfolg ? (tfErg.daten?.eintraege || []) : [];
 
-    _start_rendern(container);
+    _start_rendern();
 }
 
 // ============================================================
 // START-SCREEN
 // ============================================================
 
-function _start_rendern(container) {
+function _start_rendern() {
     const alleAktiv = _aktive_tf_ids.size === 0;
 
-    container.innerHTML = `
+    _container.innerHTML = `
         <div class="nt-container">
             <div class="nt-start">
                 <h1 class="nt-start__titel">
@@ -100,20 +110,18 @@ function _start_rendern(container) {
         </div>
     `;
 
-    _start_events_binden(container);
-    _pool_info_laden(container);
+    _start_events_binden();
+    _pool_info_laden();
 }
 
-function _start_events_binden(container) {
-    // Alle Themenfelder
-    container.querySelector('[data-tf-alle]')?.addEventListener('click', () => {
+function _start_events_binden() {
+    _container.querySelector('[data-tf-alle]')?.addEventListener('click', () => {
         _aktive_tf_ids.clear();
-        _start_chips_aktualisieren(container);
-        _pool_info_laden(container);
+        _start_chips_aktualisieren();
+        _pool_info_laden();
     });
 
-    // Einzelne Themenfelder
-    container.querySelectorAll('[data-tf-id]').forEach(btn => {
+    _container.querySelectorAll('[data-tf-id]').forEach(btn => {
         btn.addEventListener('click', () => {
             const tid = parseInt(btn.dataset.tfId, 10);
             if (_aktive_tf_ids.has(tid)) {
@@ -121,36 +129,33 @@ function _start_events_binden(container) {
             } else {
                 _aktive_tf_ids.add(tid);
             }
-            _start_chips_aktualisieren(container);
-            _pool_info_laden(container);
+            _start_chips_aktualisieren();
+            _pool_info_laden();
         });
     });
 
-    // Include-ohne Checkbox
-    container.querySelector('#chk-include-ohne')?.addEventListener('change', e => {
+    _container.querySelector('#chk-include-ohne')?.addEventListener('change', e => {
         _include_ohne = e.target.checked;
-        _pool_info_laden(container);
+        _pool_info_laden();
     });
 
-    // Starten
-    container.querySelector('#btn-starten')?.addEventListener('click', () => {
-        _uebung_starten(container);
+    _container.querySelector('#btn-starten')?.addEventListener('click', () => {
+        _uebung_starten();
     });
 }
 
-function _start_chips_aktualisieren(container) {
+function _start_chips_aktualisieren() {
     const alleAktiv = _aktive_tf_ids.size === 0;
-    container.querySelector('[data-tf-alle]')?.classList.toggle('nt-tf-chip--aktiv', alleAktiv);
-    container.querySelectorAll('[data-tf-id]').forEach(btn => {
+    _container.querySelector('[data-tf-alle]')?.classList.toggle('nt-tf-chip--aktiv', alleAktiv);
+    _container.querySelectorAll('[data-tf-id]').forEach(btn => {
         const tid = parseInt(btn.dataset.tfId, 10);
         btn.classList.toggle('nt-tf-chip--aktiv', _aktive_tf_ids.has(tid));
     });
 }
 
-async function _pool_info_laden(container) {
-    const params = _api_params();
-    const erg = await apiGet('tipp_saetze/zufaellig.php', params);
-    const info = container.querySelector('#pool-info');
+async function _pool_info_laden() {
+    const erg = await apiGet('tipp_saetze/zufaellig.php', _api_params());
+    const info = _container?.querySelector('#pool-info');
     if (!info) return;
 
     if (erg.erfolg) {
@@ -168,49 +173,49 @@ async function _pool_info_laden(container) {
 // ÜBUNGS-SCREEN
 // ============================================================
 
-async function _uebung_starten(container) {
+async function _uebung_starten() {
     if (_pool_groesse === 0) {
-        // Noch einmal prüfen
-        await _pool_info_laden(container);
+        await _pool_info_laden();
         if (_pool_groesse === 0) return;
     }
 
-    _korrekt   = 0;
-    _blockiert = false;
-
-    lade_anzeige_rendern(container);
-    await _naechsten_satz_laden(container, true);
+    lade_anzeige_rendern(_container);
+    await _naechsten_text_laden(true);
 }
 
-async function _naechsten_satz_laden(container, erster = false) {
+async function _naechsten_text_laden(erster = false) {
     if (_laedt) return;
     _laedt = true;
 
-    const letzteId = erster ? 0 : (_satz?.id ?? 0);
     const erg = await apiGet('tipp_saetze/zufaellig.php', {
         ..._api_params(),
-        exclude_id: letzteId,
+        exclude_id: erster ? 0 : (_satz?.id ?? 0),
     });
 
     _laedt = false;
 
     if (!erg.erfolg) {
         apiFehlerAnzeigen(erg);
-        _start_rendern(container);
+        _start_rendern();
         return;
     }
 
-    _satz      = erg.daten.satz;
-    _korrekt   = 0;
-    _blockiert = false;
+    _satz       = erg.daten.satz;
+    _saetze     = _text_in_saetze_teilen(_satz.text);
+    _satz_index = 0;
+    _korrekt    = 0;
+    _blockiert  = false;
 
-    _uebung_rendern(container);
+    _uebung_rendern();
 }
 
-function _uebung_rendern(container) {
-    container.innerHTML = `
+function _uebung_rendern() {
+    const mehrSaetze = _saetze.length > 1;
+
+    _container.innerHTML = `
         <div class="nt-container">
             <div class="nt-uebung">
+
                 <!-- Kopf mit Stats -->
                 <div class="nt-kopf">
                     <button class="btn btn--text" id="btn-beenden">
@@ -229,64 +234,98 @@ function _uebung_rendern(container) {
                     </div>
                 </div>
 
-                <!-- Satz-Box -->
-                <div class="nt-satz-box" id="satz-box">
-                    ${_satz.themenfeld_titel
-                        ? `<span class="nt-themenfeld-badge">${esc(_satz.themenfeld_titel)}</span>`
-                        : ''
-                    }
-                    <div class="nt-satz-anzeige" id="satz-anzeige" aria-live="polite">
-                        ${_satz_anzeige_html(0, false)}
+                <!-- Tipp-Box: Text anzeigen, hier wird getippt -->
+                <div class="nt-tipp-box" id="tipp-box">
+                    <!-- Badge-Zeile: Themenfeld + Satz-Fortschritt -->
+                    <div class="nt-tipp-badges">
+                        ${_satz.themenfeld_titel
+                            ? `<span class="nt-themenfeld-badge">${esc(_satz.themenfeld_titel)}</span>`
+                            : '<span></span>'
+                        }
+                        ${mehrSaetze
+                            ? `<span class="nt-satz-zaehler" id="satz-zaehler">
+                                   ${_satz_index + 1}&thinsp;/&thinsp;${_saetze.length}
+                               </span>`
+                            : ''
+                        }
                     </div>
-                    <div class="nt-fortschritt-wrapper">
-                        <div class="nt-fortschritt-bar">
-                            <div class="nt-fortschritt-fill" id="fortschritt-fill" style="width:0%"></div>
-                        </div>
+
+                    <!-- Aktueller Satz (zeichenweise gefärbt) -->
+                    <div class="nt-satz-anzeige" id="satz-anzeige" aria-live="polite">
+                        ${_satz_anzeige_html()}
+                    </div>
+
+                    <!-- Nächster Satz Vorschau -->
+                    <div class="nt-naechster-satz" id="naechster-satz">
+                        ${_naechster_satz_vorschau_html()}
+                    </div>
+
+                    <!-- Versteckte Eingabe (fängt Tastatureingaben ab) -->
+                    <input type="text" class="nt-versteckte-eingabe" id="nt-eingabe"
+                        autocomplete="off" autocorrect="off"
+                        autocapitalize="none" spellcheck="false"
+                        aria-label="${t('nachtippen.titel')}">
+                </div>
+
+                <!-- Fortschrittsbalken (über gesamten Text) -->
+                <div class="nt-fortschritt-wrapper">
+                    <div class="nt-fortschritt-bar">
+                        <div class="nt-fortschritt-fill" id="fortschritt-fill" style="width:0%"></div>
                     </div>
                 </div>
 
-                <!-- Eingabe -->
-                <div class="nt-eingabe-bereich">
-                    <input type="text"
-                        class="nt-eingabe-feld" id="nt-eingabe"
-                        autocomplete="off" autocorrect="off"
-                        autocapitalize="off" spellcheck="false"
-                        placeholder="${t('nachtippen.eingabe_placeholder')}">
-                    <div class="nt-eingabe-aktionen">
-                        <button class="btn btn--text" id="btn-ueberspringen">
-                            <span class="material-symbols-outlined" style="font-size:18px">skip_next</span>
-                            ${t('nachtippen.ueberspringen')}
-                        </button>
-                    </div>
+                <!-- Aktionen -->
+                <div class="nt-aktionen">
+                    <button class="btn btn--text" id="btn-ueberspringen">
+                        <span class="material-symbols-outlined" style="font-size:18px">skip_next</span>
+                        ${t('nachtippen.ueberspringen')}
+                    </button>
                 </div>
+
             </div>
         </div>
     `;
 
-    _uebung_events_binden(container);
+    _uebung_events_binden();
 
-    // Auto-Fokus
     requestAnimationFrame(() => {
-        container.querySelector('#nt-eingabe')?.focus();
+        _container.querySelector('#nt-eingabe')?.focus();
     });
 }
 
-function _satz_anzeige_html(korrekt, blockiert, eingabe_wert = '') {
-    const text = _satz?.text ?? '';
+// ---- Zeichen-für-Zeichen Anzeige ----
+
+function _satz_anzeige_html() {
+    const text = _aktueller_satz_text();
     return text.split('').map((zeichen, i) => {
-        if (i < korrekt) {
-            return `<span class="nt-char nt-char--korrekt">${_zeichen_esc(zeichen)}</span>`;
+        let klasse;
+        if (i < _korrekt)        klasse = 'nt-char--korrekt';
+        else if (i === _korrekt) klasse = _blockiert ? 'nt-char--falsch' : 'nt-char--cursor';
+        else                     klasse = 'nt-char--offen';
+
+        if (zeichen === '\n') {
+            return `<span class="nt-char ${klasse} nt-char--nl">↵</span><br>`;
         }
-        if (i === korrekt) {
-            if (blockiert) {
-                // Falsch getipptes Zeichen anzeigen
-                const falsch = eingabe_wert[korrekt] ?? '';
-                return `<span class="nt-char nt-char--falsch">${_zeichen_esc(falsch || zeichen)}</span>`;
-            }
-            return `<span class="nt-char nt-char--naechst">${_zeichen_esc(zeichen)}</span>`;
-        }
-        return `<span class="nt-char nt-char--offen">${_zeichen_esc(zeichen)}</span>`;
+        return `<span class="nt-char ${klasse}">${_zeichen_esc(zeichen)}</span>`;
     }).join('');
+}
+
+function _naechster_satz_vorschau_html() {
+    const naechster = _naechster_satz_text();
+    if (!naechster) return '';
+
+    const woerter    = naechster.trim().split(/\s+/);
+    const vorschau   = woerter.slice(0, 5);
+    const anzahl     = vorschau.length;
+    // Opacity: 0.60 → 0.20 gleichmäßig über die Wörter
+    const html = vorschau.map((w, i) => {
+        const op = anzahl > 1
+            ? (0.60 - (i / (anzahl - 1)) * 0.40).toFixed(2)
+            : '0.60';
+        return `<span style="opacity:${op}">${esc(w)}</span>`;
+    }).join(' ');
+
+    return html + '<span style="opacity:0.12"> …</span>';
 }
 
 function _zeichen_esc(z) {
@@ -297,88 +336,131 @@ function _zeichen_esc(z) {
     return z;
 }
 
-function _uebung_events_binden(container) {
-    const eingabe = container.querySelector('#nt-eingabe');
-    if (!eingabe) return;
+// ---- Anzeige aktualisieren ----
 
-    // Backspace / Blockierung
-    eingabe.addEventListener('keydown', e => {
-        // Meta-/Control-Shortcuts erlauben (z.B. Ctrl+A, Ctrl+C)
-        if (e.ctrlKey || e.metaKey) return;
-        // Backspace immer erlauben
-        if (e.key === 'Backspace') return;
-        // Bei Blockierung: alle anderen Tasten sperren
-        if (_blockiert) {
-            e.preventDefault();
-        }
-    });
+function _anzeige_aktualisieren() {
+    const anzeige = _container?.querySelector('#satz-anzeige');
+    if (anzeige) anzeige.innerHTML = _satz_anzeige_html();
 
-    // Eingabe verarbeiten
-    eingabe.addEventListener('input', () => {
-        _eingabe_verarbeiten(container, eingabe);
-    });
+    const vorschau = _container?.querySelector('#naechster-satz');
+    if (vorschau) vorschau.innerHTML = _naechster_satz_vorschau_html();
 
-    // Überspringen
-    container.querySelector('#btn-ueberspringen')?.addEventListener('click', () => {
-        _ueberspringen(container);
-    });
+    const zaehler = _container?.querySelector('#satz-zaehler');
+    if (zaehler) zaehler.innerHTML = `${_satz_index + 1}&thinsp;/&thinsp;${_saetze.length}`;
 
-    // Beenden
-    container.querySelector('#btn-beenden')?.addEventListener('click', () => {
-        _start_rendern(container);
-    });
+    // Fortschrittsbalken über gesamten Text
+    const fill = _container?.querySelector('#fortschritt-fill');
+    if (fill) {
+        const gesamt = _saetze.reduce((sum, s) => sum + s.length, 0);
+        const fertig = _saetze.slice(0, _satz_index).reduce((sum, s) => sum + s.length, 0) + _korrekt;
+        fill.style.width = `${gesamt > 0 ? Math.round(fertig / gesamt * 100) : 0}%`;
+    }
 }
 
-function _eingabe_verarbeiten(container, eingabe) {
-    const val  = eingabe.value;
-    const text = _satz?.text ?? '';
+// ---- Events ----
 
-    if (val.length === 0) {
-        // Alles gelöscht
-        _korrekt   = 0;
-        _blockiert = false;
-    } else if (val.length <= _korrekt) {
-        // Backspace — ggf. Block aufheben
-        _korrekt   = val.length;
-        _blockiert = false;
-    } else if (val.length === _korrekt + 1) {
-        // Neues Zeichen
-        const neues = val[_korrekt];
-        if (neues === text[_korrekt]) {
-            _korrekt++;
+function _uebung_events_binden() {
+    const tippBox = _container.querySelector('#tipp-box');
+    const eingabe = _container.querySelector('#nt-eingabe');
+    if (!eingabe) return;
+
+    // Klick auf die ganze Tipp-Box fokussiert die versteckte Eingabe
+    tippBox?.addEventListener('click', () => eingabe.focus());
+
+    // Fokus-Ring auf der Box anzeigen
+    eingabe.addEventListener('focus',  () => tippBox?.classList.add('nt-tipp-box--fokus'));
+    eingabe.addEventListener('blur',   () => tippBox?.classList.remove('nt-tipp-box--fokus'));
+
+    // Tastatureingabe abfangen
+    eingabe.addEventListener('keydown', e => {
+        // System-Shortcuts (Strg/Cmd) durchlassen
+        if (e.ctrlKey || e.metaKey) return;
+
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            if (_blockiert) {
+                _blockiert = false;
+            } else if (_korrekt > 0) {
+                _korrekt--;
+            }
+            _anzeige_aktualisieren();
+            return;
+        }
+
+        const text = _aktueller_satz_text();
+        const erwartet = text[_korrekt] ?? '';
+
+        // Enter oder Space gelten als Eingabe für Zeilenumbrüche
+        let zeichenEingabe;
+        if (e.key === 'Enter') {
+            if (erwartet === '\n') {
+                e.preventDefault();
+                zeichenEingabe = '\n';
+            } else {
+                return; // Enter ignorieren wenn kein \n erwartet
+            }
+        } else if (e.key === ' ' && erwartet === '\n') {
+            // Space als Alternative zu Enter für Zeilenumbrüche
+            e.preventDefault();
+            zeichenEingabe = '\n';
+        } else if (e.key.length !== 1 || e.altKey) {
+            return; // Sondertasten ignorieren
+        } else {
+            e.preventDefault();
+            zeichenEingabe = e.key;
+        }
+
+        if (_korrekt >= text.length) return;
+
+        const korrektesZeichen = zeichenEingabe === erwartet;
+
+        if (_blockiert) {
+            // Nur die richtige Taste entsperrt und macht weiter
+            if (!korrektesZeichen) return;
             _blockiert = false;
+        }
+
+        if (korrektesZeichen) {
+            _korrekt++;
+            if (_korrekt === text.length) {
+                _satz_fertig();
+                return;
+            }
         } else {
             _blockiert = true;
         }
-    }
-    // val.length > _korrekt + 1 kann durch Paste passieren →
-    // Input auf Kontrollzustand zurücksetzen
-    if (val.length > _korrekt + (_blockiert ? 1 : 0)) {
-        eingabe.value = val.slice(0, _korrekt + (_blockiert ? 1 : 0));
-    }
 
-    // Anzeige aktualisieren
-    const anzeige = container.querySelector('#satz-anzeige');
-    if (anzeige) anzeige.innerHTML = _satz_anzeige_html(_korrekt, _blockiert, eingabe.value);
+        _anzeige_aktualisieren();
+    });
 
-    // Fortschrittsbalken
-    const fill = container.querySelector('#fortschritt-fill');
-    if (fill) fill.style.width = `${Math.round((_korrekt / text.length) * 100)}%`;
+    // input-Event verhindert, dass Browser-Autokorrekturen den Value verändern
+    eingabe.addEventListener('input', () => {
+        eingabe.value = '';
+    });
 
-    // Eingabefeld stylen
-    eingabe.classList.toggle('nt-eingabe-feld--falsch', _blockiert);
+    _container.querySelector('#btn-ueberspringen')?.addEventListener('click', () => _ueberspringen());
+    _container.querySelector('#btn-beenden')?.addEventListener('click', () => _start_rendern());
+}
 
-    // Fertig?
-    if (_korrekt === text.length && text.length > 0) {
-        _satz_abgeschlossen(container, eingabe);
+// ---- Satz / Text Abschluss ----
+
+function _satz_fertig() {
+    if (_satz_index < _saetze.length - 1) {
+        // Nächster Satz im selben Text
+        _satz_index++;
+        _korrekt   = 0;
+        _blockiert = false;
+        _anzeige_aktualisieren();
+    } else {
+        // Letzter Satz: gesamter Text abgetippt
+        _text_abgeschlossen();
     }
 }
 
-async function _satz_abgeschlossen(container, eingabe) {
+async function _text_abgeschlossen() {
     _session_korrekt++;
 
-    // Erfolgs-Overlay einblenden
-    const box = container.querySelector('#satz-box');
+    const box = _container?.querySelector('#tipp-box');
     if (box) {
         const overlay = document.createElement('div');
         overlay.className = 'nt-erfolg-overlay';
@@ -386,28 +468,40 @@ async function _satz_abgeschlossen(container, eingabe) {
         box.appendChild(overlay);
     }
 
-    // Stats aktualisieren
-    const statEl = container.querySelector('#stat-korrekt');
+    const statEl = _container?.querySelector('#stat-korrekt');
     if (statEl) statEl.textContent = _session_korrekt;
 
-    // Eingabe leeren & deaktivieren
-    if (eingabe) { eingabe.value = ''; eingabe.disabled = true; }
-
-    // Kurz warten, dann nächster Satz
     await new Promise(r => setTimeout(r, 700));
-
-    await _naechsten_satz_laden(container);
+    await _naechsten_text_laden();
 }
 
-function _ueberspringen(container) {
+function _ueberspringen() {
     _session_skip++;
-    const statEl = container.querySelector('#stat-skip');
+    const statEl = _container?.querySelector('#stat-skip');
     if (statEl) statEl.textContent = _session_skip;
 
-    _naechsten_satz_laden(container);
+    _naechsten_text_laden();
 }
 
 // ---- Hilfsfunktionen ----
+
+function _text_in_saetze_teilen(text) {
+    // Splittet auf ., ! oder ? — behält das Satzzeichen beim vorherigen Satz.
+    // Führende Leerzeichen/Newlines (durch vorangehendes Satzzeichen) werden entfernt,
+    // interne Newlines bleiben erhalten (werden als ↵ angezeigt und müssen getippt werden).
+    const teile = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+    return teile
+        .map(s => s.replace(/^[\s\n]+/, ''))   // nur FÜHRENDE Whitespace/Newlines entfernen
+        .filter(s => s.length > 0);
+}
+
+function _aktueller_satz_text() {
+    return _saetze[_satz_index] ?? '';
+}
+
+function _naechster_satz_text() {
+    return _saetze[_satz_index + 1] ?? null;
+}
 
 function _api_params() {
     return {
@@ -416,11 +510,18 @@ function _api_params() {
     };
 }
 
+// ============================================================
+// CLEANUP
+// ============================================================
+
 export function aufraeumen() {
+    _container       = null;
     _themenfelder    = [];
     _aktive_tf_ids.clear();
     _include_ohne    = true;
     _satz            = null;
+    _saetze          = [];
+    _satz_index      = 0;
     _korrekt         = 0;
     _blockiert       = false;
     _session_korrekt = 0;
